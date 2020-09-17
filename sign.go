@@ -9,7 +9,7 @@ import (
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 )
 
-func SignMessage(privKey string, message string, compress bool) string {
+func SignMessage(privKey string, message string) string {
 	prefixBytes := []byte("Bitcoin Signed Message:\n")
 	messageBytes := []byte(message)
 	bytes := []byte{}
@@ -29,7 +29,7 @@ func SignMessage(privKey string, message string, compress bool) string {
 		D:         new(big.Int).SetBytes(privKeyBytes),
 	}
 
-	sigbytes, err := bsvec.SignCompact(bsvec.S256(), ecdsaPrivKey, chainhash.DoubleHashB(bytes), compress)
+	sigbytes, err := bsvec.SignCompact(bsvec.S256(), ecdsaPrivKey, chainhash.DoubleHashB(bytes), true)
 	if err != nil {
 		panic(err)
 	}

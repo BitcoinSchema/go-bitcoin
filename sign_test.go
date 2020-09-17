@@ -10,13 +10,11 @@ const privKey = "E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F2B7
 func TestSignMessage(t *testing.T) {
 
 	// privKey string, message string, compress bool
+	sig := SignMessage(privKey, "Testing!")
 
-	tx, err := SignMessage(privKey, "Test message!", true)
-	if err != nil {
-		t.Error("Failed to sign message:", err)
-	}
+	t.Log("got sig", sig)
 
-	if tx.GetTxID() != "e97ed4acb8d01a822dd5070e6addf762949f48a696311a954b85cd4a9c993a23" {
-		t.Error("Failed to generate expected signature")
+	if sig != "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=" {
+		t.Error("Failed to generate expected signature", sig)
 	}
 }
