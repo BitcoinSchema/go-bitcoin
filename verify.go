@@ -21,7 +21,7 @@ const (
 	H_BSV string = "Bitcoin Signed Message:\n"
 )
 
-func VerifyMessage(address, signature, data string) (ok boolean) {
+func VerifyMessage(address, signature, data string) (ok bool) {
 	addrs, err := sigmestoaddr(signature, data)
 	if err != nil {
 		return
