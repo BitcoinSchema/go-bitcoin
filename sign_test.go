@@ -1,4 +1,4 @@
-package bap
+package bitcoin
 
 import (
 	"testing"
