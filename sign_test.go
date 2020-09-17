@@ -2,8 +2,6 @@ package bitcoin
 
 import (
 	"testing"
-
-	"github.com/rohenaz/go-bitcoin"
 )
 
 // Identity Private Key
@@ -13,7 +11,7 @@ func TestSignMessage(t *testing.T) {
 
 	// privKey string, message string, compress bool
 
-	tx, err := bitcoin.SignMessage(privKey, "Test message!", true)
+	tx, err := SignMessage(privKey, "Test message!", true)
 	if err != nil {
 		t.Error("Failed to sign message:", err)
 	}
