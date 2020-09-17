@@ -1,9 +1,7 @@
 package bitcoin
 
 import (
-	"crypto/ecdsa"
 	"encoding/base64"
-	"math/big"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
@@ -17,17 +15,7 @@ func SignMessage(privKey string, message string) string {
 	bytes = append(bytes, prefixBytes...)
 	bytes = append(bytes, byte(len(messageBytes)))
 	bytes = append(bytes, messageBytes...)
-	privKeyBytes := HexDecode(privKey)
-	x, y := bsvec.S256().ScalarBaseMult(privKeyBytes)
-	ecdsaPubKey := ecdsa.PublicKey{
-		Curve: bsvec.S256(),
-		X:     x,
-		Y:     y,
-	}
-	ecdsaPrivKey := &bsvec.PrivateKey{
-		PublicKey: ecdsaPubKey,
-		D:         new(big.Int).SetBytes(privKeyBytes),
-	}
+	ecdsaPrivKey := PrivateKey(privKey)
 
 	sigbytes, err := bsvec.SignCompact(bsvec.S256(), ecdsaPrivKey, chainhash.DoubleHashB(bytes), true)
 	if err != nil {
