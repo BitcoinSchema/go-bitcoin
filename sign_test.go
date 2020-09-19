@@ -16,3 +16,14 @@ func TestSignMessage(t *testing.T) {
 		t.Error("Failed to generate expected signature", sig)
 	}
 }
+
+func TestVerifyMessage(t *testing.T) {
+
+	var sig = "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8="
+	var address = "1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ"
+	var data = "Testing!"
+
+	if !VerifyMessage(address, sig, data) {
+		t.Error("Failed to verify message")
+	}
+}
