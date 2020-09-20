@@ -7,6 +7,7 @@ import (
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 )
 
+// SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
 func SignMessage(privKey string, message string) string {
 	prefixBytes := []byte("Bitcoin Signed Message:\n")
 	messageBytes := []byte(message)

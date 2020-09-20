@@ -7,6 +7,7 @@ import (
 	"github.com/bitcoinsv/bsvd/bsvec"
 )
 
+// PrivateKey turns a private key string into an bsvec.PrivateKey
 func PrivateKey(privKey string) (ecdsaPrivKey *bsvec.PrivateKey) {
 	privKeyBytes := HexDecode(privKey)
 	x, y := bsvec.S256().ScalarBaseMult(privKeyBytes)

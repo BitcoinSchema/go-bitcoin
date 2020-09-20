@@ -18,9 +18,11 @@ func sha256d(body []byte) []byte {
 }
 
 const (
-	H_BSV string = "Bitcoin Signed Message:\n"
+	// H_BSV is the magic header string required fore Bitcoin Signed Messages
+	hBSV string = "Bitcoin Signed Message:\n"
 )
 
+// VerifyMessage verifies a string and address against the provided signature and assumes Bitcoin Signed Message encoding
 func VerifyMessage(address, signature, data string) (ok bool) {
 	addrs, err := sigmestoaddr(signature, data)
 	if err != nil {
@@ -73,29 +75,29 @@ func parseSignature(signature string) (sig secp256k1.Signature, recid int,
 	return
 }
 
-func pubtoaddr(pubkey_xy2 secp256k1.XY, compressed bool,
+func pubtoaddr(pubkeyXy2 secp256k1.XY, compressed bool,
 	magic []byte) (bcpy []byte) {
 	size := 65
 	if compressed {
 		size = 33
 	}
 	out := make([]byte, size)
-	pubkey_xy2.GetPublicKey(out)
-	sha256_h := sha256.New()
-	sha256_h.Reset()
-	sha256_h.Write(out)
-	pub_hash_1 := sha256_h.Sum(nil)
-	ripemd160_h := ripemd160.New()
-	ripemd160_h.Reset()
-	ripemd160_h.Write(pub_hash_1)
-	pub_hash_2 := ripemd160_h.Sum(nil)
-	bcpy = append(magic, pub_hash_2...)
+	pubkeyXy2.GetPublicKey(out)
+	sha256H := sha256.New()
+	sha256H.Reset()
+	sha256H.Write(out)
+	pubHash1 := sha256H.Sum(nil)
+	ripemd160H := ripemd160.New()
+	ripemd160H.Reset()
+	ripemd160H.Write(pubHash1)
+	pubHash2 := ripemd160H.Sum(nil)
+	bcpy = append(magic, pubHash2...)
 	hash2 := sha256d(bcpy)
 	bcpy = append(bcpy, hash2[0:4]...)
 	return
 }
 
-func addrtostr(bcpy []byte) (s string, err error) {
+func addrToStr(bcpy []byte) (s string, err error) {
 	z := new(big.Int)
 	z.SetBytes(bcpy)
 	enc := base58.BitcoinEncoding
@@ -118,7 +120,7 @@ func addrtostr(bcpy []byte) (s string, err error) {
 // And modified for local package.
 // License is:
 //   https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/COPYING
-func get_bin(num *secp256k1.Number, le int) []byte {
+func getBin(num *secp256k1.Number, le int) []byte {
 	bts := num.Bytes()
 	if len(bts) > le {
 		panic("buffer too small")
@@ -135,8 +137,8 @@ func get_bin(num *secp256k1.Number, le int) []byte {
 //   https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/COPYING
 func recover(sig *secp256k1.Signature, pubkey *secp256k1.XY,
 	m *secp256k1.Number, recid int) (ret bool) {
-	var thecurve_p secp256k1.Number
-	thecurve_p.SetBytes([]byte{
+	var theCurveP secp256k1.Number
+	theCurveP.SetBytes([]byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFC, 0x2F})
 	var rx, rn, u1, u2 secp256k1.Number
@@ -147,12 +149,12 @@ func recover(sig *secp256k1.Signature, pubkey *secp256k1.XY,
 	rx.Set(&sig.R.Int)
 	if (recid & 2) != 0 {
 		rx.Add(&rx.Int, &secp256k1.TheCurve.Order.Int)
-		if rx.Cmp(&thecurve_p.Int) >= 0 {
+		if rx.Cmp(&theCurveP.Int) >= 0 {
 			return false
 		}
 	}
 
-	fx.SetB32(get_bin(&rx, 32))
+	fx.SetB32(getBin(&rx, 32))
 
 	X.SetXO(&fx, (recid&1) != 0)
 	if !X.IsValid() {
@@ -177,7 +179,7 @@ func recover(sig *secp256k1.Signature, pubkey *secp256k1.XY,
 }
 
 func sigmestoaddr(signature, message string) (addrs []string, err error) {
-	msghash2, err2 := messagehash(message, H_BSV)
+	msghash2, err2 := messagehash(message, hBSV)
 	if err2 != nil {
 		err = err2
 		return
@@ -190,8 +192,8 @@ func sigmestoaddr(signature, message string) (addrs []string, err error) {
 	var msg secp256k1.Number
 	msg.SetBytes(msghash2)
 
-	var pubkey_xy2 secp256k1.XY
-	ret2 := recover(&sig, &pubkey_xy2, &msg, recid)
+	var pubkeyXy2 secp256k1.XY
+	ret2 := recover(&sig, &pubkeyXy2, &msg, recid)
 	if !ret2 {
 		err = fmt.Errorf("recover pubkey failed")
 		return
@@ -199,8 +201,8 @@ func sigmestoaddr(signature, message string) (addrs []string, err error) {
 
 	addrs = make([]string, 2)
 	for i, compressed := range []bool{true, false} {
-		bcpy := pubtoaddr(pubkey_xy2, compressed, []byte{byte(0)})
-		s, err2 := addrtostr(bcpy)
+		bcpy := pubtoaddr(pubkeyXy2, compressed, []byte{byte(0)})
+		s, err2 := addrToStr(bcpy)
 		if err2 != nil {
 			err = err2
 			return

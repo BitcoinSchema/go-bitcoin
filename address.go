@@ -6,6 +6,7 @@ import (
 	"github.com/bitcoinsv/bsvutil"
 )
 
+// AddressFromPrivKey takes a private key string and returns a Bitcoin address
 func AddressFromPrivKey(privKey string) string {
 	pubKey := PrivateKey(privKey).PubKey()
 	return Address(pubKey).EncodeAddress()
