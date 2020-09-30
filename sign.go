@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"encoding/base64"
+	"errors"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
@@ -9,6 +10,9 @@ import (
 
 // SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
 func SignMessage(privateKey string, message string) (string, error) {
+	if len(privateKey) == 0 {
+		return "", errors.New("privateKey is empty")
+	}
 	prefixBytes := []byte(hBSV)
 	messageBytes := []byte(message)
 	var bytes []byte

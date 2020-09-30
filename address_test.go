@@ -20,6 +20,11 @@ func TestValidA58(t *testing.T) {
 	}{
 		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi2", true, false},
 		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, false},
+		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
 		{"1KCEAmV", false, false},
 		{"", false, false},
 		{"0", false, true},
