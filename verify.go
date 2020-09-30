@@ -11,12 +11,6 @@ import (
 	"golang.org/x/crypto/ripemd160"
 )
 
-func sha256d(body []byte) []byte {
-	msgHash1 := sha256.Sum256(body)
-	msgHash2 := sha256.Sum256(msgHash1[:])
-	return msgHash2[:]
-}
-
 const (
 	// H_BSV is the magic header string required fore Bitcoin Signed Messages
 	hBSV string = "Bitcoin Signed Message:\n"
@@ -34,6 +28,13 @@ func VerifyMessage(address, signature, data string) error {
 		}
 	}
 	return fmt.Errorf("address: %s not found", address)
+}
+
+// sha256d is a double sha256
+func sha256d(body []byte) []byte {
+	msgHash1 := sha256.Sum256(body)
+	msgHash2 := sha256.Sum256(msgHash1[:])
+	return msgHash2[:]
 }
 
 // messageHash will compute a hash for the given message & header

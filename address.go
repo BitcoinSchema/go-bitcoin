@@ -73,9 +73,12 @@ func (a *A25) ComputeChecksum() (c [4]byte) {
 
 // AddressFromPrivateKey takes a private key string and returns a Bitcoin address
 func AddressFromPrivateKey(privateKey string) (string, error) {
-	pubKey := PrivateKey(privateKey).PubKey()
-	address, err := Address(pubKey)
+	pubKey, err := PrivateKey(privateKey)
 	if err != nil {
+		return "", err
+	}
+	var address *bsvutil.LegacyAddressPubKeyHash
+	if address, err = Address(pubKey.PubKey()); err != nil {
 		return "", err
 	}
 	return address.EncodeAddress(), nil
