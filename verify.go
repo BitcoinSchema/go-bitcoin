@@ -18,6 +18,8 @@ const (
 )
 
 // VerifyMessage verifies a string and address against the provided signature and assumes Bitcoin Signed Message encoding
+//
+// Error will occur if verify fails or verification is not successful (no bool)
 func VerifyMessage(address, signature, data string) error {
 	if len(address) == 0 {
 		return errors.New("address is missing")
@@ -28,8 +30,8 @@ func VerifyMessage(address, signature, data string) error {
 	if err != nil {
 		return err
 	}
-	for _, addr2 := range addresses {
-		if address == addr2 {
+	for _, testAddress := range addresses {
+		if address == testAddress {
 			return nil
 		}
 	}
