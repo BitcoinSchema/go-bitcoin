@@ -89,6 +89,7 @@ func TestPrivateKeyFromString(t *testing.T) {
 		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F", "", true, true},
 		{"1234567", "", true, true},
 		{"0", "", true, true},
+		{"", "", true, true},
 	}
 
 	// Run tests

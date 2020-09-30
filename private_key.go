@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"math/big"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
@@ -10,6 +11,9 @@ import (
 
 // PrivateKeyFromString turns a private key (hex encoded string) into an bsvec.PrivateKey
 func PrivateKeyFromString(privateKey string) (*bsvec.PrivateKey, error) {
+	if len(privateKey) == 0 {
+		return nil, errors.New("privateKey is missing")
+	}
 	privateKeyBytes, err := hex.DecodeString(privateKey)
 	if err != nil {
 		return nil, err
