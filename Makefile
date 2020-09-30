@@ -11,7 +11,7 @@ endif
 
 ## Not defined? Use default repo owner
 ifeq ($(REPO_OWNER),)
-	REPO_OWNER="BitcoinSchema"
+	REPO_OWNER="bitcoinschema"
 endif
 
 .PHONY: clean

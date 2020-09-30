@@ -1,4 +1,4 @@
-module github.com/BitcoinSchema/go-bitcoin
+module github.com/bitcoinschema/go-bitcoin
 
 go 1.15
 
