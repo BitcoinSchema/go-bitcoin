@@ -69,19 +69,22 @@ func (a *A25) Set58(s []byte) error {
 func (a *A25) ComputeChecksum() (c [4]byte) {
 	copy(c[:], a.doubleSHA256())
 	return
-} /* {{header|Go}} */
+}
 
-// AddressFromPrivKey takes a private key string and returns a Bitcoin address
-func AddressFromPrivKey(privKey string) string {
-	pubKey := PrivateKey(privKey).PubKey()
-	return Address(pubKey).EncodeAddress()
+// AddressFromPrivateKey takes a private key string and returns a Bitcoin address
+func AddressFromPrivateKey(privateKey string) (string, error) {
+	pubKey := PrivateKey(privateKey).PubKey()
+	address, err := Address(pubKey)
+	if err != nil {
+		return "", err
+	}
+	return address.EncodeAddress(), nil
 }
 
 // Address gets a bsvutil.LegacyAddressPubKeyHash
-func Address(publicKey *bsvec.PublicKey) (address *bsvutil.LegacyAddressPubKeyHash) {
+func Address(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	publicKeyHash := bsvutil.Hash160(publicKey.SerializeCompressed())
-	address, _ = bsvutil.NewLegacyAddressPubKeyHash(publicKeyHash, &chaincfg.MainNetParams)
-	return
+	return bsvutil.NewLegacyAddressPubKeyHash(publicKeyHash, &chaincfg.MainNetParams)
 }
 
 // ValidA58 validates a base58 encoded bitcoin address.  An address is valid
@@ -89,7 +92,7 @@ func Address(publicKey *bsvec.PublicKey) (address *bsvutil.LegacyAddressPubKeyHa
 // and the checksum validates.  Return value ok will be true for valid
 // addresses.  If ok is false, the address is invalid and the error value
 // may indicate why.
-func ValidA58(a58 []byte) (ok bool, err error) {
+func ValidA58(a58 []byte) (bool, error) {
 	var a A25
 	if err := a.Set58(a58); err != nil {
 		return false, err
