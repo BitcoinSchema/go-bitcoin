@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	"crypto/sha256"
 
@@ -73,21 +74,25 @@ func (a *A25) ComputeChecksum() (c [4]byte) {
 
 // AddressFromPrivateKey takes a private key string and returns a Bitcoin address
 func AddressFromPrivateKey(privateKey string) (string, error) {
-	pubKey, err := PrivateKeyFromString(privateKey)
+	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}
 	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = Address(pubKey.PubKey()); err != nil {
+	if address, err = AddressFromPubKey(rawKey.PubKey()); err != nil {
 		return "", err
 	}
 	return address.EncodeAddress(), nil
 }
 
-// Address gets a bsvutil.LegacyAddressPubKeyHash
-func Address(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
-	publicKeyHash := bsvutil.Hash160(publicKey.SerializeCompressed())
-	return bsvutil.NewLegacyAddressPubKeyHash(publicKeyHash, &chaincfg.MainNetParams)
+// AddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bsvec.PublicKey
+func AddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
+	if publicKey == nil {
+		return nil, fmt.Errorf("publicKey cannot be nil")
+	} else if publicKey.X == nil {
+		return nil, fmt.Errorf("publicKey.X cannot be nil")
+	}
+	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(publicKey.SerializeCompressed()), &chaincfg.MainNetParams)
 }
 
 // ValidA58 validates a base58 encoded bitcoin address.  An address is valid
