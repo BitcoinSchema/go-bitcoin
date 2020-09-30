@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -18,6 +19,11 @@ const (
 
 // VerifyMessage verifies a string and address against the provided signature and assumes Bitcoin Signed Message encoding
 func VerifyMessage(address, signature, data string) error {
+	if len(address) == 0 {
+		return errors.New("address is missing")
+	} else if len(signature) == 0 {
+		return errors.New("signature is missing")
+	}
 	addresses, err := sigMessageToAddress(signature, data)
 	if err != nil {
 		return err
@@ -56,6 +62,12 @@ func messageHash(message, header string) ([]byte, error) {
 
 // parseSignature will parse the given signature
 func parseSignature(signature string) (sig secp256k1.Signature, recID int, err error) {
+	// todo: is this 64 or 65? is it always the same?
+	// panic was occurring: sig.R.SetBytes(sigRaw[1 : 1+32])
+	if len(signature) < 64 {
+		err = fmt.Errorf("signature is less than %d characters", 64)
+		return
+	}
 	var sigRaw []byte
 	if sigRaw, err = base64.StdEncoding.DecodeString(signature); err != nil {
 		return

@@ -21,6 +21,7 @@ func TestSignMessage(t *testing.T) {
 		{"93596babb564cbbdc84f2370c710b9bcc94333495b60af719b5fcf9ba00ba82c", "This is a test message", "IIuDw09ffPgEDuxEw5yHVp1+mi4QpuhAwLyQdpMTfsHCOkMqTKXuP7dSNWMEJqZsiQ8eKMDRvf2wZ4e5bxcu4O0=", false},
 		{"50381cf8f52936faae4a05a073a03d688a9fa206d005e87a39da436c75476d78", "This is a test message", "ILBmbjCY2Z7eSXGXZoBI3x2ZRaYUYOGtEaDjXetaY+zNDtMOvagsOGEHnVT3f5kXlEbuvmPydHqLnyvZP3cDOWk=", false},
 		{"c7726663147afd1add392d129086e57c0b05aa66a6ded564433c04bd55741434", "This is a test message", "IOI207QUnTLr2Ll+s4kUxNgLgorkc/Z5Pc+XNvUBYLy2TxaU6oHEJ2TTJ1mZVrtUyHm6e315v1tIjeosW3Odfqw=", false},
+		{"c7726663147afd1add392d129086e57c0b05aa66a6ded564433c04bd55741434", "1", "IMcRFG1VNN9TDGXpCU+9CqKLNOuhwQiXI5hZpkTOuYHKBDOWayNuAABofYLqUHYTMiMf9mYFQ0sPgFJZz3F7ELQ=", false},
 		{"", "This is a test message", "", true},
 		{"0", "This is a test message", "", true},
 		{"0000000", "This is a test message", "", true},
