@@ -6,6 +6,8 @@
 [![Report](https://goreportcard.com/badge/github.com/BitcoinSchema/go-bitcoin?style=flat&v=2)](https://goreportcard.com/report/github.com/BitcoinSchema/go-bitcoin)
 [![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=2)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
 [![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=2)](https://golang.org/)
+[![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=3)](https://github.com/sponsors/BitcoinSchema)
+[![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat)](https://gobitcoinsv.com/?tab=tips&af=go-bitcoin)
 
 <br/>
 
