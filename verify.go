@@ -72,7 +72,7 @@ func parseSignature(signature string) (sig secp256k1.Signature, recID int, err e
 }
 
 // pubKeyToAddress will convert a pubkey to an address
-func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (bcpy []byte) {
+func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (byteCopy []byte) {
 	size := 65
 	if compressed {
 		size = 33
@@ -87,23 +87,23 @@ func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (bcp
 	ripemd160H.Reset()
 	ripemd160H.Write(pubHash1)
 	pubHash2 := ripemd160H.Sum(nil)
-	bcpy = append(magic, pubHash2...)
-	hash2 := sha256d(bcpy)
-	bcpy = append(bcpy, hash2[0:4]...)
+	byteCopy = append(magic, pubHash2...)
+	hash2 := sha256d(byteCopy)
+	byteCopy = append(byteCopy, hash2[0:4]...)
 	return
 }
 
 // addressToString will convert a raw address to a string version
-func addressToString(bcpy []byte) (s string, err error) {
+func addressToString(byteCopy []byte) (s string, err error) {
 	z := new(big.Int)
-	z.SetBytes(bcpy)
+	z.SetBytes(byteCopy)
 	enc := base58.BitcoinEncoding
 	var encodeResults []byte
 	if encodeResults, err = enc.Encode([]byte(z.String())); err != nil {
 		return
 	}
 	s = string(encodeResults)
-	for _, v := range bcpy {
+	for _, v := range byteCopy {
 		if v != 0 {
 			break
 		}
@@ -208,10 +208,10 @@ func sigMessageToAddress(signature, message string) ([]string, error) {
 
 	addresses := make([]string, 2)
 	for i, compressed := range []bool{true, false} {
-		bcpy := pubKeyToAddress(pubkeyXy2, compressed, []byte{byte(0)})
+		byteCopy := pubKeyToAddress(pubkeyXy2, compressed, []byte{byte(0)})
 
 		var addressString string
-		addressString, err = addressToString(bcpy)
+		addressString, err = addressToString(byteCopy)
 		if err != nil {
 			return nil, err
 		}
