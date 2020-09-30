@@ -73,7 +73,7 @@ func (a *A25) ComputeChecksum() (c [4]byte) {
 
 // AddressFromPrivateKey takes a private key string and returns a Bitcoin address
 func AddressFromPrivateKey(privateKey string) (string, error) {
-	pubKey, err := PrivateKey(privateKey)
+	pubKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}

@@ -16,7 +16,7 @@ func SignMessage(privateKey string, message string) (string, error) {
 	bytes = append(bytes, prefixBytes...)
 	bytes = append(bytes, byte(len(messageBytes)))
 	bytes = append(bytes, messageBytes...)
-	ecdsaPrivateKey, err := PrivateKey(privateKey)
+	ecdsaPrivateKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}

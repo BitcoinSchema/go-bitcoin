@@ -8,8 +8,8 @@ import (
 	"github.com/bitcoinsv/bsvd/bsvec"
 )
 
-// PrivateKey turns a private key string into an bsvec.PrivateKey
-func PrivateKey(privateKey string) (*bsvec.PrivateKey, error) {
+// PrivateKeyFromString turns a private key (hex encoded string) into an bsvec.PrivateKey
+func PrivateKeyFromString(privateKey string) (*bsvec.PrivateKey, error) {
 	privateKeyBytes, err := hex.DecodeString(privateKey)
 	if err != nil {
 		return nil, err
@@ -21,4 +21,19 @@ func PrivateKey(privateKey string) (*bsvec.PrivateKey, error) {
 		Y:     y,
 	}
 	return &bsvec.PrivateKey{PublicKey: ecdsaPubKey, D: new(big.Int).SetBytes(privateKeyBytes)}, nil
+}
+
+// CreatePrivateKey will create a new private key
+func CreatePrivateKey() (*bsvec.PrivateKey, error) {
+	return bsvec.NewPrivateKey(bsvec.S256())
+}
+
+// CreatePrivateKeyString will create a new private key (hex encoded)
+func CreatePrivateKeyString() (string, error) {
+	privateKey, err := bsvec.NewPrivateKey(bsvec.S256())
+	if err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(privateKey.Serialize()), nil
 }
