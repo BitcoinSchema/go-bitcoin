@@ -43,6 +43,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - [Private key (string) to Address (string)](address.go)
 - [Address from Private key (bsvec.PrivateKey)](address.go)
 - [Create Private Key](private_key.go)
+- [Create PubKey From Private Key](pubkey.go)
 
 
 <details>
