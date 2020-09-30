@@ -39,7 +39,7 @@ func (a *A25) EmbeddedChecksum() (c [4]byte) {
 }
 
 // Tmpl and Set58 are adapted from the C solution.
-// Go has big integers but this techinique seems better.
+// Go has big integers but this technique seems better.
 var tmpl = []byte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
 
 // Set58 takes a base58 encoded address and decodes it into the receiver.

@@ -11,7 +11,7 @@ import (
 func SignMessage(privKey string, message string) string {
 	prefixBytes := []byte("Bitcoin Signed Message:\n")
 	messageBytes := []byte(message)
-	bytes := []byte{}
+	var bytes []byte
 	bytes = append(bytes, byte(len(prefixBytes)))
 	bytes = append(bytes, prefixBytes...)
 	bytes = append(bytes, byte(len(messageBytes)))
