@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strconv"
 	"testing"
 
@@ -170,6 +171,104 @@ func TestVerifyMessageSigRecover(t *testing.T) {
 			}
 		} else {
 			t.Error("sig.recover failed")
+		}
+	}
+}
+
+// TestVerifyMessageSigRecoverFailed will test the method recoverSig()
+func TestVerifyMessageSigRecoverFailed(t *testing.T) {
+
+	// Bad signature cases
+	var vs = [][6]string{
+		{
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+			"0",
+		},
+		{
+			"000",
+			"560978aed76de9d5d781f87ed2068832ed545f2b21bf040654a2daff694c8b09",
+			"9ce428d58e8e4caf619dc6fc7b2c2c28f0561654d1f80f322c038ad5e67ff8a6",
+			"1",
+			"000",
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+		},
+		{
+			"000",
+			"1234567",
+			"1234567",
+			"1",
+			"000",
+			"1234567",
+		},
+		{
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+			"1",
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+		},
+	}
+
+	var sig secp256k1.Signature
+	var pubkey, exp secp256k1.XY
+	var msg secp256k1.Number
+
+	for i := range vs {
+		sig.R.SetHex(vs[i][0])
+		sig.S.SetHex(vs[i][1])
+		msg.SetHex(vs[i][2])
+		rid, err := strconv.ParseInt(vs[i][3], 10, 32)
+		if err != nil {
+			t.Fatalf("failed in ParseInt: %s", err.Error())
+		}
+		exp.X.SetHex(vs[i][4])
+		exp.Y.SetHex(vs[i][5])
+
+		var success bool
+		success, err = recoverSig(&sig, &pubkey, &msg, int(rid))
+
+		if success {
+			t.Fatalf("sigRecover should have failed")
+		} else if err == nil {
+			t.Error("sigRecover should have thrown an error")
+		}
+	}
+
+	// Test nil case
+	if _, err := recoverSig(nil, &pubkey, &msg, 1); err == nil {
+		t.Fatalf("error was expected with nil sig")
+	}
+}
+
+// TestVerifyMessageGetBin will test the method getBin()
+func TestVerifyMessageGetBin(t *testing.T) {
+	t.Parallel()
+
+	var (
+		// Testing private methods
+		tests = []struct {
+			inputNumber   *secp256k1.Number
+			inputLength   int
+			expectedError bool
+		}{
+			{nil, 1, true},
+			{&secp256k1.Number{Int: *big.NewInt(400)}, 1, true},
+			{&secp256k1.Number{Int: *big.NewInt(1)}, 1, false},
+		}
+	)
+
+	// Run tests
+	for _, test := range tests {
+		if _, err := getBin(test.inputNumber, test.inputLength); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.inputNumber, test.inputLength, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Log(len(test.inputNumber.Bytes()), test.inputLength)
+			t.Errorf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.inputNumber, test.inputLength)
 		}
 	}
 }

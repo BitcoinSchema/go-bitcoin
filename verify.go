@@ -131,9 +131,12 @@ func addressToString(byteCopy []byte) (s string, err error) {
 // License is:
 //   https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/COPYING
 func getBin(num *secp256k1.Number, le int) ([]byte, error) {
+	if num == nil {
+		return nil, errors.New("secp256k1.Number is nil")
+	}
 	bts := num.Bytes()
 	if len(bts) > le {
-		return nil, fmt.Errorf("buffer too small")
+		return nil, errors.New("buffer too small")
 	}
 	if len(bts) == le {
 		return bts, nil
@@ -146,6 +149,9 @@ func getBin(num *secp256k1.Number, le int) ([]byte, error) {
 // License is:
 //   https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/COPYING
 func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Number, recID int) (bool, error) {
+	if sig == nil {
+		return false, errors.New("sig is nil")
+	}
 	var theCurveP secp256k1.Number
 	theCurveP.SetBytes([]byte{
 		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -159,7 +165,7 @@ func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Num
 	if (recID & 2) != 0 {
 		rx.Add(&rx.Int, &secp256k1.TheCurve.Order.Int)
 		if rx.Cmp(&theCurveP.Int) >= 0 {
-			return false, nil // todo: is this actually an error?
+			return false, errors.New("error in recoverSig")
 		}
 	}
 
@@ -172,7 +178,7 @@ func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Num
 
 	X.SetXO(&fx, (recID&1) != 0)
 	if !X.IsValid() {
-		return false, nil // todo: is this actually an error?
+		return false, errors.New("x.IsValid failed")
 	}
 
 	xj.SetXY(&X)
