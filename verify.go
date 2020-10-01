@@ -76,8 +76,7 @@ func parseSignature(signature string) (sig secp256k1.Signature, recID int, err e
 	}
 	r0 := sigRaw[0] - 27
 	recID = int(r0 & 3)
-	compressed := (r0 & 4) == 1
-	if compressed {
+	if (r0 & 4) == 1 {
 		err = fmt.Errorf("compressed type is not supported")
 		return
 	}
