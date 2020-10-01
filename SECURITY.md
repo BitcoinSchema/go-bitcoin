@@ -8,6 +8,6 @@
 
 ## Reporting a Vulnerability
 
-Individuals or organizations that are experiencing a product security issue are strongly encouraged to contact the [project maintainers](mailto:secuiry@bitcoinschema.org).
+Individuals or organizations that are experiencing a product security issue are strongly encouraged to contact the [project maintainers](mailto:security@bitcoinschema.org).
 We welcome reports from independent researchers, industry organizations, vendors, customers, and other sources concerned with our project security.
 The minimal data needed for reporting a security issue is a description of the potential vulnerability.
