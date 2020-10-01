@@ -1,6 +1,7 @@
 package bitcoin
 
 import (
+	"encoding/hex"
 	"fmt"
 	"testing"
 )
@@ -48,5 +49,57 @@ func BenchmarkPubKeyFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
 		_, _ = PubKeyFromPrivateKey(key)
+	}
+}
+
+// TestPubKeyFromString will test the method PubKeyFromString()
+func TestPubKeyFromString(t *testing.T) {
+
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		inputKey       string
+		expectedPubKey string
+		expectedNil    bool
+		expectedError  bool
+	}{
+		{"", "", true, true},
+		{"0", "", true, true},
+		{"00000", "", true, true},
+		{"031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false, false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if pubKey, err := PubKeyFromString(test.inputKey); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
+		} else if pubKey != nil && test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and nil was expected", t.Name(), test.inputKey)
+		} else if pubKey == nil && !test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and nil was NOT expected", t.Name(), test.inputKey)
+		} else if pubKey != nil && hex.EncodeToString(pubKey.SerializeCompressed()) != test.expectedPubKey {
+			t.Errorf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.SerializeCompressed()))
+		}
+	}
+}
+
+// ExamplePubKeyFromString example using PubKeyFromString()
+func ExamplePubKeyFromString() {
+	pubKey, err := PubKeyFromString("031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("pubkey from string: %s", hex.EncodeToString(pubKey.SerializeCompressed()))
+	// Output:pubkey from string: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
+}
+
+// BenchmarkPubKeyFromString benchmarks the method PubKeyFromString()
+func BenchmarkPubKeyFromString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = PubKeyFromString("031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f")
 	}
 }
