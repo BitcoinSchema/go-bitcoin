@@ -45,6 +45,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - [Address from Script](address.go)
 - [Create PrivateKey](private_key.go)
 - [Create PubKey from PrivateKey](pubkey.go)
+- [Script from Address](script.go)
 
 
 <details>
