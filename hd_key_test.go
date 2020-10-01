@@ -139,22 +139,6 @@ func TestGetPrivateKeyByPath(t *testing.T) {
 		t.Fatalf("error occurred: %s", err.Error())
 	}
 
-	// Max depth key
-	var maxKey *hdkeychain.ExtendedKey
-	maxKey, err = GetHDKeyByPath(validKey, 1<<9, 1<<9)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-
-	// Test depth limit
-	for i := 0; i < 1<<8-1; i++ {
-		maxKey, err = GetHDKeyByPath(maxKey, uint32(i), uint32(i))
-		if err != nil {
-			t.Log("hit the depth limit on HD key")
-			break
-		}
-	}
-
 	// Create the list of tests
 	var tests = []struct {
 		inputHDKey    *hdkeychain.ExtendedKey
@@ -240,11 +224,11 @@ func TestGetHDKeyByPath(t *testing.T) {
 	}
 
 	// Test depth limit
+	// todo: make a better test (after 126 maxKey is now nil)
 	for i := 0; i < 1<<8-1; i++ {
 		maxKey, err = GetHDKeyByPath(maxKey, uint32(i), uint32(i))
-		if err != nil {
-			t.Log("hit the depth limit on HD key")
-			break
+		if i >= 126 && err == nil {
+			t.Fatalf("expected to hit depth limit on HD key index: %d", i)
 		}
 	}
 
