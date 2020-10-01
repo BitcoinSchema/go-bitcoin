@@ -177,3 +177,55 @@ func BenchmarkAddressFromPubKey(b *testing.B) {
 		_, _ = AddressFromPubKey(pubKey)
 	}
 }
+
+// TestAddressFromScript will test the method AddressFromScript()
+func TestAddressFromScript(t *testing.T) {
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		inputScript     string
+		expectedAddress string
+		expectedError   bool
+	}{
+		{"", "", true},
+		{"0", "", true},
+		{"76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac", "1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", false},
+		{"76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2", "", true},
+		{"76a914b424110292f4ea2ac92beb9e83", "", true},
+		{"76a914b424110292f", "", true},
+		{"1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", "", true},
+		{"514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae", "", true},
+		{"410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3", "", true},
+		{"47304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901", "", true},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if address, err := AddressFromScript(test.inputScript); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputScript, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputScript)
+		} else if address != test.expectedAddress {
+			t.Errorf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.inputScript, test.expectedAddress, address)
+		}
+	}
+}
+
+// ExampleAddressFromScript example using AddressFromScript()
+func ExampleAddressFromScript() {
+	address, err := AddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("address found: %s", address)
+	// Output:address found: 1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7
+}
+
+// BenchmarkAddressFromScript benchmarks the method AddressFromScript()
+func BenchmarkAddressFromScript(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = AddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
+	}
+}

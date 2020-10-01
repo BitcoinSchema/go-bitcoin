@@ -40,10 +40,11 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 
 ### Features
 - [Sign](sign.go) / [Verify](verify.go) Bitcoin Message
-- [Private key (string) to Address (string)](address.go)
-- [Address from Private key (bsvec.PrivateKey)](address.go)
-- [Create Private Key](private_key.go)
-- [Create PubKey From Private Key](pubkey.go)
+- [PrivateKey (string) to Address (string)](address.go)
+- [Address from PrivateKey (bsvec.PrivateKey)](address.go)
+- [Address from Script](address.go)
+- [Create PrivateKey](private_key.go)
+- [Create PubKey from PrivateKey](pubkey.go)
 
 
 <details>

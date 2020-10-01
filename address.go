@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -9,6 +10,7 @@ import (
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
+	"github.com/bitcoinsv/bsvd/txscript"
 	"github.com/bitcoinsv/bsvutil"
 )
 
@@ -72,6 +74,22 @@ func (a *A25) ComputeChecksum() (c [4]byte) {
 	return
 }
 
+// ValidA58 validates a base58 encoded bitcoin address.  An address is valid
+// if it can be decoded into a 25 byte address, the version number is 0,
+// and the checksum validates.  Return value ok will be true for valid
+// addresses.  If ok is false, the address is invalid and the error value
+// may indicate why.
+func ValidA58(a58 []byte) (bool, error) {
+	var a A25
+	if err := a.Set58(a58); err != nil {
+		return false, err
+	}
+	if a.Version() != 0 {
+		return false, errors.New("not version 0")
+	}
+	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
+}
+
 // AddressFromPrivateKey takes a private key string and returns a Bitcoin address
 func AddressFromPrivateKey(privateKey string) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
@@ -95,18 +113,40 @@ func AddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKey
 	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(publicKey.SerializeCompressed()), &chaincfg.MainNetParams)
 }
 
-// ValidA58 validates a base58 encoded bitcoin address.  An address is valid
-// if it can be decoded into a 25 byte address, the version number is 0,
-// and the checksum validates.  Return value ok will be true for valid
-// addresses.  If ok is false, the address is invalid and the error value
-// may indicate why.
-func ValidA58(a58 []byte) (bool, error) {
-	var a A25
-	if err := a.Set58(a58); err != nil {
-		return false, err
+// AddressFromScript will take an output script and extract a standard bitcoin address
+func AddressFromScript(script string) (string, error) {
+
+	// No script?
+	if len(script) == 0 {
+		return "", errors.New("missing script")
 	}
-	if a.Version() != 0 {
-		return false, errors.New("not version 0")
+
+	// Decode the hex string into bytes
+	scriptBytes, err := hex.DecodeString(script)
+	if err != nil {
+		return "", err
 	}
-	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
+
+	// Extract the components from the script
+	var addresses []bsvutil.Address
+	_, addresses, _, err = txscript.ExtractPkScriptAddrs(scriptBytes, &chaincfg.MainNetParams)
+	if err != nil {
+		return "", err
+	}
+
+	// Missing an address?
+	if len(addresses) == 0 {
+		// This error case should not occur since the error above will occur when no address is found,
+		// however we ensure that we have an address for the NewLegacyAddressPubKeyHash() below
+		return "", fmt.Errorf("invalid output script, missing an address")
+	}
+
+	// Extract the address from the pubkey hash
+	var address *bsvutil.LegacyAddressPubKeyHash
+	if address, err = bsvutil.NewLegacyAddressPubKeyHash(addresses[0].ScriptAddress(), &chaincfg.MainNetParams); err != nil {
+		return "", err
+	}
+
+	// Use the encoded version of the address
+	return address.EncodeAddress(), nil
 }
