@@ -41,3 +41,23 @@ func CreatePrivateKeyString() (string, error) {
 
 	return hex.EncodeToString(privateKey.Serialize()), nil
 }
+
+// PrivateAndPublicKeys will return both the private and public key in one method
+// Expects a hex encoded privateKey
+func PrivateAndPublicKeys(privateKey string) (*bsvec.PrivateKey, *bsvec.PublicKey, error) {
+
+	// No key?
+	if len(privateKey) == 0 {
+		return nil, nil, errors.New("missing privateKey")
+	}
+
+	// Decode the private key into bytes
+	privateKeyBytes, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Get the public and private key from the bytes
+	rawKey, publicKey := bsvec.PrivKeyFromBytes(bsvec.S256(), privateKeyBytes)
+	return rawKey, publicKey, nil
+}

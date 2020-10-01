@@ -126,3 +126,59 @@ func BenchmarkPrivateKeyFromString(b *testing.B) {
 		_, _ = PrivateKeyFromString(key)
 	}
 }
+
+// TestPrivateAndPublicKeys will test the method PrivateAndPublicKeys()
+func TestPrivateAndPublicKeys(t *testing.T) {
+
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input              string
+		expectedPrivateKey string
+		expectedNil        bool
+		expectedError      bool
+	}{
+		{"", "", true, true},
+		{"0", "", true, true},
+		{"00000", "", true, true},
+		{"0-0-0-0-0", "", true, true},
+		{"z4035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abz", "", true, true},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if privateKey, publicKey, err := PrivateAndPublicKeys(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+		} else if (privateKey == nil || publicKey == nil) && !test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+		} else if (privateKey != nil || publicKey != nil) && test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedPrivateKey {
+			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialize()))
+		}
+	}
+}
+
+// ExamplePrivateAndPublicKeys example using PrivateAndPublicKeys()
+func ExamplePrivateAndPublicKeys() {
+	privateKey, publicKey, err := PrivateAndPublicKeys("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("private key: %s public key: %s", hex.EncodeToString(privateKey.Serialize()), hex.EncodeToString(publicKey.SerializeCompressed()))
+
+	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd public key: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
+}
+
+// BenchmarkPrivateAndPublicKeys benchmarks the method PrivateAndPublicKeys()
+func BenchmarkPrivateAndPublicKeys(b *testing.B) {
+	key, _ := CreatePrivateKeyString()
+	for i := 0; i < b.N; i++ {
+		_, _, _ = PrivateAndPublicKeys(key)
+	}
+}
