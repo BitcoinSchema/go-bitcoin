@@ -182,3 +182,215 @@ func BenchmarkPrivateAndPublicKeys(b *testing.B) {
 		_, _, _ = PrivateAndPublicKeys(key)
 	}
 }
+
+// TestPrivateKeyToWif will test the method PrivateKeyToWif()
+func TestPrivateKeyToWif(t *testing.T) {
+
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input         string
+		expectedWif   string
+		expectedNil   bool
+		expectedError bool
+	}{
+		{"", "", true, true},
+		{"0", "", true, true},
+		{"000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false, false},
+		{"6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false, false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false, false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if wif, err := PrivateKeyToWif(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+		} else if wif == nil && !test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+		} else if wif != nil && test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+		} else if wif != nil && wif.String() != test.expectedWif {
+			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif.String())
+		}
+	}
+
+}
+
+// ExamplePrivateKeyToWif example using PrivateKeyToWif()
+func ExamplePrivateKeyToWif() {
+	wif, err := PrivateKeyToWif("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("converted wif: %s", wif.String())
+
+	// Output:converted wif: 5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei
+}
+
+// BenchmarkPrivateKeyToWif benchmarks the method PrivateKeyToWif()
+func BenchmarkPrivateKeyToWif(b *testing.B) {
+	key, _ := CreatePrivateKeyString()
+	for i := 0; i < b.N; i++ {
+		_, _ = PrivateKeyToWif(key)
+	}
+}
+
+// TestPrivateKeyToWifString will test the method PrivateKeyToWifString()
+func TestPrivateKeyToWifString(t *testing.T) {
+
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input         string
+		expectedWif   string
+		expectedError bool
+	}{
+		{"", "", true},
+		{"0", "", true},
+		{"000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false},
+		{"6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if wif, err := PrivateKeyToWifString(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+		} else if wif != test.expectedWif {
+			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif)
+		}
+	}
+
+}
+
+// ExamplePrivateKeyToWifString example using PrivateKeyToWifString()
+func ExamplePrivateKeyToWifString() {
+	wif, err := PrivateKeyToWifString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("converted wif: %s", wif)
+
+	// Output:converted wif: 5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei
+}
+
+// BenchmarkPrivateKeyToWifString benchmarks the method PrivateKeyToWifString()
+func BenchmarkPrivateKeyToWifString(b *testing.B) {
+	key, _ := CreatePrivateKeyString()
+	for i := 0; i < b.N; i++ {
+		_, _ = PrivateKeyToWifString(key)
+	}
+}
+
+// TestWifToPrivateKey will test the method WifToPrivateKey()
+func TestWifToPrivateKey(t *testing.T) {
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input         string
+		expectedKey   string
+		expectedNil   bool
+		expectedError bool
+	}{
+		{"", "", true, true},
+		{"0", "", true, true},
+		{"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false, false},
+		{"5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false, false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
+		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if privateKey, err := WifToPrivateKey(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+		} else if privateKey == nil && !test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+		} else if privateKey != nil && test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedKey {
+			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
+		}
+	}
+}
+
+// ExampleWifToPrivateKey example using WifToPrivateKey()
+func ExampleWifToPrivateKey() {
+	privateKey, err := WifToPrivateKey("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialize()))
+
+	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
+}
+
+// BenchmarkWifToPrivateKey benchmarks the method WifToPrivateKey()
+func BenchmarkWifToPrivateKey(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = WifToPrivateKey("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	}
+}
+
+// TestWifToPrivateKeyString will test the method WifToPrivateKeyString()
+func TestWifToPrivateKeyString(t *testing.T) {
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input         string
+		expectedKey   string
+		expectedError bool
+	}{
+		{"", "", true},
+		{"0", "", true},
+		{"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false},
+		{"5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
+		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if privateKey, err := WifToPrivateKeyString(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+		} else if privateKey != test.expectedKey {
+			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, privateKey)
+		}
+	}
+}
+
+// ExampleWifToPrivateKeyString example using WifToPrivateKeyString()
+func ExampleWifToPrivateKeyString() {
+	privateKey, err := WifToPrivateKeyString("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("private key: %s", privateKey)
+
+	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
+}
+
+// BenchmarkWifToPrivateKeyString benchmarks the method WifToPrivateKeyString()
+func BenchmarkWifToPrivateKeyString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = WifToPrivateKeyString("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	}
+}

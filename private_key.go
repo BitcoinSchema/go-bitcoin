@@ -7,6 +7,8 @@ import (
 	"math/big"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/bitcoinsv/bsvd/chaincfg"
+	"github.com/bitcoinsv/bsvutil"
 )
 
 // PrivateKeyFromString turns a private key (hex encoded string) into an bsvec.PrivateKey
@@ -27,7 +29,7 @@ func PrivateKeyFromString(privateKey string) (*bsvec.PrivateKey, error) {
 	return &bsvec.PrivateKey{PublicKey: ecdsaPubKey, D: new(big.Int).SetBytes(privateKeyBytes)}, nil
 }
 
-// CreatePrivateKey will create a new private key
+// CreatePrivateKey will create a new private key (*bsvec.PrivateKey)
 func CreatePrivateKey() (*bsvec.PrivateKey, error) {
 	return bsvec.NewPrivateKey(bsvec.S256())
 }
@@ -60,4 +62,66 @@ func PrivateAndPublicKeys(privateKey string) (*bsvec.PrivateKey, *bsvec.PublicKe
 	// Get the public and private key from the bytes
 	rawKey, publicKey := bsvec.PrivKeyFromBytes(bsvec.S256(), privateKeyBytes)
 	return rawKey, publicKey, nil
+}
+
+// PrivateKeyToWif will convert a private key to a WIF (*bsvutil.WIF)
+func PrivateKeyToWif(privateKey string) (*bsvutil.WIF, error) {
+
+	// Missing private key
+	if len(privateKey) == 0 {
+		return nil, errors.New("missing privateKey")
+	}
+
+	// Decode the private key
+	decodedKey, err := hex.DecodeString(privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the private key from bytes
+	rawKey, _ := bsvec.PrivKeyFromBytes(bsvec.S256(), decodedKey)
+
+	// Create a new WIF (error never gets hit since (net) is set correctly)
+	return bsvutil.NewWIF(rawKey, &chaincfg.MainNetParams, false)
+}
+
+// PrivateKeyToWifString will convert a private key to a WIF (string)
+func PrivateKeyToWifString(privateKey string) (string, error) {
+	wif, err := PrivateKeyToWif(privateKey)
+	if err != nil {
+		return "", err
+	}
+
+	return wif.String(), nil
+}
+
+// WifToPrivateKey will convert a WIF to a private key (*bsvec.PrivateKey)
+func WifToPrivateKey(wif string) (*bsvec.PrivateKey, error) {
+
+	// Missing wif?
+	if len(wif) == 0 {
+		return nil, errors.New("missing wif")
+	}
+
+	// Decode the wif
+	decodedWif, err := bsvutil.DecodeWIF(wif)
+	if err != nil {
+		return nil, err
+	}
+
+	// Return the private key
+	return decodedWif.PrivKey, nil
+}
+
+// WifToPrivateKeyString will convert a WIF to private key (string)
+func WifToPrivateKeyString(wif string) (string, error) {
+
+	// Convert the wif to private key
+	privateKey, err := WifToPrivateKey(wif)
+	if err != nil {
+		return "", err
+	}
+
+	// Return the hex (string) version of the private key
+	return hex.EncodeToString(privateKey.Serialize()), nil
 }
