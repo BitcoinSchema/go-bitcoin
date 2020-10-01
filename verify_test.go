@@ -3,7 +3,10 @@ package bitcoin
 import (
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"testing"
+
+	"github.com/piotrnar/gocoin/lib/secp256k1"
 )
 
 // TestVerifyMessage will test the method VerifyMessage()
@@ -37,57 +40,6 @@ func TestVerifyMessage(t *testing.T) {
 		}
 	}
 
-	// Testing private methods
-	var messageTests = []struct {
-		inputMessage  string
-		inputHeader   string
-		expectedHash  string
-		expectedError bool
-	}{
-		{"example message", hBSV, "002c483012a3c71d36349682d5ef6495926d4712b5cd2462f1e3c9f57bd4449f", false},
-		{"", hBSV, "80e795d4a4caadd7047af389d9f7f220562feb6196032e2131e10563352c4bcc", false},
-		{"example message", "", "f91e1e5a01b6aad5ec785946e4233b0613bf6183ffde8da9879949cbf7d7ca57", false},
-		{"4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", "", true},
-		{"", "4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", true},
-	}
-
-	// Run tests
-	for _, test := range messageTests {
-		if output, err := messageHash(test.inputMessage, test.inputHeader); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputMessage, test.inputHeader, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputMessage, test.inputHeader)
-		} else if test.expectedHash != hex.EncodeToString(output) {
-			t.Errorf("%s Failed: [%s] [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputMessage, test.inputHeader, test.expectedHash, hex.EncodeToString(output))
-		}
-	}
-
-	// Testing private methods
-	var parseTests = []struct {
-		inputSignature string
-		expectedID     int
-		expectedError  bool
-	}{
-		{"0", 0, true},
-		{"1234567", 0, true},
-		{"Op0u5nr4CPukjekOsOojjxuyEOG1HbIAf8qEteGXjA7tlqFinprrEcvdSlJOkZ8zMb", 0, true},
-		{"000000000000000000000000000000000000000000000000000000000000000000", 0, true},
-		{"-000-0-000-0---0--00-0-0-000-0--0-000-0-00-0-00---0-0-0--000-00-0-", 0, true},
-		{"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", 1, false},
-		{"IBDscOd-Ov4yrd-YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS-UJD+UK2SnNMn6Z3E4na8=", 0, true},
-	}
-
-	// Run tests
-	for _, test := range parseTests {
-		if _, output, err := parseSignature(test.inputSignature); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputSignature, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputSignature)
-		} else if output != test.expectedID {
-			t.Errorf("%s Failed: [%s] inputted and [%d] expected, but got: %d", t.Name(), test.inputSignature, test.expectedID, output)
-		}
-	}
-
 }
 
 // ExampleVerifyMessage example using VerifyMessage()
@@ -104,5 +56,120 @@ func ExampleVerifyMessage() {
 func BenchmarkVerifyMessage(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = VerifyMessage("1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", "Testing!")
+	}
+}
+
+// TestVerifyMessageMessageHash will test the method messageHash()
+func TestVerifyMessageMessageHash(t *testing.T) {
+
+	t.Parallel()
+
+	// Testing private methods
+	var tests = []struct {
+		inputMessage  string
+		inputHeader   string
+		expectedHash  string
+		expectedError bool
+	}{
+		{"example message", hBSV, "002c483012a3c71d36349682d5ef6495926d4712b5cd2462f1e3c9f57bd4449f", false},
+		{"", hBSV, "80e795d4a4caadd7047af389d9f7f220562feb6196032e2131e10563352c4bcc", false},
+		{"example message", "", "f91e1e5a01b6aad5ec785946e4233b0613bf6183ffde8da9879949cbf7d7ca57", false},
+		{"4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", "", true},
+		{"", "4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", true},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if output, err := messageHash(test.inputMessage, test.inputHeader); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputMessage, test.inputHeader, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputMessage, test.inputHeader)
+		} else if test.expectedHash != hex.EncodeToString(output) {
+			t.Errorf("%s Failed: [%s] [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputMessage, test.inputHeader, test.expectedHash, hex.EncodeToString(output))
+		}
+	}
+
+}
+
+// TestVerifyMessageParseSignature will test the method parseSignature()
+func TestVerifyMessageParseSignature(t *testing.T) {
+
+	t.Parallel()
+
+	// Testing private methods
+	var tests = []struct {
+		inputSignature string
+		expectedID     int
+		expectedError  bool
+	}{
+		{"0", 0, true},
+		{"1234567", 0, true},
+		{"Op0u5nr4CPukjekOsOojjxuyEOG1HbIAf8qEteGXjA7tlqFinprrEcvdSlJOkZ8zMb", 0, true},
+		{"000000000000000000000000000000000000000000000000000000000000000000", 0, true},
+		{"-000-0-000-0---0--00-0-0-000-0--0-000-0-00-0-00---0-0-0--000-00-0-", 0, true},
+		{"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", 1, false},
+		{"IBDscOd-Ov4yrd-YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS-UJD+UK2SnNMn6Z3E4na8=", 0, true},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if _, output, err := parseSignature(test.inputSignature); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputSignature, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputSignature)
+		} else if output != test.expectedID {
+			t.Errorf("%s Failed: [%s] inputted and [%d] expected, but got: %d", t.Name(), test.inputSignature, test.expectedID, output)
+		}
+	}
+
+}
+
+// TestVerifyMessageSigRecover will test the method recoverSig()
+//
+// From: https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/sig_test.go
+func TestVerifyMessageSigRecover(t *testing.T) {
+	var vs = [][6]string{
+		{
+			"6028b9e3a31c9e725fcbd7d5d16736aaaafcc9bf157dfb4be62bcbcf0969d488",
+			"036d4a36fa235b8f9f815aa6f5457a607f956a71a035bf0970d8578bf218bb5a",
+			"9cff3da1a4f86caf3683f865232c64992b5ed002af42b321b8d8a48420680487",
+			"0",
+			"56dc5df245955302893d8dda0677cc9865d8011bc678c7803a18b5f6faafec08",
+			"54b5fbdcd8fac6468dac2de88fadce6414f5f3afbb103753e25161bef77705a6",
+		},
+		{
+			"b470e02f834a3aaafa27bd2b49e07269e962a51410f364e9e195c31351a05e50",
+			"560978aed76de9d5d781f87ed2068832ed545f2b21bf040654a2daff694c8b09",
+			"9ce428d58e8e4caf619dc6fc7b2c2c28f0561654d1f80f322c038ad5e67ff8a6",
+			"1",
+			"15b7e7d00f024bffcd2e47524bb7b7d3a6b251e23a3a43191ed7f0a418d9a578",
+			"bf29a25e2d1f32c5afb18b41ae60112723278a8af31275965a6ec1d95334e840",
+		},
+	}
+
+	var sig secp256k1.Signature
+	var pubkey, exp secp256k1.XY
+	var msg secp256k1.Number
+
+	for i := range vs {
+		sig.R.SetHex(vs[i][0])
+		sig.S.SetHex(vs[i][1])
+		msg.SetHex(vs[i][2])
+		rid, _ := strconv.ParseInt(vs[i][3], 10, 32)
+		exp.X.SetHex(vs[i][4])
+		exp.Y.SetHex(vs[i][5])
+
+		success, _ := recoverSig(&sig, &pubkey, &msg, int(rid))
+
+		if success {
+			if !exp.X.Equals(&pubkey.X) {
+				t.Error("X mismatch at vector", i)
+			}
+			if !exp.Y.Equals(&pubkey.Y) {
+				t.Error("Y mismatch at vector", i)
+			}
+		} else {
+			t.Error("sig.recover failed")
+		}
 	}
 }
