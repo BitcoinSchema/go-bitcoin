@@ -190,6 +190,7 @@ func TestAddressFromScript(t *testing.T) {
 	}{
 		{"", "", true},
 		{"0", "", true},
+		{"76a9141a9d62736746f85ca872dc555ff51b1fed2471e288ac", "13Rj7G3pn2GgG8KE6SFXLc7dCJdLNnNK7M", false},
 		{"76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac", "1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", false},
 		{"76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2", "", true},
 		{"76a914b424110292f4ea2ac92beb9e83", "", true},
