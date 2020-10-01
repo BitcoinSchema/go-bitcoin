@@ -1,6 +1,9 @@
 package bitcoin
 
 import (
+	"errors"
+
+	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvutil/hdkeychain"
 )
@@ -54,4 +57,35 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 	xPublicKey = pubKey.String()
 
 	return
+}
+
+// GetHDKeyByPath gets the corresponding HD key from a chain/num path
+func GetHDKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*hdkeychain.ExtendedKey, error) {
+
+	// Make sure we have a valid key
+	if hdKey == nil {
+		return nil, errors.New("hdKey is nil")
+	}
+
+	// Derive the child key from the chain path
+	childKeyChain, err := hdKey.Child(chain)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the child key from the num path
+	return childKeyChain.Child(num)
+}
+
+// GetPrivateKeyByPath gets the key for a given derivation path (chain/num)
+func GetPrivateKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*bsvec.PrivateKey, error) {
+
+	// Get the child key from the num & chain
+	childKeyNum, err := GetHDKeyByPath(hdKey, chain, num)
+	if err != nil {
+		return nil, err
+	}
+
+	// Get the private key
+	return childKeyNum.ECPrivKey()
 }

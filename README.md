@@ -49,6 +49,8 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - [WIF to PrivateKey](private_key.go)
 - [PrivateKey to WIF](private_key.go)
 - [Generate HD Keys](hd_key.go)
+- [Get PrivateKey by Path](hd_key.go)
+- [Get HD Key by Path](hd_key.go)
 
 ### ToDo
 - Support `testnet` addresses & keys

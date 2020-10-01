@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	// Create a private key for the example
+	// Create a private key  (we will make one for this example)
 	privateKey, err := bitcoin.CreatePrivateKeyString()
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
