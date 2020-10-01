@@ -21,5 +21,5 @@ func main() {
 	}
 
 	// Success!
-	log.Printf("found addres: %s from private key: %s", address, privateKey)
+	log.Printf("found address: %s from private key: %s", address, privateKey)
 }
