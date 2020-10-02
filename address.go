@@ -113,6 +113,15 @@ func AddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKey
 	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(publicKey.SerializeCompressed()), &chaincfg.MainNetParams)
 }
 
+// AddressFromPubKeyString is a convenience function to use a hex string pubKey
+func AddressFromPubKeyString(pubKey string) (*bsvutil.LegacyAddressPubKeyHash, error) {
+	rawPubKey, err := PubKeyFromString(pubKey)
+	if err != nil {
+		return nil, err
+	}
+	return AddressFromPubKey(rawPubKey)
+}
+
 // AddressFromScript will take an output script and extract a standard bitcoin address
 func AddressFromScript(script string) (string, error) {
 

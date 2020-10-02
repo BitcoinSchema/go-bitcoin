@@ -230,3 +230,54 @@ func BenchmarkAddressFromScript(b *testing.B) {
 		_, _ = AddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
 	}
 }
+
+// TestAddressFromPubKeyString will test the method AddressFromPubKeyString()
+func TestAddressFromPubKeyString(t *testing.T) {
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input           string
+		expectedAddress string
+		expectedNil     bool
+		expectedError   bool
+	}{
+		{"", "", true, true},
+		{"0", "", true, true},
+		{"03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf", "17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ", false, false},
+		{"0000", "", true, true},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if rawKey, err := AddressFromPubKeyString(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
+		} else if rawKey == nil && !test.expectedNil {
+			t.Errorf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
+		} else if rawKey != nil && test.expectedNil {
+			t.Errorf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
+			t.Errorf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+		}
+	}
+}
+
+// ExampleAddressFromPubKeyString example using AddressFromPubKeyString()
+func ExampleAddressFromPubKeyString() {
+	rawAddress, err := AddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("address found: %s", rawAddress.EncodeAddress())
+	// Output:address found: 17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ
+}
+
+// BenchmarkAddressFromPubKeyString benchmarks the method AddressFromPubKeyString()
+func BenchmarkAddressFromPubKeyString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = AddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
+	}
+}
