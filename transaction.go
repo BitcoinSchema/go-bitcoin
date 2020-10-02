@@ -24,12 +24,10 @@ type PayToAddress struct {
 }
 
 // OpReturnData is the op return data to include in the tx
-type OpReturnData struct {
-	Data string `json:"data"`
-}
+type OpReturnData [][]byte
 
 // CreateTx will create a basic transaction
-func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []*OpReturnData, wif string) (string, error) {
+func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData, wif string) (string, error) {
 
 	// Missing utxos
 	if len(utxos) == 0 {
@@ -57,7 +55,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []*OpReturnDat
 	// Loop any op returns
 	var outPut *output.Output
 	for _, op := range opReturns {
-		if outPut, err = output.NewOpReturn([]byte(op.Data)); err != nil {
+		if outPut, err = output.NewOpReturnParts(op); err != nil {
 			return "", err
 		}
 		tx.AddOutput(outPut)
