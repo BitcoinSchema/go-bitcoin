@@ -9,5 +9,5 @@ require (
 	github.com/itchyny/base58-go v0.1.0
 	github.com/libsv/libsv v0.0.11
 	github.com/piotrnar/gocoin v0.0.0-20201001091124-adad7a225eeb
-	golang.org/x/crypto v0.0.0-20200930160638-afb6bcd081ae
+	golang.org/x/crypto v0.0.0-20201002094018-c90954cbb977
 )
