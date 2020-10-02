@@ -22,10 +22,10 @@ func TestCreateTx(t *testing.T) {
 	}
 
 	// Add some op return data
-	opReturns := &OpReturnData{Data: "This is the example data!"}
+	opReturn := &OpReturnData{Data: "This is the example data!"}
 
 	// Generate the TX
-	rawTx, err := CreateTx([]*Utxo{utxo}, []*PayToAddress{payTo}, []*OpReturnData{opReturns}, "L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
+	rawTx, err := CreateTx([]*Utxo{utxo}, []*PayToAddress{payTo}, []*OpReturnData{opReturn}, "L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
 	if err != nil {
 		t.Fatalf("error occurred: %s", err.Error())
 	}
