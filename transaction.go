@@ -26,6 +26,11 @@ type PayToAddress struct {
 // OpReturnData is the op return data to include in the tx
 type OpReturnData [][]byte
 
+// TxFromHex will return a libsv.tx from a raw hex string
+func TxFromHex(rawHex string) (*transaction.Transaction, error) {
+	return transaction.NewFromString(rawHex)
+}
+
 // CreateTx will create a basic transaction
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData, wif string) (string, error) {
 
