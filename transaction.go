@@ -31,12 +31,15 @@ func TxFromHex(rawHex string) (*transaction.Transaction, error) {
 	return transaction.NewFromString(rawHex)
 }
 
-// CreateTx will create a basic transaction
-func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData, wif string) (string, error) {
+// CreateTx will create a basic transaction and return the raw transaction (*transaction.Transaction)
+//
+// Get the raw hex version: tx.ToString()
+// Get the tx id: tx.GetTxID()
+func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData, wif string) (*transaction.Transaction, error) {
 
 	// Missing utxos
 	if len(utxos) == 0 {
-		return "", errors.New("utxos are required to create a tx")
+		return nil, errors.New("utxos are required to create a tx")
 	}
 
 	// Start creating a new transaction
@@ -46,14 +49,14 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData
 	var err error
 	for _, utxo := range utxos {
 		if err = tx.From(utxo.TxID, utxo.Vout, utxo.ScriptSig, utxo.Satoshis); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
 	// Loop any pay addresses
 	for _, address := range addresses {
 		if err = tx.PayTo(address.Address, address.Satoshis); err != nil {
-			return "", err
+			return nil, err
 		}
 	}
 
@@ -61,7 +64,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData
 	var outPut *output.Output
 	for _, op := range opReturns {
 		if outPut, err = output.NewOpReturnParts(op); err != nil {
-			return "", err
+			return nil, err
 		}
 		tx.AddOutput(outPut)
 	}
@@ -69,15 +72,15 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData
 	// Decode the WIF
 	var decodedWif *bsvutil.WIF
 	if decodedWif, err = bsvutil.DecodeWIF(wif); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Sign the transaction
 	signer := signature.InternalSigner{PrivateKey: decodedWif.PrivKey, SigHashFlag: 0}
 	if err = tx.SignAuto(&signer); err != nil {
-		return "", err
+		return nil, err
 	}
 
 	// Return the transaction as a raw string
-	return tx.ToString(), nil
+	return tx, nil
 }

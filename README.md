@@ -51,6 +51,8 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - [Generate HD Keys](hd_key.go)
 - [Get PrivateKey by Path](hd_key.go)
 - [Get HD Key by Path](hd_key.go)
+- [Create Tx](transaction.go)
+- [Tx from Hex](transaction.go)
 
 ### ToDo
 - Support `testnet` addresses & keys
@@ -63,6 +65,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - [bitcoinsv/bsvd](https://github.com/bitcoinsv/bsvd)
 - [bitcoinsv/bsvutil](https://github.com/bitcoinsv/bsvutil)
 - [itchyny/base58-go](https://github.com/itchyny/base58-go)
+- [libsv/libsv](https://github.com/libsv/libsv)
 - [piotrnar/gocoin](https://github.com/piotrnar/gocoin)
 </details>
 
