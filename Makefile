@@ -25,7 +25,8 @@ clean: ## Remove previous builds and any test cache data
 	@if [ -d $(DISTRIBUTIONS_DIR) ]; then rm -r $(DISTRIBUTIONS_DIR); fi
 
 lint:: ## Installs the linter and runs
-	@if [ "$(shell command -v golangci-lint)" = "" ]; then go get -u github.com/golangci/golangci-lint/cmd/golangci-lint; fi
+	@if [ "$(shell command -v golangci-lint)" = "" ]; then curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.23.8; fi
+	@golangci-lint
 	#@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.31.0
 
 release:: ## Runs common.release then runs godocs
