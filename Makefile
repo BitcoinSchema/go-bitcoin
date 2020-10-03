@@ -28,7 +28,8 @@ lint:: ## Runs the golangci-lint tool
 	@golangci-lint run
 
 install-lint-ci: ## Installs the linter for Travis
-	@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.31.0
+	@if [ "$(shell command -v golint)" = "" ]; then go get -u github.com/golangci/golangci-lint/cmd/golangci-lint; fi
+	#@curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.31.0
 
 release:: ## Runs common.release then runs godocs
 	@$(MAKE) godocs
