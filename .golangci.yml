@@ -248,7 +248,8 @@ linters-settings:
     # Setting locale to US will correct the British spelling of 'colour' to 'color'.
     locale: US
     ignore-words:
-      - someword
+      - bsv
+      - bitcoin
   nakedret:
     # make an issue if func has more lines of code than this setting and it has naked returns; default is 30
     max-func-lines: 30
@@ -303,7 +304,7 @@ linters-settings:
     # Allow multiline assignments to be cuddled. Default is true.
     allow-multiline-assign: true
     # Allow declarations (var) to be cuddled.
-    allow-cuddle-declarations: false
+    allow-cuddle-declarations: true
     # Allow trailing comments in ending of blocks
     allow-trailing-comment: false
     # Force newlines in end of case at this limit (0 = never).
@@ -333,9 +334,31 @@ linters:
   enable:
     - megacheck
     - govet
-  disable:
+    - gosec
+    - bodyclose
+    - golint
+    - unconvert
+    - dupl
     - maligned
+    - misspell
+    - dogsled
     - prealloc
+    - exportloopref
+    - exhaustive
+    - sqlclosecheck
+    - nolintlint
+    - gci
+    - goconst
+  disable:
+    - gocritic # use this for very opinionated linting
+    - gochecknoglobals
+    - whitespace
+    - wsl
+    - goerr113
+    - godot
+    - testpackage
+    - nestif
+    - nlreturn
   disable-all: false
   presets:
     - bugs
