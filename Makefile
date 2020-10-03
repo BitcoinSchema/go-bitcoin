@@ -27,6 +27,9 @@ clean: ## Remove previous builds and any test cache data
 lint:: ## Runs the golangci-lint tool
 	@golangci-lint run
 
+install-lint-ci: ## Installs the linter for Travis
+	@curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.31.0
+
 release:: ## Runs common.release then runs godocs
 	@$(MAKE) godocs
 

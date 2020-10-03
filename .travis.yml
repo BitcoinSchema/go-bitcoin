@@ -20,6 +20,9 @@ git:
 notifications:
  email: false
 
+before_install:
+ - make install-lint-ci
+
 # Run all scripts
 script:
  - make test-travis
