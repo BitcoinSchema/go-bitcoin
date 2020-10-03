@@ -20,7 +20,8 @@ git:
 notifications:
  email: false
 
-before_install:
+# Install before running scripts
+before_script:
  - make install-lint-ci
 
 # Run all scripts
