@@ -21,8 +21,8 @@ notifications:
  email: false
 
 # Install before running scripts
-before_script:
- - make install-lint-ci
+#before_script:
+# - make install-lint-ci
 
 # Run all scripts
 script:
