@@ -23,10 +23,10 @@ type A25 [25]byte
 // the first four bytes of the slice.)
 func (a *A25) doubleSHA256() []byte {
 	h := sha256.New()
-	h.Write(a[:21])
+	_, _ = h.Write(a[:21])
 	d := h.Sum([]byte{})
 	h = sha256.New()
-	h.Write(d)
+	_, _ = h.Write(d)
 	return h.Sum(d[:0])
 }
 
