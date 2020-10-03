@@ -24,5 +24,11 @@ clean: ## Remove previous builds and any test cache data
 	@test $(DISTRIBUTIONS_DIR)
 	@if [ -d $(DISTRIBUTIONS_DIR) ]; then rm -r $(DISTRIBUTIONS_DIR); fi
 
+lint:: ## Runs the golangci-lint tool
+	@golangci-lint run
+
 release:: ## Runs common.release then runs godocs
 	@$(MAKE) godocs
+
+update-linter: ## Update the golangci-lint package
+	@brew upgrade golangci-lint

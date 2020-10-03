@@ -2,14 +2,15 @@
 
 This project uses the following code standards and specifications from:
 - [effective go](https://golang.org/doc/effective_go.html)
-- [go tests](https://golang.org/pkg/testing/)
-- [go examples](https://golang.org/pkg/testing/#hdr-Examples)
 - [go benchmarks](https://golang.org/pkg/testing/#hdr-Benchmarks)
-- [gofmt](https://golang.org/cmd/gofmt/)
-- [golint](https://github.com/golang/lint)
+- [go examples](https://golang.org/pkg/testing/#hdr-Examples)
+- [go tests](https://golang.org/pkg/testing/)
 - [godoc](https://godoc.org/golang.org/x/tools/cmd/godoc)
-- [vet](https://golang.org/cmd/vet/)
+- [gofmt](https://golang.org/cmd/gofmt/)
+- [golangci-lint](https://golangci-lint.run/usage/quick-start/)
+- [golint](https://github.com/golang/lint)
 - [report card](https://goreportcard.com/)
+- [vet](https://golang.org/cmd/vet/)
 
 ### *effective go* standards
 View the [effective go](https://golang.org/doc/effective_go.html) standards documentation.
@@ -22,6 +23,14 @@ How to install [golint](https://github.com/golang/lint):
 go get -u golang.org/x/lint/golint
 cd ../go-bitcoin
 golint
+```
+
+### *golangci-lint* specifications
+The package [golangci-lint](https://golangci-lint.run/usage/quick-start) runs several linters in one package/cmd.
+
+How to install [golangci-lint](https://golangci-lint.run/):
+```shell script
+brew install golangci-lint
 ```
 
 ### *go vet* specifications

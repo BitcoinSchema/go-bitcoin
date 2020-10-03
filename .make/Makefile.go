@@ -40,7 +40,7 @@ install: ## Install the application
 install-go: ## Install the application (Using Native Go)
 	@go install $(GIT_DOMAIN)/$(REPO_OWNER)/$(REPO_NAME)
 
-lint: ## Run the Go lint application
+lint:: ## Run the Go lint application
 	@if [ "$(shell command -v golint)" = "" ]; then go get -u golang.org/x/lint/golint; fi
 	@golint
 
