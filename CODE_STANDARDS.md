@@ -8,22 +8,12 @@ This project uses the following code standards and specifications from:
 - [godoc](https://godoc.org/golang.org/x/tools/cmd/godoc)
 - [gofmt](https://golang.org/cmd/gofmt/)
 - [golangci-lint](https://golangci-lint.run/usage/quick-start/)
-- [golint](https://github.com/golang/lint)
+- [golint](https://github.com/golang/lint) (deprecated)
 - [report card](https://goreportcard.com/)
 - [vet](https://golang.org/cmd/vet/)
 
 ### *effective go* standards
 View the [effective go](https://golang.org/doc/effective_go.html) standards documentation.
-
-### *golint* specifications
-The package [golint](https://github.com/golang/lint) differs from [gofmt](https://golang.org/cmd/gofmt/). The package [gofmt](https://golang.org/cmd/gofmt/) formats Go source code, whereas [golint](https://github.com/golang/lint) prints out style mistakes. The package [golint](https://github.com/golang/lint) differs from [vet](https://golang.org/cmd/vet/). The package [vet](https://golang.org/cmd/vet/) is concerned with correctness, whereas [golint](https://github.com/golang/lint) is concerned with coding style. The package [golint](https://github.com/golang/lint) is in use at Google, and it seeks to match the accepted style of the open source [Go project](https://golang.org/).
-
-How to install [golint](https://github.com/golang/lint):
-```shell script
-go get -u golang.org/x/lint/golint
-cd ../go-bitcoin
-golint
-```
 
 ### *golangci-lint* specifications
 The package [golangci-lint](https://golangci-lint.run/usage/quick-start) runs several linters in one package/cmd.
@@ -31,6 +21,16 @@ The package [golangci-lint](https://golangci-lint.run/usage/quick-start) runs se
 How to install [golangci-lint](https://golangci-lint.run/):
 ```shell script
 brew install golangci-lint
+```
+
+### *golint* specifications (deprecated)
+The package [golint](https://github.com/golang/lint) differs from [gofmt](https://golang.org/cmd/gofmt/). The package [gofmt](https://golang.org/cmd/gofmt/) formats Go source code, whereas [golint](https://github.com/golang/lint) prints out style mistakes. The package [golint](https://github.com/golang/lint) differs from [vet](https://golang.org/cmd/vet/). The package [vet](https://golang.org/cmd/vet/) is concerned with correctness, whereas [golint](https://github.com/golang/lint) is concerned with coding style. The package [golint](https://github.com/golang/lint) is in use at Google, and it seeks to match the accepted style of the open source [Go project](https://golang.org/).
+
+How to install [golint](https://github.com/golang/lint):
+```shell script
+go get -u golang.org/x/lint/golint
+cd ../go-bitcoin
+golint
 ```
 
 ### *go vet* specifications

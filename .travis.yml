@@ -20,14 +20,13 @@ git:
 notifications:
  email: false
 
-# Install before running scripts
+# Install linter before running scripts
 before_script:
  - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | bash -s -- -b $GOPATH/bin v1.31.0
 
 # Run all scripts
 script:
  - make test-travis
-# - $GOPATH/bin/golangci-lint run
 
 # After build success
 after_success:
