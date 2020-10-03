@@ -27,7 +27,7 @@ before_script:
 # Run all scripts
 script:
  - make test-travis
- - $GOPATH/bin/golangci-lint run
+# - $GOPATH/bin/golangci-lint run
 
 # After build success
 after_success:
