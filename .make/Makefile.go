@@ -41,7 +41,6 @@ install-go: ## Install the application (Using Native Go)
 	@go install $(GIT_DOMAIN)/$(REPO_OWNER)/$(REPO_NAME)
 
 lint: ## Run the golangci-lint application (install if not found)
-	#@if [ "$(shell command -v golangci-lint)" = "" ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.31.0; fi;
 	@if [ "$(shell command -v golangci-lint)" = "" ]; then curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.31.0 && sudo cp ./bin/golangci-lint $(go env GOPATH)/bin/; fi;
 	@echo "running golangci-lint..."
 	@golangci-lint run
