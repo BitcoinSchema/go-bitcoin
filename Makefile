@@ -26,6 +26,3 @@ clean: ## Remove previous builds and any test cache data
 
 release:: ## Runs common.release then runs godocs
 	@$(MAKE) godocs
-
-update-linter: ## Update the golangci-lint package
-	@brew upgrade golangci-lint

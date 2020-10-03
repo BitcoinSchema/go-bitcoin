@@ -47,18 +47,22 @@ lint: ## Run the golangci-lint application (install if not found)
 
 test: ## Runs vet, lint and ALL tests
 	@$(MAKE) lint
+	@echo "running tests..."
 	@go test ./... -v
 
 test-short: ## Runs vet, lint and tests (excludes integration tests)
 	@$(MAKE) lint
+	@echo "running tests (short)..."
 	@go test ./... -v -test.short
 
 test-travis: ## Runs all tests via Travis (also exports coverage)
 	@$(MAKE) lint
+	@echo "running tests..."
 	@go test ./... -race -coverprofile=coverage.txt -covermode=atomic
 
 test-travis-short: ## Runs unit tests via Travis (also exports coverage)
 	@$(MAKE) lint
+	@echo "running tests (short)..."
 	@go test ./... -test.short -race -coverprofile=coverage.txt -covermode=atomic
 
 uninstall: ## Uninstall the application (and remove files)
@@ -72,6 +76,9 @@ uninstall: ## Uninstall the application (and remove files)
 
 update:  ## Update all project dependencies
 	@go get -u ./... && go mod tidy
+
+update-linter: ## Update the golangci-lint package (macOS only)
+	@brew upgrade golangci-lint
 
 vet: ## Run the Go vet application
 	@echo "running go vet..."
