@@ -13,8 +13,8 @@ github.com/itchyny/base58-go v0.1.0/go.mod h1:SrMWPE3DFuJJp1M/RUhu4fccp/y9AlB8AL
 github.com/jessevdk/go-flags v1.4.0/go.mod h1:4FA24M0QyGHXBuZZK/XkWh8h0e1EYbRYJSGM75WSRxI=
 github.com/libsv/libsv v0.0.11 h1:tb2w/RFpsZLEfPNDGl4tlwk3haMSXYXKspta16+nyv4=
 github.com/libsv/libsv v0.0.11/go.mod h1:jhXD2sLtYUNMWoD9mWmsQN0hoGZUK1wCvindT1Odijo=
-github.com/piotrnar/gocoin v0.0.0-20201001091124-adad7a225eeb h1:zoASkOZwrUP9K6SeNBG7DSj33tqywMuq3LJgI/eyalU=
-github.com/piotrnar/gocoin v0.0.0-20201001091124-adad7a225eeb/go.mod h1:sW6i99ojgdRHcz53PCjyEeoTEDFh9dfP5iiEIiNfcaM=
+github.com/piotrnar/gocoin v0.0.0-20201004105208-19152002e94e h1:GxCWyrs5rRKX+ntbqWGCjquzK99g6vIOMmrXzMOWC2E=
+github.com/piotrnar/gocoin v0.0.0-20201004105208-19152002e94e/go.mod h1:sW6i99ojgdRHcz53PCjyEeoTEDFh9dfP5iiEIiNfcaM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
