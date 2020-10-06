@@ -39,20 +39,36 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 [![GoDoc](https://godoc.org/github.com/bitcoinschema/go-bitcoin?status.svg&style=flat)](https://pkg.go.dev/github.com/bitcoinschema/go-bitcoin)
 
 ### Features
-- [Sign](sign.go) / [Verify](verify.go) Bitcoin Message
-- [PrivateKey (string) to Address (string)](address.go)
-- [Address from PrivateKey (bsvec.PrivateKey)](address.go)
-- [Address from Script](address.go)
-- [Create PrivateKey](private_key.go)
-- [Create PubKey from PrivateKey](pubkey.go)
-- [Script from Address](script.go)
-- [WIF to PrivateKey](private_key.go)
-- [PrivateKey to WIF](private_key.go)
-- [Generate HD Keys](hd_key.go)
-- [Get PrivateKey by Path](hd_key.go)
-- [Get HD Key by Path](hd_key.go)
-- [Create Tx](transaction.go)
-- [Tx from Hex](transaction.go)
+
+- **Private Keys**
+    - [Create PrivateKey](private_key.go)
+    - [PrivateKey (string) to Address (string)](address.go)
+    - [PrivateKey from string](private_key.go)
+    - [Get Private and Public keys](private_key.go)
+    - [WIF to PrivateKey](private_key.go)
+    - [PrivateKey to WIF](private_key.go)
+- **Addresses**
+    - [Address from PrivateKey (bsvec.PrivateKey)](address.go)
+    - [Address from Script](address.go)
+- **PubKeys**
+    - [Create PubKey from PrivateKey](pubkey.go)
+    - [PubKey from String](pubkey.go)
+- **HD Keys**
+    - [Generate HD Keys](hd_key.go)
+    - [Generate HD Key from string](hd_key.go)
+    - [Get HD Key by Path](hd_key.go)
+    - [Get PrivateKey by Path](hd_key.go)
+    - [Get HD Child Key](hd_key.go)
+    - [Get Addresses from HD Key](hd_key.go)
+    - [Get PublicKeys for Path](hd_key.go)
+    - [Get Addresses for Path](hd_key.go)
+- **Scripts**
+    - [Script from Address](script.go)
+- **Transactions**
+    - [Create Tx](transaction.go)
+    - [Tx from Hex](transaction.go)
+- **Signatures**
+    - [Sign](sign.go) / [Verify](verify.go) Bitcoin Message
 
 <details>
 <summary><strong><code>Package Dependencies</code></strong></summary>
