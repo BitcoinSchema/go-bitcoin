@@ -15,7 +15,7 @@ func main() {
 
 	// Get an address
 	var address string
-	if address, err = bitcoin.AddressFromPrivateKey(privateKey); err != nil {
+	if address, err = bitcoin.GetAddressFromPrivateKey(privateKey); err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 
