@@ -66,8 +66,8 @@ func BenchmarkValidA58(b *testing.B) {
 	}
 }
 
-// TestAddressFromPrivateKey will test the method AddressFromPrivateKey()
-func TestAddressFromPrivateKey(t *testing.T) {
+// TestGetAddressFromPrivateKey will test the method GetAddressFromPrivateKey()
+func TestGetAddressFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
 	// Create the list of tests
@@ -86,7 +86,7 @@ func TestAddressFromPrivateKey(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if address, err := AddressFromPrivateKey(test.input); err != nil && !test.expectedError {
+		if address, err := GetAddressFromPrivateKey(test.input); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
@@ -96,9 +96,9 @@ func TestAddressFromPrivateKey(t *testing.T) {
 	}
 }
 
-// ExampleAddressFromPrivateKey example using AddressFromPrivateKey()
-func ExampleAddressFromPrivateKey() {
-	address, err := AddressFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+// ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
+func ExampleGetAddressFromPrivateKey() {
+	address, err := GetAddressFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -107,11 +107,11 @@ func ExampleAddressFromPrivateKey() {
 	// Output:address found: 1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK
 }
 
-// BenchmarkAddressFromPrivateKey benchmarks the method AddressFromPrivateKey()
-func BenchmarkAddressFromPrivateKey(b *testing.B) {
+// BenchmarkGetAddressFromPrivateKey benchmarks the method GetAddressFromPrivateKey()
+func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
-		_, _ = AddressFromPrivateKey(key)
+		_, _ = GetAddressFromPrivateKey(key)
 	}
 }
 
@@ -124,8 +124,8 @@ func testGetPublicKeyFromPrivateKey(privateKey string) *bsvec.PublicKey {
 	return rawKey.PubKey()
 }
 
-// TestAddressFromPubKey will test the method AddressFromPubKey()
-func TestAddressFromPubKey(t *testing.T) {
+// TestGetAddressFromPubKey will test the method GetAddressFromPubKey()
+func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
 	// Create the list of tests
@@ -145,7 +145,7 @@ func TestAddressFromPubKey(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if rawKey, err := AddressFromPubKey(test.input); err != nil && !test.expectedError {
+		if rawKey, err := GetAddressFromPubKey(test.input); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
@@ -159,9 +159,9 @@ func TestAddressFromPubKey(t *testing.T) {
 	}
 }
 
-// ExampleAddressFromPubKey example using AddressFromPubKey()
-func ExampleAddressFromPubKey() {
-	rawAddress, err := AddressFromPubKey(testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"))
+// ExampleGetAddressFromPubKey example using GetAddressFromPubKey()
+func ExampleGetAddressFromPubKey() {
+	rawAddress, err := GetAddressFromPubKey(testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"))
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -170,16 +170,16 @@ func ExampleAddressFromPubKey() {
 	// Output:address found: 1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK
 }
 
-// BenchmarkAddressFromPubKey benchmarks the method AddressFromPubKey()
-func BenchmarkAddressFromPubKey(b *testing.B) {
+// BenchmarkGetAddressFromPubKey benchmarks the method GetAddressFromPubKey()
+func BenchmarkGetAddressFromPubKey(b *testing.B) {
 	pubKey := testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
 	for i := 0; i < b.N; i++ {
-		_, _ = AddressFromPubKey(pubKey)
+		_, _ = GetAddressFromPubKey(pubKey)
 	}
 }
 
-// TestAddressFromScript will test the method AddressFromScript()
-func TestAddressFromScript(t *testing.T) {
+// TestGetAddressFromScript will test the method GetAddressFromScript()
+func TestGetAddressFromScript(t *testing.T) {
 	t.Parallel()
 
 	// Create the list of tests
@@ -203,7 +203,7 @@ func TestAddressFromScript(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if address, err := AddressFromScript(test.inputScript); err != nil && !test.expectedError {
+		if address, err := GetAddressFromScript(test.inputScript); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputScript, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputScript)
@@ -213,9 +213,9 @@ func TestAddressFromScript(t *testing.T) {
 	}
 }
 
-// ExampleAddressFromScript example using AddressFromScript()
-func ExampleAddressFromScript() {
-	address, err := AddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
+// ExampleGetAddressFromScript example using GetAddressFromScript()
+func ExampleGetAddressFromScript() {
+	address, err := GetAddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -224,15 +224,15 @@ func ExampleAddressFromScript() {
 	// Output:address found: 1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7
 }
 
-// BenchmarkAddressFromScript benchmarks the method AddressFromScript()
-func BenchmarkAddressFromScript(b *testing.B) {
+// BenchmarkAddressFromScript benchmarks the method GetAddressFromScript()
+func BenchmarkGetAddressFromScript(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = AddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
+		_, _ = GetAddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
 	}
 }
 
-// TestAddressFromPubKeyString will test the method AddressFromPubKeyString()
-func TestAddressFromPubKeyString(t *testing.T) {
+// TestGetAddressFromPubKeyString will test the method GetAddressFromPubKeyString()
+func TestGetAddressFromPubKeyString(t *testing.T) {
 	t.Parallel()
 
 	// Create the list of tests
@@ -250,7 +250,7 @@ func TestAddressFromPubKeyString(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if rawKey, err := AddressFromPubKeyString(test.input); err != nil && !test.expectedError {
+		if rawKey, err := GetAddressFromPubKeyString(test.input); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
@@ -264,9 +264,9 @@ func TestAddressFromPubKeyString(t *testing.T) {
 	}
 }
 
-// ExampleAddressFromPubKeyString example using AddressFromPubKeyString()
-func ExampleAddressFromPubKeyString() {
-	rawAddress, err := AddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
+// ExampleGetAddressFromPubKeyString example using GetAddressFromPubKeyString()
+func ExampleGetAddressFromPubKeyString() {
+	rawAddress, err := GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -275,9 +275,9 @@ func ExampleAddressFromPubKeyString() {
 	// Output:address found: 17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ
 }
 
-// BenchmarkAddressFromPubKeyString benchmarks the method AddressFromPubKeyString()
-func BenchmarkAddressFromPubKeyString(b *testing.B) {
+// BenchmarkGetAddressFromPubKeyString benchmarks the method GetAddressFromPubKeyString()
+func BenchmarkGetAddressFromPubKeyString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = AddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
+		_, _ = GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
 	}
 }

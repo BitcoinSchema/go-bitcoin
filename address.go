@@ -89,21 +89,21 @@ func ValidA58(a58 []byte) (bool, error) {
 	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
 }
 
-// AddressFromPrivateKey takes a private key string and returns a Bitcoin address
-func AddressFromPrivateKey(privateKey string) (string, error) {
+// GetAddressFromPrivateKey takes a private key string and returns a Bitcoin address
+func GetAddressFromPrivateKey(privateKey string) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}
 	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = AddressFromPubKey(rawKey.PubKey()); err != nil {
+	if address, err = GetAddressFromPubKey(rawKey.PubKey()); err != nil {
 		return "", err
 	}
 	return address.EncodeAddress(), nil
 }
 
-// AddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bsvec.PublicKey
-func AddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
+// GetAddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bsvec.PublicKey
+func GetAddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	if publicKey == nil {
 		return nil, fmt.Errorf("publicKey cannot be nil")
 	} else if publicKey.X == nil {
@@ -112,17 +112,17 @@ func AddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKey
 	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(publicKey.SerializeCompressed()), &chaincfg.MainNetParams)
 }
 
-// AddressFromPubKeyString is a convenience function to use a hex string pubKey
-func AddressFromPubKeyString(pubKey string) (*bsvutil.LegacyAddressPubKeyHash, error) {
+// GetAddressFromPubKeyString is a convenience function to use a hex string pubKey
+func GetAddressFromPubKeyString(pubKey string) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	rawPubKey, err := PubKeyFromString(pubKey)
 	if err != nil {
 		return nil, err
 	}
-	return AddressFromPubKey(rawPubKey)
+	return GetAddressFromPubKey(rawPubKey)
 }
 
-// AddressFromScript will take an output script and extract a standard bitcoin address
-func AddressFromScript(script string) (string, error) {
+// GetAddressFromScript will take an output script and extract a standard bitcoin address
+func GetAddressFromScript(script string) (string, error) {
 
 	// No script?
 	if len(script) == 0 {
