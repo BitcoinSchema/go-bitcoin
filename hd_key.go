@@ -1,8 +1,6 @@
 package bitcoin
 
 import (
-	"errors"
-
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvutil"
@@ -10,11 +8,19 @@ import (
 )
 
 const (
-	// RecommendedSeedLength is the recommended length in bytes for a seed to a master node.
+	// RecommendedSeedLength is the recommended length in bytes for a seed to a master node
 	RecommendedSeedLength = 32 // 256 bits
 
-	// SecureSeedLength is the max size of a seed length (most secure
+	// SecureSeedLength is the max size of a seed length (most secure)
 	SecureSeedLength = 64 // 512 bits
+
+	// DefaultInternalChain is the default internal chain (for change, generating, other purposes...)
+	// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
+	DefaultInternalChain = 0
+
+	// DefaultExternalChain is the default external chain (for public use to accept incoming txs)
+	// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
+	DefaultExternalChain = 1
 )
 
 // GenerateHDKey will create a new master node for use in creating a hierarchical deterministic key chain
@@ -67,35 +73,30 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 }
 
 // GetHDKeyByPath gets the corresponding HD key from a chain/num path
+// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
 func GetHDKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*hdkeychain.ExtendedKey, error) {
 
-	// Make sure we have a valid key
-	if hdKey == nil {
-		return nil, errors.New("hdKey is nil")
-	}
-
 	// Derive the child key from the chain path
-	childKeyChain, err := hdKey.Child(chain)
+	childKeyChain, err := GetHDKeyChild(hdKey, chain)
 	if err != nil {
 		return nil, err
 	}
 
 	// Get the child key from the num path
-	return childKeyChain.Child(num)
+	return GetHDKeyChild(childKeyChain, num)
 }
 
 // GetHDKeyChild gets the child hd key for a given num
-// Note: For a hardened child, start at 0x80000000. (For reference, 0x8000000 = 0').
+// Note: For a hardened child, start at 0x80000000. (For reference, 0x8000000 = 0')
+//
+// Expects hdKey to not be nil (otherwise will panic)
 func GetHDKeyChild(hdKey *hdkeychain.ExtendedKey, num uint32) (*hdkeychain.ExtendedKey, error) {
-	// Make sure we have a valid key
-	if hdKey == nil {
-		return nil, errors.New("hdKey is nil")
-	}
-	// Get child key from the num path
 	return hdKey.Child(num)
 }
 
 // GetPrivateKeyByPath gets the key for a given derivation path (chain/num)
+//
+// Expects hdKey to not be nil (otherwise will panic)
 func GetPrivateKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*bsvec.PrivateKey, error) {
 
 	// Get the child key from the num & chain
@@ -108,30 +109,86 @@ func GetPrivateKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*bsv
 	return childKeyNum.ECPrivKey()
 }
 
-// GetPrivateKeyFromHDKey - helper function to get the Private Key associated
-// with a given hdKey
+// GetPrivateKeyFromHDKey is a helper function to get the Private Key associated with a given hdKey
+//
+// Expects hdKey to not be nil (otherwise will panic)
 func GetPrivateKeyFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvec.PrivateKey, error) {
-	if hdKey == nil {
-		return nil, errors.New("hdKey is nil")
-	}
 	return hdKey.ECPrivKey()
 }
 
-// GetPublicKeyFromHDKey - helper function to get the Public Key associated
-// with a given hdKey
+// GetPublicKeyFromHDKey is a helper function to get the Public Key associated with a given hdKey
+//
+// Expects hdKey to not be nil (otherwise will panic)
 func GetPublicKeyFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvec.PublicKey, error) {
-	if hdKey == nil {
-		return nil, errors.New("hdKey is nil")
-	}
 	return hdKey.ECPubKey()
 }
 
-// GetAddressFromHDKey - helper function to get the Public Key associated with
-// a given hdKey
+// GetAddressFromHDKey is a helper function to get the Address associated with a given hdKey
+//
+// Expects hdKey to not be nil (otherwise will panic)
 func GetAddressFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	pubKey, err := GetPublicKeyFromHDKey(hdKey)
 	if err != nil {
 		return nil, err
 	}
-	return AddressFromPubKey(pubKey)
+	return GetAddressFromPubKey(pubKey)
+}
+
+// GetPublicKeysForPath gets the PublicKeys for a given derivation path
+// Uses the standard m/0/0 (internal) and m/0/1 (external) paths
+// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
+func GetPublicKeysForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (pubKeys []*bsvec.PublicKey, err error) {
+
+	//  m/0/x
+	var childM0x *hdkeychain.ExtendedKey
+	if childM0x, err = GetHDKeyByPath(hdKey, DefaultInternalChain, num); err != nil {
+		return
+	}
+
+	// Get the internal pubkey from m/0/x
+	var pubKey *bsvec.PublicKey
+	if pubKey, err = childM0x.ECPubKey(); err != nil {
+		// Should never error since the previous method ensures a valid hdKey
+		return
+	}
+	pubKeys = append(pubKeys, pubKey)
+
+	//  m/1/x
+	var childM1x *hdkeychain.ExtendedKey
+	if childM1x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
+		// Should never error since the previous method ensures a valid hdKey
+		return
+	}
+
+	// Get the external pubkey from m/1/x
+	if pubKey, err = childM1x.ECPubKey(); err != nil {
+		// Should never error since the previous method ensures a valid hdKey
+		return
+	}
+	pubKeys = append(pubKeys, pubKey)
+
+	return
+}
+
+// GetAddressesForPath will get the corresponding addresses for the PublicKeys at the given path m/0/x
+// Returns 2 keys, first is internal and second is external
+func GetAddressesForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (addresses []string, err error) {
+
+	// Get the public keys for the corresponding chain/num (using default chain)
+	var pubKeys []*bsvec.PublicKey
+	if pubKeys, err = GetPublicKeysForPath(hdKey, num); err != nil {
+		return
+	}
+
+	// Loop, get address and append to results
+	var address *bsvutil.LegacyAddressPubKeyHash
+	for _, key := range pubKeys {
+		if address, err = GetAddressFromPubKey(key); err != nil {
+			// Should never error if the pubKeys are valid keys
+			return
+		}
+		addresses = append(addresses, address.String())
+	}
+
+	return
 }
