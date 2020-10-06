@@ -54,10 +54,6 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - [Create Tx](transaction.go)
 - [Tx from Hex](transaction.go)
 
-### ToDo
-- Support `testnet` addresses & keys
-
-
 <details>
 <summary><strong><code>Package Dependencies</code></strong></summary>
 <br/>
