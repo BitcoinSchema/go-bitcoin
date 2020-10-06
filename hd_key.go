@@ -5,6 +5,7 @@ import (
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
+	"github.com/bitcoinsv/bsvutil"
 	"github.com/bitcoinsv/bsvutil/hdkeychain"
 )
 
@@ -32,6 +33,12 @@ func GenerateHDKey(seedLength uint8) (hdKey *hdkeychain.ExtendedKey, err error) 
 
 	// Generate a new master key
 	return hdkeychain.NewMaster(seed, &chaincfg.MainNetParams)
+}
+
+// GenerateHDKeyFromString will create a new master node for use in creating a
+// hierarchical deterministic key chain from an xPrivKey string
+func GenerateHDKeyFromString(xpriv string) (hdKey *hdkeychain.ExtendedKey, err error) {
+	return hdkeychain.NewKeyFromString(xpriv)
 }
 
 // GenerateHDKeyPair will generate a new xPub HD master node (xPrivateKey & xPublicKey)
@@ -77,6 +84,17 @@ func GetHDKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*hdkeycha
 	return childKeyChain.Child(num)
 }
 
+// GetHDKeyChild gets the child hd key for a given num
+// Note: For a hardened child, start at 0x80000000. (For reference, 0x8000000 = 0').
+func GetHDKeyChild(hdKey *hdkeychain.ExtendedKey, num uint32) (*hdkeychain.ExtendedKey, error) {
+	// Make sure we have a valid key
+	if hdKey == nil {
+		return nil, errors.New("hdKey is nil")
+	}
+	// Get child key from the num path
+	return hdKey.Child(num)
+}
+
 // GetPrivateKeyByPath gets the key for a given derivation path (chain/num)
 func GetPrivateKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*bsvec.PrivateKey, error) {
 
@@ -88,4 +106,26 @@ func GetPrivateKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*bsv
 
 	// Get the private key
 	return childKeyNum.ECPrivKey()
+}
+
+// GetPrivateKeyFromHDKey - helper function to get the Private Key associated
+// with a given hdKey
+func GetPrivateKeyFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvec.PrivateKey, error) {
+	return hdKey.ECPrivKey()
+}
+
+// GetPublicKeyFromHDKey - helper function to get the Public Key associated
+// with a given hdKey
+func GetPublicKeyFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvec.PublicKey, error) {
+	return hdKey.ECPubKey()
+}
+
+// GetAddressFromHDKey - helper function to get the Public Key associated with
+// a given hdKey
+func GetAddressFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
+	pubKey, err := GetPublicKeyFromHDKey(hdKey)
+	if err != nil {
+		return nil, err
+	}
+	return AddressFromPubKey(pubKey)
 }
