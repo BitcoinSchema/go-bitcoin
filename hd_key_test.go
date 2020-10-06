@@ -270,7 +270,7 @@ func TestGetHDKeyByPath(t *testing.T) {
 	}
 }
 
-// ExampleGetPrivateKeyByPath example using GetHDKeyByPath()
+// ExampleGetHDKeyByPath example using GetHDKeyByPath()
 func ExampleGetHDKeyByPath() {
 
 	hdKey, err := GenerateHDKey(SecureSeedLength)
@@ -290,10 +290,108 @@ func ExampleGetHDKeyByPath() {
 	// Output:hd key (111) found at path 0/1
 }
 
-// BenchmarkGetPrivateKeyByPath benchmarks the method GetHDKeyByPath()
+// BenchmarkGetHDKeyByPath benchmarks the method GetHDKeyByPath()
 func BenchmarkGetHDKeyByPath(b *testing.B) {
 	hdKey, _ := GenerateHDKey(SecureSeedLength)
 	for i := 0; i < b.N; i++ {
 		_, _ = GetHDKeyByPath(hdKey, 0, 1)
+	}
+}
+
+// TestGetHDKeyByPath will test the method GetHDKeyByPath()
+func TestGetHDChild(t *testing.T) {
+
+	t.Parallel()
+
+	// Generate a valid key
+	validKey, err := GenerateHDKey(RecommendedSeedLength)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Max depth key
+	var maxKey *hdkeychain.ExtendedKey
+	maxKey, err = GetHDKeyByPath(validKey, 1<<9, 1<<9)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Test depth limit
+	// todo: make a better test (after 126 maxKey is now nil)
+	for i := 0; i < 1<<8-1; i++ {
+		maxKey, err = GetHDKeyChild(maxKey, uint32(i))
+		if i < 126 && err != nil {
+			t.Fatalf("error occurred: %s", err.Error())
+		}
+		// TODO: make this better rather than grabbing the child twice. This is
+		// basically a copy of the GetHDKeyByPath test
+		maxKey, err = GetHDKeyChild(maxKey, uint32(i))
+		if i >= 126 && err == nil {
+			t.Fatalf("expected to hit depth limit on HD key index: %d", i)
+		}
+	}
+
+	// Create the list of tests
+	var tests = []struct {
+		inputHDKey    *hdkeychain.ExtendedKey
+		inputNum      uint32
+		expectedNil   bool
+		expectedError bool
+	}{
+		{nil, 0, true, true},
+		{validKey, 0, false, false},
+		{validKey, 10, false, false},
+		{validKey, 100, false, false},
+		{validKey, 2 ^ 31 + 1, false, false},
+		{validKey, 1 << 8, false, false},
+		{validKey, 1 << 9, false, false},
+		{validKey, 1 << 10, false, false},
+		{validKey, 1 << 11, false, false},
+		{validKey, 1 << 12, false, false},
+		{validKey, 1 << 16, false, false},
+		{validKey, 1<<32 - 1, false, false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if hdKey, err := GetHDKeyChild(test.inputHDKey, test.inputNum); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.inputHDKey, test.inputNum, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.inputHDKey, test.inputNum)
+		} else if hdKey == nil && !test.expectedNil {
+			t.Errorf("%s Failed: [%v] [%d] inputted and was nil but not expected", t.Name(), test.inputHDKey, test.inputNum)
+		} else if hdKey != nil && test.expectedNil {
+			t.Errorf("%s Failed: [%v] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHDKey, test.inputNum)
+		} else if hdKey != nil && len(hdKey.String()) == 0 {
+			t.Errorf("%s Failed: [%v] [%d] inputted and should not be empty", t.Name(), test.inputHDKey, test.inputNum)
+		}
+	}
+}
+
+// ExampleGetHDKeyChild example using GetHDKeyChild()
+func ExampleGetHDKeyChild() {
+
+	hdKey, err := GenerateHDKey(SecureSeedLength)
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	// Get a child key
+	var childKey *hdkeychain.ExtendedKey
+	childKey, err = GetHDKeyChild(hdKey, 0)
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("hd key (%d) found at path %d", len(childKey.String()), 0)
+	// Output:hd key (111) found at path 0
+}
+
+// BenchmarkGetHDKeyChild benchmarks the method GetHDKeyChild()
+func BenchmarkGetHDKeyChild(b *testing.B) {
+	hdKey, _ := GenerateHDKey(SecureSeedLength)
+	for i := 0; i < b.N; i++ {
+		_, _ = GetHDKeyChild(hdKey, 0)
 	}
 }
