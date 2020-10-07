@@ -113,7 +113,8 @@ func CalculateFeeForTx(tx *transaction.Transaction, standardRate, dataRate float
 	// Loop all outputs and accumulate size (find data related outputs)
 	for _, out := range tx.GetOutputs() {
 		// todo: once libsv has outs.data.ToBytes() this can be removed/optimized
-		if strings.HasPrefix(out.String(), "&006a") || strings.HasPrefix(out.String(), "&6a") {
+		outHexString := out.GetLockingScriptHexString()
+		if strings.HasPrefix(outHexString, "006a") || strings.HasPrefix(outHexString, "6a") {
 			totalDataBytes = totalDataBytes + len(out.ToBytes())
 		}
 	}
