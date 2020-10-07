@@ -46,7 +46,8 @@ func TxFromHex(rawHex string) (*transaction.Transaction, error) {
 // CreateTxWithChange will automatically create the change output and calculate fees
 //
 // Use this if you don't want to figure out fees/change for a tx
-func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData, changeAddress string, standardRate, dataRate float64, wif string) (*transaction.Transaction, error) {
+func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
+	changeAddress string, standardRate, dataRate float64, wif string) (*transaction.Transaction, error) {
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -114,7 +115,8 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 //
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
-func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData, wif string) (*transaction.Transaction, error) {
+func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
+	opReturns []OpReturnData, wif string) (*transaction.Transaction, error) {
 
 	// Missing utxo(s)
 	if len(utxos) == 0 {
@@ -179,7 +181,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData
 //
 // If tx is nil this will panic
 // Rate(s) can be derived from MinerAPI (default is DefaultDataRate and DefaultStandardRate)
-// Reference: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec#calculating-tx-fee-with-different-feetypes
+// Reference: https://tncpw.co/c215a75c
 func CalculateFeeForTx(tx *transaction.Transaction, standardRate, dataRate float64) uint64 {
 
 	// Set the totals

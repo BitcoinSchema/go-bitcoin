@@ -151,7 +151,10 @@ func GetAddressFromScript(script string) (string, error) {
 
 	// Extract the address from the pubkey hash
 	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = bsvutil.NewLegacyAddressPubKeyHash(addresses[0].ScriptAddress(), &chaincfg.MainNetParams); err != nil {
+	if address, err = bsvutil.NewLegacyAddressPubKeyHash(
+		addresses[0].ScriptAddress(),
+		&chaincfg.MainNetParams,
+	); err != nil {
 		return "", err
 	}
 

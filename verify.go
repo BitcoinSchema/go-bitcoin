@@ -17,7 +17,8 @@ const (
 	hBSV string = "Bitcoin Signed Message:\n"
 )
 
-// VerifyMessage verifies a string and address against the provided signature and assumes Bitcoin Signed Message encoding
+// VerifyMessage verifies a string and address against the provided
+// signature and assumes Bitcoin Signed Message encoding
 //
 // Error will occur if verify fails or verification is not successful (no bool)
 func VerifyMessage(address, signature, data string) error {
