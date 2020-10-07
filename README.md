@@ -66,6 +66,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Script from Address](script.go)
 - **Transactions**
   - [Create Tx](transaction.go)
+  - [Create Tx with Change](transaction.go)
   - [Tx from Hex](transaction.go)
   - [Calculate Fee](transaction.go)
 - **Signatures**
