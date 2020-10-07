@@ -14,13 +14,13 @@ const (
 	// SecureSeedLength is the max size of a seed length (most secure)
 	SecureSeedLength = 64 // 512 bits
 
-	// DefaultInternalChain is the default internal chain (for change, generating, other purposes...)
-	// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
-	DefaultInternalChain = 0
-
 	// DefaultExternalChain is the default external chain (for public use to accept incoming txs)
 	// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
-	DefaultExternalChain = 1
+	DefaultExternalChain = 0
+
+	// DefaultInternalChain is the default internal chain (for change, generating, other purposes...)
+	// Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
+	DefaultInternalChain = 1
 )
 
 // GenerateHDKey will create a new master node for use in creating a hierarchical deterministic key chain
@@ -141,7 +141,7 @@ func GetPublicKeysForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (pubKeys []
 
 	//  m/0/x
 	var childM0x *hdkeychain.ExtendedKey
-	if childM0x, err = GetHDKeyByPath(hdKey, DefaultInternalChain, num); err != nil {
+	if childM0x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
 		return
 	}
 
@@ -155,7 +155,7 @@ func GetPublicKeysForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (pubKeys []
 
 	//  m/1/x
 	var childM1x *hdkeychain.ExtendedKey
-	if childM1x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
+	if childM1x, err = GetHDKeyByPath(hdKey, DefaultInternalChain, num); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
 		return
 	}
