@@ -2,11 +2,22 @@ package bitcoin
 
 import (
 	"errors"
+	"math"
+	"strings"
 
 	"github.com/bitcoinsv/bsvutil"
 	"github.com/libsv/libsv/transaction"
 	"github.com/libsv/libsv/transaction/output"
 	"github.com/libsv/libsv/transaction/signature"
+)
+
+const (
+
+	// DefaultDataRate is the default rate for feeType: data (0.5 satoshis per byte)
+	DefaultDataRate = 0.5
+
+	// DefaultStandardRate is the default rate for feeType: standard (0.5 satoshis per byte)
+	DefaultStandardRate = 0.5
 )
 
 // Utxo is an unspent transaction output
@@ -83,4 +94,41 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress, opReturns []OpReturnData
 
 	// Return the transaction as a raw string
 	return tx, nil
+}
+
+// CalculateFeeForTx will estimate a fee for the given transaction
+//
+// If tx is nil this will panic
+// Rate(s) can be derived from MinerAPI (default is DefaultDataRate and DefaultStandardRate)
+// Reference: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec#calculating-tx-fee-with-different-feetypes
+func CalculateFeeForTx(tx *transaction.Transaction, standardRate, dataRate float64) uint64 {
+
+	// Set the totals
+	var totalFee float64
+	var totalDataBytes int
+
+	// Set the total bytes of the tx
+	totalBytes := len(tx.ToBytes())
+
+	// Loop all outputs and accumulate size (find data related outputs)
+	for _, out := range tx.GetOutputs() {
+		// todo: once libsv has outs.data.ToBytes() this can be removed/optimized
+		if strings.HasPrefix(out.String(), "&006a") || strings.HasPrefix(out.String(), "&6a") {
+			totalDataBytes = totalDataBytes + len(out.ToBytes())
+		}
+	}
+
+	// Got some data bytes?
+	if totalDataBytes > 0 {
+		totalBytes = totalBytes - totalDataBytes
+		totalFee = totalFee + math.Ceil(float64(totalDataBytes)*dataRate)
+	}
+
+	// Still have regular standard bytes?
+	if totalBytes > 0 {
+		totalFee = totalFee + math.Ceil(float64(totalBytes)*standardRate)
+	}
+
+	// Return the total fee as a uint (easier to use with satoshi values)
+	return uint64(totalFee)
 }
