@@ -23,6 +23,6 @@ func main() {
 	if err = bitcoin.VerifyMessage(address, signature, message); err != nil {
 		log.Fatalf("verify failed: %s", err.Error())
 	} else {
-		log.Println("verification successful!")
+		log.Println("verification passed")
 	}
 }

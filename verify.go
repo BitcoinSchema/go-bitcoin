@@ -3,10 +3,12 @@ package bitcoin
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
 
+	"github.com/btcsuite/btcd/btcec"
 	"github.com/itchyny/base58-go"
 	"github.com/piotrnar/gocoin/lib/secp256k1"
 	"golang.org/x/crypto/ripemd160"
@@ -21,6 +23,7 @@ const (
 // signature and assumes Bitcoin Signed Message encoding
 //
 // Error will occur if verify fails or verification is not successful (no bool)
+// Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func VerifyMessage(address, signature, data string) error {
 	if len(address) == 0 {
 		return errors.New("address is missing")
@@ -37,6 +40,44 @@ func VerifyMessage(address, signature, data string) error {
 		}
 	}
 	return fmt.Errorf("address: %s not found", address)
+}
+
+// VerifyMessageDER will take a message string, a public key string and a signature string
+// (in strict DER format) and verify that the message was signed by the public key.
+//
+// Copyright (c) 2019 Bitcoin Association
+// License: https://github.com/bitcoin-sv/merchantapi-reference/blob/master/LICENSE
+//
+// Source: https://github.com/bitcoin-sv/merchantapi-reference/blob/master/handler/global.go
+func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified bool, err error) {
+
+	// Decode the signature string
+	var sigBytes []byte
+	if sigBytes, err = hex.DecodeString(signature); err != nil {
+		return
+	}
+
+	// Parse the signature
+	var sig *btcec.Signature
+	if sig, err = btcec.ParseDERSignature(sigBytes, btcec.S256()); err != nil {
+		return
+	}
+
+	// Decode the pubKey
+	var pubKeyBytes []byte
+	if pubKeyBytes, err = hex.DecodeString(pubKey); err != nil {
+		return
+	}
+
+	// Parse the pubKey
+	var rawPubKey *btcec.PublicKey
+	if rawPubKey, err = btcec.ParsePubKey(pubKeyBytes, btcec.S256()); err != nil {
+		return
+	}
+
+	// Verify the signature against the pubKey
+	verified = sig.Verify(hash[:], rawPubKey)
+	return
 }
 
 // sha256d is a double sha256

@@ -9,6 +9,8 @@ import (
 )
 
 // SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
+//
+// Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func SignMessage(privateKey string, message string) (string, error) {
 	if len(privateKey) == 0 {
 		return "", errors.New("privateKey is empty")

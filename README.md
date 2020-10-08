@@ -70,7 +70,8 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Tx from Hex](transaction.go)
   - [Calculate Fee](transaction.go)
 - **Signatures**
-  - [Sign](sign.go) / [Verify](verify.go) Bitcoin Message
+  - [Sign](sign.go) & [Verify](verify.go) a Bitcoin Message
+  - [Verify DER Signature](verify.go)
 
 <details>
 <summary><strong><code>Package Dependencies</code></strong></summary>
