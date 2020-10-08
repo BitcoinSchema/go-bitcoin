@@ -79,6 +79,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 
 - [bitcoinsv/bsvd](https://github.com/bitcoinsv/bsvd)
 - [bitcoinsv/bsvutil](https://github.com/bitcoinsv/bsvutil)
+- [btcsuite/btcd](https://github.com/btcsuite/btcd)
 - [itchyny/base58-go](https://github.com/itchyny/base58-go)
 - [libsv/libsv](https://github.com/libsv/libsv)
 - [piotrnar/gocoin](https://github.com/piotrnar/gocoin)
