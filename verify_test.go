@@ -311,6 +311,14 @@ func TestVerifyMessageDER(t *testing.T) {
 		t.Fatalf("expected verified to be false")
 	}
 
+	// Test an invalid pubkey
+	verified, err = VerifyMessageDER(validHash, "0", testDERSignature)
+	if err == nil {
+		t.Fatalf("error should have occurred")
+	} else if verified {
+		t.Fatalf("expected verified to be false")
+	}
+
 	// Test an invalid signature
 	verified, err = VerifyMessageDER(validHash, testDERPubKey, "0"+testDERSignature)
 	if verified {
@@ -321,6 +329,14 @@ func TestVerifyMessageDER(t *testing.T) {
 
 	// Test an invalid signature
 	verified, err = VerifyMessageDER(validHash, testDERPubKey, testDERSignature+"-1")
+	if verified {
+		t.Fatalf("expected verified to be false but got: %v", verified)
+	} else if err == nil {
+		t.Fatalf("expected error not be nil")
+	}
+
+	// Test an invalid signature
+	verified, err = VerifyMessageDER(validHash, testDERPubKey, "1234567")
 	if verified {
 		t.Fatalf("expected verified to be false but got: %v", verified)
 	} else if err == nil {
