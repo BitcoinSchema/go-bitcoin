@@ -16,7 +16,7 @@ func main() {
 	}
 
 	// Calculate the fee using default rates (you can replace with MinerAPI rates)
-	estimatedFee := bitcoin.CalculateFeeForTx(tx, bitcoin.DefaultStandardRate, bitcoin.DefaultDataRate)
+	estimatedFee := bitcoin.CalculateFeeForTx(tx, nil, nil)
 
 	// Success!
 	log.Printf("tx id: %s estimated fee: %d satoshis", tx.GetTxID(), estimatedFee)

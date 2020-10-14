@@ -342,7 +342,7 @@ func TestCalculateFeeForTx(t *testing.T) {
 	// t.Log("tx size: ", len(rawTx.ToBytes()))
 
 	// Calculate fee
-	if fee := CalculateFeeForTx(rawTx, DefaultStandardRate, DefaultDataRate); fee != expectedFee {
+	if fee := CalculateFeeForTx(rawTx, nil, nil); fee != expectedFee {
 		t.Fatalf("expected fee: %d got: %d", expectedFee, fee)
 	}
 }
@@ -355,58 +355,58 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 	// Create the list of tests
 	var tests = []struct {
 		inputHex          string
-		inputStandardRate float64
-		inputDataRate     float64
+		inputStandardRate *FeeAmount
+		inputDataRate     *FeeAmount
 		expectedTxID      string
 		expectedSatoshis  uint64
 	}{
 		{"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100e07b7661af4e4b521c012a146b25da2c7b9d606e9ceaae28fa73eb347ef6da6f0220527f0638a89ff11cbe53d5f8c4c2962484a370dcd9463a6330f45d31247c2512412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0364030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"e75fa79ee5fbb589201f769c01835e14ca595b7bbfa0e602050a2a90cf28d129",
 			132,
 		},
 		{"0200000001203d3a9d8e2ccfe2d6bb1bce6ad8a9c1251a58f9c788737b21e3e19588e89110010000006a47304402201e7fe22f20d02a5cd6978b21bc68aa31eb74530c6b75b47caef19d6f2a95f47802206b20de32c7398fa822397b49389a49224742a9d3c175a851376a25deb6428cb24121023bc787128d6296be6a534b32e90724413179545a0ec2720a7258de330fc54544ffffffff02000000000000000053006a4c4fe5b08fe881aae6b8b8e6888f3130e69c883234e697a5e6b7b1e59cb3e7babfe4b88be994a6e6a087e8b59befbc8ce586a0e5869b425356e5a596e98791e7ad89e4bda0e69da5e68c91e68898efbc817c0c0000000000001976a9146382643e30d2ea7e52eb07eac8767ed219c53e3a88ac00000000",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"1affabe9b5adc3a6930a06002a447e834681004a5e6767a649d0371a806e7b1d",
-			142,
+			141,
 		},
 		{"0200000001a39b865acf5d100aa35341a63e4ba6dc7da101f3b740cd5372e25b0fb23306c5000000006a47304402207cdcab521641801cd0427501c0264073cfd11f2693bb9a109d00482c643f16b30220798801d1acc9dea23013f17cbd7cc0edec996abc1493f9b9a8ba61723b4ec01d41210250a932cf2543f8f35dba3fce46f53ca821409f4e233d9f8090a165f5ac42a0e8ffffffff014a060000000000001976a914f21ff89bd2259699d229ebc1f9c29ac3c3e0411888ac00000000",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"175fc22ffbd76f1cdb7ec2c40474abedbb4bb6080e9c8d22736ffc2d48e85fd2",
-			96,
+			95,
 		},
 		{"010000000129cdf21be448b28b0f88ecc9317d9ea1a385a6928d855f55b2d62a3bbc8631cd000000006b483045022100a8b7d34e10e817647f753a9a1380606945bd9c255ebb87c7a00a701903abc6e20220284651051ef520eb5f13901c0f792d7eae2e75b9e85fff36258d9592839227614121029843434e00940e0829196042983e46fe801364b1a586f3d4160556684d63e8d1ffffffff030000000000000000fd48026a2231394878696756345179427633744870515663554551797131707a5a56646f4175744cff545742544348205457455443482054574554534820545745544348205457455443482054574554434820545745544348205457455443482054564554434820545745544348205457454943482054574554434820545745544348205457455453482054574554434820545745544348205457415443482054574554434820545745574348205457455443482054574554434820545745544548205457455443482054574554434820545745545348205457455443482054574554434820545745544f482054574554434820544d45544348205457455443482054574554454820545745544348205768617427732077697468696e205457455443483f203a500a746578742f706c61696e04746578741f7477657463685f7477746578745f313536383139363330383230372e747874017c223150755161374b36324d694b43747373534c4b79316b683536575755374d74555235035345540b7477646174615f6a736f6e046e756c6c0375726c046e756c6c07636f6d6d656e74046e756c6c076d625f757365720434363631047479706504706f73740974696d657374616d700f3638343131393038353536373938330361707006747765746368017c22313550636948473232534e4c514a584d6f53556157566937575371633768436676610d424954434f494e5f45434453412231414b48566959674247626d78693871694a6b4e766f484e654475396d334d665045102323636f6d70757465645f7369672323953f0000000000001976a9147346219a70740418422b19c0ecd696671d3ce17088acdbdf0500000000001976a914b4376ffbd47974340a0a0d940681e168c1d6ae0788ac00000000",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"d612aed6c3f12756ea1d3e9a48eef2faf05eaf20ff6031911d8610332f8d3f9a",
-			411,
+			410,
 		},
 		{"01000000018558c697a0bb502f9aec70b27c48d3c87f0df28e16f9c8f43a43b1327ea69304010000006b483045022100e0114cf815c0d60fc72e7c8a4c39b03920ac03e62b5c98c68882c1235f2e0ac90220278319c67e79c4397ad989cb9be453acfbbb8e8a9f927c6f4509d9a1da4a17eb412103637720f48f059b854605da3d5a959d204e1e6cbd0d03ee91a38a067bdee90558ffffffff020000000000000000d96a2231394878696756345179427633744870515663554551797131707a5a56646f4175742c436865636b6f757420546f6e6963506f773a2068747470733a2f2f746e6370772e636f2f36313239373839330d746578742f6d61726b646f776e055554462d38017c223150755161374b36324d694b43747373534c4b79316b683536575755374d745552350353455403617070086d6574616c656e73047479706507636f6d6d656e740375726c2268747470733a2f2f6f66666572732e746f6e6963706f772e636f6d2f6f666665727304757365720444756465d3bb1100000000001976a914e0190be1c0ced1e92c26b3c6d5ccbbe853b57e7288ac00000000",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"ef3fe744c7be4b81f2881f9c11433bc4905a032a0bf15bcda31f90c28ba1b356",
 			209,
 		},
 		{"010000000190c5208bed05b4e54746bab5a5d4a5e4324e2999c180b7ea7105047f1f16b84a030000006a47304402202ca5d7a2cfb2388babb549b10c47ed20cdadafb845af835c7d5ff04e933ba1c102200a8b7289bbd3c0cc62172afe0006ba374ddd0132a7e4fb4e92ebcff5ce9217db412102812d641ff356c362815f8fc03bd061c2ae57e02f5dc3083f61785c0e5b198039ffffffff040000000000000000ad006a223150755161374b36324d694b43747373534c4b79316b683536575755374d74555235035345540361707008746f6e6963706f7704747970650b6f666665725f636c69636b0f6f666665725f636f6e6669675f696403323934106f666665725f73657373696f6e5f696440653638616631393439626131633239326131376431393635343638383234383663653635313830663465363439383235613561363532376634646132303761661f0c0000000000001976a91409cc4559bdcb84cb35c107743f0dbb10d66679cc88ac31790000000000001976a9147c8ced9ee0f48192822a0148f27b5a1f24aa42d388ac53f74600000000001976a914852f89e9b05d6adfc905842ee0d301947d675df988ac00000000",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"8785ca5f11795a38eb1f50f62562cb5e0335b283762fe8a2c7e96d5f7f79bb15",
-			221,
+			220,
 		},
 		{"010000000190c5208bed05b4e54746bab5a5d4a5e4324e2999c180b7ea7105047f1f16b84a030000006a47304402202ca5d7a2cfb2388babb549b10c47ed20cdadafb845af835c7d5ff04e933ba1c102200a8b7289bbd3c0cc62172afe0006ba374ddd0132a7e4fb4e92ebcff5ce9217db412102812d641ff356c362815f8fc03bd061c2ae57e02f5dc3083f61785c0e5b198039ffffffff040000000000000000ad006a223150755161374b36324d694b43747373534c4b79316b683536575755374d74555235035345540361707008746f6e6963706f7704747970650b6f666665725f636c69636b0f6f666665725f636f6e6669675f696403323934106f666665725f73657373696f6e5f696440653638616631393439626131633239326131376431393635343638383234383663653635313830663465363439383235613561363532376634646132303761661f0c0000000000001976a91409cc4559bdcb84cb35c107743f0dbb10d66679cc88ac31790000000000001976a9147c8ced9ee0f48192822a0148f27b5a1f24aa42d388ac53f74600000000001976a914852f89e9b05d6adfc905842ee0d301947d675df988ac00000000",
-			1.0,
-			1.0,
+			&FeeAmount{Bytes: DefaultRateBytes, Satoshis: 1000},
+			&FeeAmount{Bytes: DefaultRateBytes, Satoshis: 1000},
 			"8785ca5f11795a38eb1f50f62562cb5e0335b283762fe8a2c7e96d5f7f79bb15",
 			441,
 		},
 		{"010000000190c5208bed05b4e54746bab5a5d4a5e4324e2999c180b7ea7105047f1f16b84a030000006a47304402202ca5d7a2cfb2388babb549b10c47ed20cdadafb845af835c7d5ff04e933ba1c102200a8b7289bbd3c0cc62172afe0006ba374ddd0132a7e4fb4e92ebcff5ce9217db412102812d641ff356c362815f8fc03bd061c2ae57e02f5dc3083f61785c0e5b198039ffffffff040000000000000000ad006a223150755161374b36324d694b43747373534c4b79316b683536575755374d74555235035345540361707008746f6e6963706f7704747970650b6f666665725f636c69636b0f6f666665725f636f6e6669675f696403323934106f666665725f73657373696f6e5f696440653638616631393439626131633239326131376431393635343638383234383663653635313830663465363439383235613561363532376634646132303761661f0c0000000000001976a91409cc4559bdcb84cb35c107743f0dbb10d66679cc88ac31790000000000001976a9147c8ced9ee0f48192822a0148f27b5a1f24aa42d388ac53f74600000000001976a914852f89e9b05d6adfc905842ee0d301947d675df988ac00000000",
-			0.25,
-			0.25,
+			&FeeAmount{Bytes: DefaultRateBytes, Satoshis: 250},
+			&FeeAmount{Bytes: DefaultRateBytes, Satoshis: 250},
 			"8785ca5f11795a38eb1f50f62562cb5e0335b283762fe8a2c7e96d5f7f79bb15",
-			111,
+			109,
 		},
 	}
 
@@ -422,9 +422,9 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 
 		// Test the function
 		if satoshis = CalculateFeeForTx(tx, test.inputStandardRate, test.inputDataRate); satoshis != test.expectedSatoshis {
-			t.Errorf("%s Failed: [%s] [%f] [%f] inputted [%d] expected but got: %d", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedSatoshis, satoshis)
+			t.Errorf("%s Failed: [%s] [%v] [%v] inputted [%d] expected but got: %d", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedSatoshis, satoshis)
 		} else if tx.GetTxID() != test.expectedTxID {
-			t.Errorf("%s Failed: [%s] [%f] [%f] inputted [%s] expected but got: %s", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedTxID, tx.GetTxID())
+			t.Errorf("%s Failed: [%s] [%v] [%v] inputted [%s] expected but got: %s", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedTxID, tx.GetTxID())
 		}
 	}
 }
@@ -441,7 +441,7 @@ func ExampleCalculateFeeForTx() {
 	}
 
 	// Calculate the fee using default rates
-	estimatedFee := CalculateFeeForTx(tx, DefaultStandardRate, DefaultDataRate)
+	estimatedFee := CalculateFeeForTx(tx, nil, nil)
 
 	fmt.Printf("tx id: %s estimated fee: %d satoshis", tx.GetTxID(), estimatedFee)
 	// Output:tx id: e75fa79ee5fbb589201f769c01835e14ca595b7bbfa0e602050a2a90cf28d129 estimated fee: 132 satoshis
@@ -459,7 +459,7 @@ func BenchmarkCalculateFeeForTx(b *testing.B) {
 	}
 
 	for i := 0; i < b.N; i++ {
-		_ = CalculateFeeForTx(tx, DefaultStandardRate, DefaultDataRate)
+		_ = CalculateFeeForTx(tx, nil, nil)
 	}
 }
 
@@ -473,7 +473,7 @@ func TestCalculateFeeForTxPanic(t *testing.T) {
 		}
 	}()
 
-	_ = CalculateFeeForTx(nil, DefaultStandardRate, DefaultDataRate)
+	_ = CalculateFeeForTx(nil, nil, nil)
 }
 
 // TestCreateTxWithChange tests for nil case in CreateTxWithChange()
@@ -503,8 +503,8 @@ func TestCreateTxWithChange(t *testing.T) {
 		[]*PayToAddress{payTo},
 		[]OpReturnData{opReturn1, opReturn2},
 		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-		DefaultStandardRate,
-		DefaultDataRate,
+		nil,
+		nil,
 		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
 	if err != nil {
@@ -516,10 +516,10 @@ func TestCreateTxWithChange(t *testing.T) {
 
 	// Expected
 	expectedFee := uint64(149)
-	expectedChange := uint64(351)
+	expectedChange := uint64(352)
 
 	// Test the right fee
-	fee := CalculateFeeForTx(rawTx, DefaultStandardRate, DefaultDataRate)
+	fee := CalculateFeeForTx(rawTx, nil, nil)
 	if fee != expectedFee {
 		t.Fatalf("fee expected: %d vs %d", expectedFee, fee)
 	}
@@ -545,8 +545,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 		inputOpReturns     []OpReturnData
 		inputWif           string
 		inputChangeAddress string
-		inputStandardRate  float64
-		inputDataRate      float64
+		inputStandardRate  *FeeAmount
+		inputDataRate      *FeeAmount
 		expectedRawTx      string
 		expectedNil        bool
 		expectedError      bool
@@ -564,9 +564,9 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
-			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100b95aff403574aba31b1786e5f5ddb3c57356a13e6207b66babb16a6d851d7cfe02200d0f570f619e4c05b5b7213ce673f46549f9a7ee95814f3ec0cc0233fd54c85e412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac71010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			nil,
+			nil,
+			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a4730440220767b6b7483746c1b07e8f58dd953bdc9ade3696036fe093cc404660704d7b407022063858090101d990568af473834d63372c9d31cb678733f9e50a62b2f047c2aa5412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac72010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			false,
 			false,
 		},
@@ -583,8 +583,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100bd31b3d9fbe18468086c0470e99f096e370f0c6ff41b6bb71f1a1d5c1b068ce302204f0c83d792a40337909b8b1bcea192722161f48dc475c653b7c352baa38eea6c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff02f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			true,
 			true,
@@ -597,8 +597,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -612,9 +612,9 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
-			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100d618cb75f59af1a58babb545abe04ffd335034e1d9e23168fa7ef3f1258ce9c7022027049280b83f6c54d41c1a960fd438694ee18e2e1816f50d5091e4e37593708e412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0276030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			nil,
+			nil,
+			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a47304402203fa8a408ef7b523a7efab01e0016d4e4879b3e9a56418691cd441344e326fd2c022066997fde9d357a83dec6fc80722089f740f393d6ef949f966f6739da44282f44412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0278030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			false,
 			false,
 		},
@@ -627,8 +627,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a4730440220143c042ecbdb9296d84a87155dcaf558b657be627ab54ffe464028c050cf0da902205117bd7aa2f85d3cd2f98b504a52599e2ea69ea6afb6a640637c12ddcef8c2f0412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0188030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000",
 			false,
 			false,
@@ -646,8 +646,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -665,8 +665,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -684,8 +684,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -703,8 +703,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -722,8 +722,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -741,8 +741,8 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"",
 			true,
 			true,
@@ -792,8 +792,8 @@ func ExampleCreateTxWithChange() {
 		[]*PayToAddress{payTo},
 		[]OpReturnData{opReturn1, opReturn2},
 		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-		DefaultStandardRate,
-		DefaultDataRate,
+		nil,
+		nil,
 		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
 	if err != nil {
@@ -802,7 +802,7 @@ func ExampleCreateTxWithChange() {
 	}
 
 	fmt.Printf("rawTx: %s", rawTx.ToString())
-	// Output:rawTx: 0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100c1dc4a4c5f26a404ff3618013dc63777d0790d0b0ea3371c67ee3f1bb5126c3e02206be8c841918215337f9b6a6a6040bd058596f2bab5c8b8cb27f849b1474b9e4c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff04f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac5f010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000
+	// Output:rawTx: 0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100beab95997a8b4b0e805aa16af1fed54a0ff80d6e45a330f71787795c394ff99d02207904b4930ccf4dae9e87d1f4b18be343f2fd73bb5500870d7194726919b5f6d8412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff04f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac60010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000
 }
 
 // BenchmarkCreateTxWithChange benchmarks the method CreateTxWithChange()
@@ -823,8 +823,8 @@ func BenchmarkCreateTxWithChange(b *testing.B) {
 			[]*PayToAddress{payTo},
 			[]OpReturnData{opReturn1, opReturn2},
 			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			DefaultStandardRate,
-			DefaultDataRate,
+			nil,
+			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
 	}

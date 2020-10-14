@@ -32,8 +32,8 @@ func main() {
 		[]*bitcoin.PayToAddress{payTo},
 		[]bitcoin.OpReturnData{opReturn1, opReturn2},
 		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-		bitcoin.DefaultStandardRate,
-		bitcoin.DefaultDataRate,
+		nil,
+		nil,
 		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
 	if err != nil {

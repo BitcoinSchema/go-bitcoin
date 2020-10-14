@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"errors"
 	"fmt"
-	"math"
 	"strings"
 
 	"github.com/bitcoinsv/bsvutil"
@@ -14,12 +13,26 @@ import (
 
 const (
 
-	// DefaultDataRate is the default rate for feeType: data (0.5 satoshis per byte)
-	DefaultDataRate = 0.5
+	// Spec: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec
 
-	// DefaultStandardRate is the default rate for feeType: standard (0.5 satoshis per byte)
-	DefaultStandardRate = 0.5
+	// DefaultDataRate is the default rate for feeType: data (500 satoshis per X bytes)
+	DefaultDataRate = 500
+
+	// DefaultStandardRate is the default rate for feeType: standard (500 satoshis per X bytes)
+	DefaultStandardRate = 500
+
+	// DefaultRateBytes is the default amount of bytes to calculate fees (X Satoshis per X bytes)
+	DefaultRateBytes = 1000
 )
+
+// FeeAmount is the actual fee for the given feeType (data or standard)
+//
+// Reference: https://github.com/tonicpow/go-minercraft/blob/b14d26a5d60436ecd3481f94d9cb468513dcf86b/fee_quote.go#L164
+// Spec: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec
+type FeeAmount struct {
+	Bytes    uint64 `json:"bytes"`
+	Satoshis uint64 `json:"satoshis"`
+}
 
 // Utxo is an unspent transaction output
 type Utxo struct {
@@ -47,7 +60,7 @@ func TxFromHex(rawHex string) (*transaction.Transaction, error) {
 //
 // Use this if you don't want to figure out fees/change for a tx
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	changeAddress string, standardRate, dataRate float64, wif string) (*transaction.Transaction, error) {
+	changeAddress string, standardRate, dataRate *FeeAmount, wif string) (*transaction.Transaction, error) {
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -181,36 +194,50 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 //
 // If tx is nil this will panic
 // Rate(s) can be derived from MinerAPI (default is DefaultDataRate and DefaultStandardRate)
+// If rate is nil it will use default rates (0.5 sat per byte)
 // Reference: https://tncpw.co/c215a75c
-func CalculateFeeForTx(tx *transaction.Transaction, standardRate, dataRate float64) uint64 {
+func CalculateFeeForTx(tx *transaction.Transaction, standardRate, dataRate *FeeAmount) uint64 {
 
 	// Set the totals
-	var totalFee float64
-	var totalDataBytes int
+	var totalFee uint64
+	var totalDataBytes uint64
+
+	// Set defaults if not found
+	if standardRate == nil {
+		standardRate = &FeeAmount{Bytes: DefaultRateBytes, Satoshis: DefaultStandardRate}
+	}
+	if dataRate == nil {
+		dataRate = &FeeAmount{Bytes: DefaultRateBytes, Satoshis: DefaultDataRate}
+	}
 
 	// Set the total bytes of the tx
-	totalBytes := len(tx.ToBytes())
+	totalBytes := uint64(len(tx.ToBytes()))
 
 	// Loop all outputs and accumulate size (find data related outputs)
 	for _, out := range tx.GetOutputs() {
 		// todo: once libsv has outs.data.ToBytes() this can be removed/optimized
 		outHexString := out.GetLockingScriptHexString()
 		if strings.HasPrefix(outHexString, "006a") || strings.HasPrefix(outHexString, "6a") {
-			totalDataBytes += len(out.ToBytes())
+			totalDataBytes += uint64(len(out.ToBytes()))
 		}
 	}
 
 	// Got some data bytes?
 	if totalDataBytes > 0 {
 		totalBytes = totalBytes - totalDataBytes
-		totalFee += math.Ceil(float64(totalDataBytes) * dataRate)
+		totalFee += (dataRate.Satoshis * totalDataBytes) / dataRate.Bytes
 	}
 
 	// Still have regular standard bytes?
 	if totalBytes > 0 {
-		totalFee += math.Ceil(float64(totalBytes) * standardRate)
+		totalFee += (standardRate.Satoshis * totalBytes) / standardRate.Bytes
+	}
+
+	// Safety check (possible division by zero?)
+	if totalFee == 0 {
+		totalFee = 1
 	}
 
 	// Return the total fee as a uint (easier to use with satoshi values)
-	return uint64(totalFee)
+	return totalFee
 }
