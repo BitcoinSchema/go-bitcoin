@@ -10,5 +10,5 @@ require (
 	github.com/itchyny/base58-go v0.1.0
 	github.com/libsv/libsv v0.0.11
 	github.com/piotrnar/gocoin v0.0.0-20201004105208-19152002e94e
-	golang.org/x/crypto v0.0.0-20201002170205-7f63de1d35b0
+	golang.org/x/crypto v0.0.0-20201012173705-84dcc777aaee
 )
