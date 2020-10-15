@@ -40,6 +40,9 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 
 ### Features
 
+- **Addresses**
+  - [Address from PrivateKey (bsvec.PrivateKey)](address.go)
+  - [Address from Script](address.go)
 - **Private Keys**
   - [Create PrivateKey](private_key.go)
   - [PrivateKey (string) to Address (string)](address.go)
@@ -47,9 +50,9 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Get Private and Public keys](private_key.go)
   - [WIF to PrivateKey](private_key.go)
   - [PrivateKey to WIF](private_key.go)
-- **Addresses**
-  - [Address from PrivateKey (bsvec.PrivateKey)](address.go)
-  - [Address from Script](address.go)
+- **Encryption**
+  - [Encrypt With Private Key](encryption.go)
+  - [Decrypt With Private Key](encryption.go)
 - **PubKeys**
   - [Create PubKey from PrivateKey](pubkey.go)
   - [PubKey from String](pubkey.go)
@@ -62,16 +65,17 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Get Addresses from HD Key](hd_key.go)
   - [Get PublicKeys for Path](hd_key.go)
   - [Get Addresses for Path](hd_key.go)
-- **Scripts**
-  - [Script from Address](script.go)
 - **Transactions**
   - [Create Tx](transaction.go)
   - [Create Tx with Change](transaction.go)
   - [Tx from Hex](transaction.go)
   - [Calculate Fee](transaction.go)
+- **Scripts**
+  - [Script from Address](script.go)
 - **Signatures**
   - [Sign](sign.go) & [Verify](verify.go) a Bitcoin Message
   - [Verify DER Signature](verify.go)
+
 
 <details>
 <summary><strong><code>Package Dependencies</code></strong></summary>

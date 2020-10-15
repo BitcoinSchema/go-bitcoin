@@ -4,10 +4,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"testing"
+
+	"github.com/bitcoinsv/bsvd/bsvec"
 )
 
-// TestPubKeyFromPrivateKey will test the method PubKeyFromPrivateKey()
-func TestPubKeyFromPrivateKey(t *testing.T) {
+// TestPubKeyFromPrivateKeyString will test the method PubKeyFromPrivateKeyString()
+func TestPubKeyFromPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
 	// Create the list of tests
@@ -23,7 +25,7 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if pubKey, err := PubKeyFromPrivateKey(test.inputKey); err != nil && !test.expectedError {
+		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
@@ -33,9 +35,9 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	}
 }
 
-// ExamplePubKeyFromPrivateKey example using PubKeyFromPrivateKey()
-func ExamplePubKeyFromPrivateKey() {
-	pubKey, err := PubKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+// ExamplePubKeyFromPrivateKeyString example using PubKeyFromPrivateKeyString()
+func ExamplePubKeyFromPrivateKeyString() {
+	pubKey, err := PubKeyFromPrivateKeyString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -44,11 +46,74 @@ func ExamplePubKeyFromPrivateKey() {
 	// Output:pubkey generated: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
 }
 
-// BenchmarkPubKeyFromPrivateKey benchmarks the method PubKeyFromPrivateKey()
-func BenchmarkPubKeyFromPrivateKey(b *testing.B) {
+// BenchmarkPubKeyFromPrivateKeyString benchmarks the method PubKeyFromPrivateKeyString()
+func BenchmarkPubKeyFromPrivateKeyString(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
-		_, _ = PubKeyFromPrivateKey(key)
+		_, _ = PubKeyFromPrivateKeyString(key)
+	}
+}
+
+// TestPubKeyFromPrivateKey will test the method PubKeyFromPrivateKey()
+func TestPubKeyFromPrivateKey(t *testing.T) {
+	t.Parallel()
+
+	priv, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Create the list of tests
+	var tests = []struct {
+		inputKey       *bsvec.PrivateKey
+		expectedPubKey string
+		expectedError  bool
+	}{
+		{priv, "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if pubKey := PubKeyFromPrivateKey(test.inputKey); pubKey != test.expectedPubKey {
+			t.Errorf("%s Failed: [%v] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
+		}
+	}
+}
+
+// TestPubKeyFromPrivateKeyPanic tests for nil case in PubKeyFromPrivateKey()
+func TestPubKeyFromPrivateKeyPanic(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("the code did not panic")
+		}
+	}()
+
+	pubKey := PubKeyFromPrivateKey(nil)
+	if len(pubKey) > 0 {
+		t.Fatalf("no pubkey expected, got: %s", pubKey)
+	}
+}
+
+// ExamplePubKeyFromPrivateKey example using PubKeyFromPrivateKey()
+func ExamplePubKeyFromPrivateKey() {
+	privateKey, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	pubKey := PubKeyFromPrivateKey(privateKey)
+	fmt.Printf("pubkey generated: %s", pubKey)
+	// Output:pubkey generated: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
+}
+
+// BenchmarkPubKeyFromPrivateKey benchmarks the method PubKeyFromPrivateKey()
+func BenchmarkPubKeyFromPrivateKey(b *testing.B) {
+	key, _ := CreatePrivateKey()
+	for i := 0; i < b.N; i++ {
+		_ = PubKeyFromPrivateKey(key)
 	}
 }
 

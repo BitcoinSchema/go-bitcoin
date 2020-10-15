@@ -36,7 +36,7 @@ func CreatePrivateKey() (*bsvec.PrivateKey, error) {
 
 // CreatePrivateKeyString will create a new private key (hex encoded)
 func CreatePrivateKeyString() (string, error) {
-	privateKey, err := bsvec.NewPrivateKey(bsvec.S256())
+	privateKey, err := CreatePrivateKey()
 	if err != nil {
 		return "", err
 	}
