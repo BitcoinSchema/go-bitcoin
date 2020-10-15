@@ -408,6 +408,12 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 			"8785ca5f11795a38eb1f50f62562cb5e0335b283762fe8a2c7e96d5f7f79bb15",
 			109,
 		},
+		{"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a47304402200083bb297d53210cf9379b3f47de2eff38e6906e5982fbfeef9bf59778750f3e022046da020811e9a2d1e6db8da103d17598abc194125612be6b108d49cb60cbca95412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0000000000",
+			&FeeAmount{Bytes: 157, Satoshis: 1},
+			&FeeAmount{Bytes: 157, Satoshis: 1},
+			"d3350a4ef4b2c72b23e5117979590d768e61f2102337e2ae956d152a80cd37ac",
+			1,
+		},
 	}
 
 	// Run tests
@@ -427,6 +433,21 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 			t.Errorf("%s Failed: [%s] [%v] [%v] inputted [%s] expected but got: %s", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedTxID, tx.GetTxID())
 		}
 	}
+}
+
+func TestA25_ComputeChecksum(t *testing.T) {
+	utxo := &Utxo{
+		TxID:      "",
+		Vout:      0,
+		ScriptSig: "",
+		Satoshis:  1000,
+	}
+	tx, err := CreateTx([]*Utxo{utxo}, nil, nil, "L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+	t.Log(tx.ToString())
+
 }
 
 // ExampleCalculateFeeForTx example using CalculateFeeForTx()

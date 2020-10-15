@@ -43,20 +43,10 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - **Addresses**
   - [Address from PrivateKey (bsvec.PrivateKey)](address.go)
   - [Address from Script](address.go)
-- **Private Keys**
-  - [Create PrivateKey](private_key.go)
-  - [PrivateKey (string) to Address (string)](address.go)
-  - [PrivateKey from string](private_key.go)
-  - [Get Private and Public keys](private_key.go)
-  - [WIF to PrivateKey](private_key.go)
-  - [PrivateKey to WIF](private_key.go)
 - **Encryption**
   - [Encrypt With Private Key](encryption.go)
   - [Decrypt With Private Key](encryption.go)
-- **PubKeys**
-  - [Create PubKey from PrivateKey](pubkey.go)
-  - [PubKey from String](pubkey.go)
-- **HD Keys**
+- **HD Keys** _(Master / xPub)_
   - [Generate HD Keys](hd_key.go)
   - [Generate HD Key from string](hd_key.go)
   - [Get HD Key by Path](hd_key.go)
@@ -65,16 +55,26 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Get Addresses from HD Key](hd_key.go)
   - [Get PublicKeys for Path](hd_key.go)
   - [Get Addresses for Path](hd_key.go)
+- **PubKeys**
+  - [Create PubKey from PrivateKey](pubkey.go)
+  - [PubKey from String](pubkey.go)
+- **Private Keys**
+  - [Create PrivateKey](private_key.go)
+  - [PrivateKey (string) to Address (string)](address.go)
+  - [PrivateKey from string](private_key.go)
+  - [Get Private and Public keys](private_key.go)
+  - [WIF to PrivateKey](private_key.go)
+  - [PrivateKey to WIF](private_key.go)
+- **Scripts**
+  - [Script from Address](script.go)
+- **Signatures**
+  - [Sign](sign.go) & [Verify a Bitcoin Message](verify.go) 
+  - [Verify a DER Signature](verify.go)
 - **Transactions**
   - [Create Tx](transaction.go)
   - [Create Tx with Change](transaction.go)
   - [Tx from Hex](transaction.go)
   - [Calculate Fee](transaction.go)
-- **Scripts**
-  - [Script from Address](script.go)
-- **Signatures**
-  - [Sign](sign.go) & [Verify](verify.go) a Bitcoin Message
-  - [Verify DER Signature](verify.go)
 
 
 <details>
