@@ -307,6 +307,16 @@ func TestDecryptWithPrivateKeyString(t *testing.T) {
 		expectedData   string
 		expectedError  bool
 	}{
+		{"",
+			"",
+			"",
+			true,
+		},
+		{"0",
+			"",
+			"",
+			true,
+		},
 		{privateKey,
 			"",
 			"",
