@@ -335,6 +335,111 @@ func TestCreateTxPanic(t *testing.T) {
 	}}, []OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}}, privateKey)
 }
 
+// TestCreateTxUsingWif will test the method CreateTxUsingWif()
+func TestCreateTxUsingWif(t *testing.T) {
+
+	// Example from: https://github.com/libsv/libsv
+
+	// Use a new UTXO
+	utxo := &Utxo{
+		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:      0,
+		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:  1000,
+	}
+
+	// Add a pay-to address
+	payTo := &PayToAddress{
+		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+		Satoshis: 500,
+	}
+
+	// Add some op return data
+	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+	// Generate the TX
+	_, err := CreateTxUsingWif(
+		[]*Utxo{utxo},
+		[]*PayToAddress{payTo},
+		[]OpReturnData{opReturn1, opReturn2},
+		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+	)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Invalid wif
+	_, err = CreateTxUsingWif(
+		[]*Utxo{utxo},
+		[]*PayToAddress{payTo},
+		[]OpReturnData{opReturn1, opReturn2},
+		"",
+	)
+	if err == nil {
+		t.Fatalf("error should have occurred")
+	}
+}
+
+// ExampleCreateTxUsingWif example using CreateTxUsingWif()
+func ExampleCreateTxUsingWif() {
+
+	// Use a new UTXO
+	utxo := &Utxo{
+		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:      0,
+		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:  1000,
+	}
+
+	// Add a pay-to address
+	payTo := &PayToAddress{
+		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+		Satoshis: 500,
+	}
+
+	// Add some op return data
+	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+	// Generate the TX
+	rawTx, err := CreateTxUsingWif(
+		[]*Utxo{utxo},
+		[]*PayToAddress{payTo},
+		[]OpReturnData{opReturn1, opReturn2},
+		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+	)
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	fmt.Printf("rawTx: %s", rawTx.ToString())
+	// Output:rawTx: 0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100eea3d606bd1627be6459a9de4860919225db74843d2fc7f4e7caa5e01f42c2d0022017978d9c6a0e934955a70e7dda71d68cb614f7dd89eb7b9d560aea761834ddd4412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000
+}
+
+// BenchmarkCreateTxUsingWif benchmarks the method CreateTxUsingWif()
+func BenchmarkCreateTxUsingWif(b *testing.B) {
+	// Use a new UTXO
+	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
+
+	// Add a pay-to address
+	payTo := &PayToAddress{Address: "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", Satoshis: 500}
+
+	// Add some op return data
+	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+	for i := 0; i < b.N; i++ {
+		_, _ = CreateTxUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			[]OpReturnData{opReturn1, opReturn2},
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+	}
+}
+
 // TestCalculateFeeForTx will test the method CalculateFeeForTx()
 func TestCalculateFeeForTx(t *testing.T) {
 	t.Parallel()
@@ -908,6 +1013,143 @@ func BenchmarkCreateTxWithChange(b *testing.B) {
 			nil,
 			nil,
 			privateKey,
+		)
+	}
+}
+
+// TestCreateTxWithChangeUsingWif tests for nil case in CreateTxWithChangeUsingWif()
+func TestCreateTxWithChangeUsingWif(t *testing.T) {
+
+	// Use a new UTXO
+	utxo := &Utxo{
+		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:      0,
+		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:  1000,
+	}
+
+	// Add a pay-to address
+	payTo := &PayToAddress{
+		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+		Satoshis: 500,
+	}
+
+	// Add some op return data
+	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+	// Generate the TX
+	rawTx, err := CreateTxWithChangeUsingWif(
+		[]*Utxo{utxo},
+		[]*PayToAddress{payTo},
+		[]OpReturnData{opReturn1, opReturn2},
+		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+		nil,
+		nil,
+		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+	)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Show the results
+	t.Logf("created tx: %s", rawTx.ToString())
+
+	// Expected
+	expectedFee := uint64(149)
+	expectedChange := uint64(352)
+
+	// Test the right fee
+	fee := CalculateFeeForTx(rawTx, nil, nil)
+	if fee != expectedFee {
+		t.Fatalf("fee expected: %d vs %d", expectedFee, fee)
+	}
+
+	// Test that we got the right amount of change (satoshis)
+	for _, out := range rawTx.GetOutputs() {
+		if out.GetLockingScriptHexString() == "76a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac" {
+			if out.Satoshis != expectedChange {
+				t.Fatalf("incorrect change expected: %d vs %d", out.Satoshis, expectedChange)
+			}
+		}
+	}
+
+	// Invalid wif
+	_, err = CreateTxWithChangeUsingWif(
+		[]*Utxo{utxo},
+		[]*PayToAddress{payTo},
+		[]OpReturnData{opReturn1, opReturn2},
+		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+		nil,
+		nil,
+		"",
+	)
+	if err == nil {
+		t.Fatalf("error should have occurred")
+	}
+}
+
+// ExampleCreateTxWithChangeUsingWif example using CreateTxWithChangeUsingWif()
+func ExampleCreateTxWithChangeUsingWif() {
+
+	// Use a new UTXO
+	utxo := &Utxo{
+		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:      0,
+		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:  1000,
+	}
+
+	// Add a pay-to address
+	payTo := &PayToAddress{
+		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+		Satoshis: 500,
+	}
+
+	// Add some op return data
+	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+	// Generate the TX
+	rawTx, err := CreateTxWithChangeUsingWif(
+		[]*Utxo{utxo},
+		[]*PayToAddress{payTo},
+		[]OpReturnData{opReturn1, opReturn2},
+		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+		nil,
+		nil,
+		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+	)
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	fmt.Printf("rawTx: %s", rawTx.ToString())
+	// Output:rawTx: 0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100beab95997a8b4b0e805aa16af1fed54a0ff80d6e45a330f71787795c394ff99d02207904b4930ccf4dae9e87d1f4b18be343f2fd73bb5500870d7194726919b5f6d8412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff04f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac60010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000
+}
+
+// BenchmarkCreateTxWithChangeUsingWif benchmarks the method CreateTxWithChangeUsingWif()
+func BenchmarkCreateTxWithChangeUsingWif(b *testing.B) {
+	// Use a new UTXO
+	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
+
+	// Add a pay-to address
+	payTo := &PayToAddress{Address: "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", Satoshis: 500}
+
+	// Add some op return data
+	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+	for i := 0; i < b.N; i++ {
+		_, _ = CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			[]OpReturnData{opReturn1, opReturn2},
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
 	}
 }
