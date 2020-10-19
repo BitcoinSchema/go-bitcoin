@@ -53,6 +53,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Get PrivateKey by Path](hd_key.go)
   - [Get HD Child Key](hd_key.go)
   - [Get Addresses from HD Key](hd_key.go)
+  - [Get XPub from HD Key](hd_key.go)
   - [Get PublicKeys for Path](hd_key.go)
   - [Get Addresses for Path](hd_key.go)
 - **PubKeys**
@@ -71,10 +72,11 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Sign](sign.go) & [Verify a Bitcoin Message](verify.go) 
   - [Verify a DER Signature](verify.go)
 - **Transactions**
-  - [Create Tx](transaction.go)
-  - [Create Tx with Change](transaction.go)
-  - [Tx from Hex](transaction.go)
   - [Calculate Fee](transaction.go)
+  - [Create Tx using WIF](transaction.go)
+  - [Create Tx with Change](transaction.go)
+  - [Create Tx](transaction.go)
+  - [Tx from Hex](transaction.go)
 
 
 <details>
