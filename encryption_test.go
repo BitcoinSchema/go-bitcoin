@@ -1,7 +1,6 @@
 package bitcoin
 
 import (
-	"encoding/hex"
 	"fmt"
 	"testing"
 
@@ -34,8 +33,6 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 		{privateKey, `PLXfZ8ZNN9emRVLapZlvsDpjti3TazobtrY1LWibG5ogf07R5u6xwTGSsBGH10E5naTJLOhj38dFFDeG7giLIvK9QbiF8xSqbXoxvILl09AeXSFfOx7154KdOQdoXMxsghUFi91Efh4uWNl53d7feec7NXh7WrRk68sYUQrfGNdvgxyJlYXBpp7pq5f9Yhhm2TxbNyTyh4dkgvXVJtVfFLwiOWYfO9PAwmfDAgoFyP1vpNcL7G2lCsDW2LuaO1PO0L8a0Z55jpqYrYwzUG3IK4HKnx61xWvawFSzapzGLMrrdxVK56WuToZPOVlLpXjGKYNXlfBXh6T4d1uYUQg9aKfrdIZWCXjVnCXrqDa8vrF0djypIPq24zE0KM0oQZfQJT2Vptu1OPJkes2nIpAUTKxtiLIiunbk8EXaRFBAgGYFFHYm3tHLQUaFQ0K6USoTN3Nr92SjgKUcXVJtSeH854fFpSAoi8je74XPLFHU54GJ0LB3ixHFmD1YQFbBJux7738gI05pxZTwl69KXoat8OfFamLhwNxg8BcA8GXpkN6i5UZW8VfvOQ11nfpd5RykehgYeFyZaewUizPTZkVfI8BT5fdBGQAGXfNT8Xo0OiRxb64rB3Q3YcKiwXjpD1gc14vZXb5EzP6y274yh9RODHPi3rZuVYeGDBd1woFHng2cFeu1ZZ1kBpB30jqqoxDvYzHWvUEpeP3mRyyL51pqYECgOoTEB9nZlb8J31sbAAyY5EXGp6mPuxnhYfR03wIPdkVaDgY9IUdBfKxiIfghTw9Zk9NYZWz1THnqe1GfnBqtHTWiHHuBt0vEJ5QNiMyvcsZbLb6djbbtVFV5sEMzRWf8cJInSEQFgcXPRFaZYow2bJiugFTGvt0ZZKscHqn2SJFNKGRgr3zlcTgF3Y33PVJVTg1uOaZw6y6mbVituSAR5LuDN0zlFuvkOvr63Hys3fE4dONIOxphiDyNG0Nvci5I3bB3E1H1gT8vUDCq`, false},
 	}
 
-	t.Log(hex.EncodeToString(privateKey.Serialize()))
-
 	// Run tests
 	var encrypted string
 	for _, test := range tests {
@@ -46,8 +43,6 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 		} else if len(encrypted) == 0 {
 			t.Errorf("%s Failed: [%s] [%s] inputted and expected length > 0, but got: 0", t.Name(), test.inputKey, test.inputData)
 		}
-		t.Log(test.inputData)
-		t.Log(encrypted)
 	}
 }
 
