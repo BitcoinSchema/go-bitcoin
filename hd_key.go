@@ -192,3 +192,17 @@ func GetAddressesForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (addresses [
 
 	return
 }
+
+// GetExtendedPublicKey will get the extended public key (xPub)
+func GetExtendedPublicKey(hdKey *hdkeychain.ExtendedKey) (string, error) {
+
+	// Neuter the extended public key from hd key
+	pub, err := hdKey.Neuter()
+	if err != nil {
+		// Error should never occur if using a valid hd key
+		return "", err
+	}
+
+	// Return the string version
+	return pub.String(), nil
+}

@@ -919,3 +919,77 @@ func BenchmarkGetAddressesForPath(b *testing.B) {
 		_, _ = GetAddressesForPath(hdKey, 5)
 	}
 }
+
+// TestGetExtendedPublicKey will test the method GetExtendedPublicKey()
+func TestGetExtendedPublicKey(t *testing.T) {
+	t.Parallel()
+
+	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Create the list of tests
+	var tests = []struct {
+		input         *hdkeychain.ExtendedKey
+		expectedKey   string
+		expectedError bool
+	}{
+		{validHdKey, "xpub661MyMwAqRbcGjhmJnvR198z2x9XnnDhz2yBtLuTdXQ2VBQj8eJ9RnxmXxKnRPhYy6nLsmabmUfVkbajvP7aZASrrnoZkzmwgyjiNskiefG", false},
+		{new(hdkeychain.ExtendedKey), "zeroed extended key", false},
+	}
+
+	// Run tests
+	var xPub string
+	for _, test := range tests {
+		if xPub, err = GetExtendedPublicKey(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
+		} else if xPub != test.expectedKey {
+			t.Errorf("%s Failed: [%v] inputted address 1 [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, xPub)
+		}
+	}
+}
+
+// TestGetExtendedPublicKeyPanic tests for nil case in GetExtendedPublicKey()
+func TestGetExtendedPublicKeyPanic(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("the code did not panic")
+		}
+	}()
+
+	_, err := GetExtendedPublicKey(nil)
+	if err == nil {
+		t.Fatalf("error expected")
+	}
+}
+
+// ExampleGetExtendedPublicKey example using GetExtendedPublicKey()
+func ExampleGetExtendedPublicKey() {
+	hdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K3PZSwbEeXEYq74EbnfMngzAiMCZcfjzyRpUvt2vQJnaHRTZjeuEmLXeN6BzYRoFsEckfobxE9XaRzeLGfQoxzPzTRyRb6oE")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	var xPub string
+	xPub, err = GetExtendedPublicKey(hdKey)
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("xPub: %s", xPub)
+	// Output:xPub: xpub661MyMwAqRbcFsdv3cmetNVZf656C85e4D6K9ayEE5XxJcp5RaEeratmGmg7ggt3ZShibYcsusYPom69yDG9hf3UE1i4LrXJbuA9d7hPujt
+}
+
+// BenchmarkGetExtendedPublicKey benchmarks the method GetExtendedPublicKey()
+func BenchmarkGetExtendedPublicKey(b *testing.B) {
+	hdKey, _ := GenerateHDKey(SecureSeedLength)
+	for i := 0; i < b.N; i++ {
+		_, _ = GetExtendedPublicKey(hdKey)
+	}
+}
