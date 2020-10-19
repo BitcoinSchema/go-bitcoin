@@ -56,18 +56,11 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 		return
 	}
 
-	// Set the xPriv
+	// Set the xPriv (string)
 	xPrivateKey = masterKey.String()
 
-	// Create the extended public key
-	var pubKey *hdkeychain.ExtendedKey
-	if pubKey, err = masterKey.Neuter(); err != nil {
-		// Error should nearly never occur since it's using a safely derived masterKey
-		return
-	}
-
-	// Set the actual xPub
-	xPublicKey = pubKey.String()
+	// Set the xPub (string)
+	xPublicKey, err = GetExtendedPublicKey(masterKey)
 
 	return
 }
