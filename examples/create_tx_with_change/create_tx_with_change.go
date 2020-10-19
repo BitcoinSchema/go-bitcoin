@@ -26,8 +26,8 @@ func main() {
 	opReturn1 := bitcoin.OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
 	opReturn2 := bitcoin.OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
-	// Generate the TX
-	rawTx, err := bitcoin.CreateTxWithChange(
+	// Generate the TX (use a WIF)
+	rawTx, err := bitcoin.CreateTxWithChangeUsingWif(
 		[]*bitcoin.Utxo{utxo},
 		[]*bitcoin.PayToAddress{payTo},
 		[]bitcoin.OpReturnData{opReturn1, opReturn2},

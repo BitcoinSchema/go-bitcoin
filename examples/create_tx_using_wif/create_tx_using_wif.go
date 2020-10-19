@@ -4,7 +4,6 @@ import (
 	"log"
 
 	"github.com/bitcoinschema/go-bitcoin"
-	"github.com/libsv/libsv/transaction"
 )
 
 func main() {
@@ -27,20 +26,12 @@ func main() {
 	opReturn1 := bitcoin.OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
 	opReturn2 := bitcoin.OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
-	// Use a private key
-	privateKey, err := bitcoin.PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
-	if err != nil {
-		log.Printf("error occurred: %s", err.Error())
-		return
-	}
-
 	// Generate the TX
-	var rawTx *transaction.Transaction
-	rawTx, err = bitcoin.CreateTx(
+	rawTx, err := bitcoin.CreateTxUsingWif(
 		[]*bitcoin.Utxo{utxo},
 		[]*bitcoin.PayToAddress{payTo},
 		[]bitcoin.OpReturnData{opReturn1, opReturn2},
-		privateKey,
+		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
 	if err != nil {
 		log.Printf("error occurred: %s", err.Error())

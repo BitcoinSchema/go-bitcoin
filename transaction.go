@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/bitcoinsv/bsvutil"
+	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/libsv/libsv/transaction"
 	"github.com/libsv/libsv/transaction/output"
 	"github.com/libsv/libsv/transaction/signature"
@@ -60,7 +60,8 @@ func TxFromHex(rawHex string) (*transaction.Transaction, error) {
 //
 // Use this if you don't want to figure out fees/change for a tx
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	changeAddress string, standardRate, dataRate *FeeAmount, wif string) (*transaction.Transaction, error) {
+	changeAddress string, standardRate, dataRate *FeeAmount,
+	privateKey *bsvec.PrivateKey) (*transaction.Transaction, error) {
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -95,7 +96,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	})
 
 	// Create the "Draft tx"
-	tx, err := CreateTx(utxos, payToAddresses, opReturns, wif)
+	tx, err := CreateTx(utxos, payToAddresses, opReturns, privateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +119,23 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	})
 
 	// Create the "Final tx" (or error)
-	return CreateTx(utxos, payToAddresses, opReturns, wif)
+	return CreateTx(utxos, payToAddresses, opReturns, privateKey)
+}
+
+// CreateTxWithChangeUsingWif will automatically create the change output and calculate fees
+//
+// Use this if you don't want to figure out fees/change for a tx
+func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
+	changeAddress string, standardRate, dataRate *FeeAmount, wif string) (*transaction.Transaction, error) {
+
+	// Decode the WIF
+	privateKey, err := WifToPrivateKey(wif)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the "Final tx" (or error)
+	return CreateTxWithChange(utxos, payToAddresses, opReturns, changeAddress, standardRate, dataRate, privateKey)
 }
 
 // CreateTx will create a basic transaction and return the raw transaction (*transaction.Transaction)
@@ -129,7 +146,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
-	opReturns []OpReturnData, wif string) (*transaction.Transaction, error) {
+	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*transaction.Transaction, error) {
 
 	// Missing utxo(s)
 	if len(utxos) == 0 {
@@ -174,20 +191,34 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 		return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
 	}
 
-	// Decode the WIF
-	var decodedWif *bsvutil.WIF
-	if decodedWif, err = bsvutil.DecodeWIF(wif); err != nil {
-		return nil, err
-	}
-
 	// Sign the transaction
-	signer := signature.InternalSigner{PrivateKey: decodedWif.PrivKey, SigHashFlag: 0}
+	signer := signature.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
 	if err = tx.SignAuto(&signer); err != nil {
 		return nil, err
 	}
 
 	// Return the transaction as a raw string
 	return tx, nil
+}
+
+// CreateTxUsingWif will create a basic transaction and return the raw transaction (*transaction.Transaction)
+//
+// Note: this will NOT create a "change" address (it's assumed you have already specified an address)
+// Note: this will NOT handle "fee" calculation (it's assumed you have already calculated the fee)
+//
+// Get the raw hex version: tx.ToString()
+// Get the tx id: tx.GetTxID()
+func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
+	opReturns []OpReturnData, wif string) (*transaction.Transaction, error) {
+
+	// Decode the WIF
+	privateKey, err := WifToPrivateKey(wif)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create the Tx
+	return CreateTx(utxos, addresses, opReturns, privateKey)
 }
 
 // CalculateFeeForTx will estimate a fee for the given transaction
