@@ -73,9 +73,9 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Verify a DER Signature](verify.go)
 - **Transactions**
   - [Calculate Fee](transaction.go)
+  - [Create Tx](transaction.go)  
   - [Create Tx using WIF](transaction.go)
   - [Create Tx with Change](transaction.go)
-  - [Create Tx](transaction.go)
   - [Tx from Hex](transaction.go)
 
 
