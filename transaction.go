@@ -16,13 +16,17 @@ const (
 	// Spec: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec
 
 	// DefaultDataRate is the default rate for feeType: data (500 satoshis per X bytes)
-	DefaultDataRate = 500
+	DefaultDataRate uint64 = 500
 
 	// DefaultStandardRate is the default rate for feeType: standard (500 satoshis per X bytes)
-	DefaultStandardRate = 500
+	DefaultStandardRate uint64 = 500
 
 	// DefaultRateBytes is the default amount of bytes to calculate fees (X Satoshis per X bytes)
-	DefaultRateBytes = 1000
+	DefaultRateBytes uint64 = 1000
+
+	// DustLimit is the minimum value for a tx that can be spent
+	// Note: this is being deprecated in the new node software (TBD)
+	DustLimit uint64 = 546
 )
 
 // FeeAmount is the actual fee for the given feeType (data or standard)
@@ -111,6 +115,11 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 	// Remove the change address (old version with original satoshis)
 	payToAddresses = payToAddresses[:len(payToAddresses)-1]
+
+	// If change is less than dust...
+	// if (totalSatoshis - (totalPayToSatoshis + fee)) < DustLimit {
+	// todo: Warn about change amount being < dust ?
+	// }
 
 	// Add the change address as the difference (now with adjusted fee)
 	payToAddresses = append(payToAddresses, &PayToAddress{
