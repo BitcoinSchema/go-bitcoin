@@ -49,4 +49,5 @@ func main() {
 
 	// Success!
 	log.Printf("rawTx: %s", rawTx.ToString())
+	log.Printf("tx_id: %s", rawTx.GetTxID())
 }

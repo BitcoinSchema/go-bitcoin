@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"encoding/hex"
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
@@ -947,7 +948,7 @@ func TestGetExtendedPublicKey(t *testing.T) {
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
 		} else if xPub != test.expectedKey {
-			t.Errorf("%s Failed: [%v] inputted address 1 [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, xPub)
+			t.Errorf("%s Failed: [%v] inputted and [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, xPub)
 		}
 	}
 }
@@ -991,5 +992,81 @@ func BenchmarkGetExtendedPublicKey(b *testing.B) {
 	hdKey, _ := GenerateHDKey(SecureSeedLength)
 	for i := 0; i < b.N; i++ {
 		_, _ = GetExtendedPublicKey(hdKey)
+	}
+}
+
+// TestGetHDKeyFromExtendedPublicKey will test the method GetHDKeyFromExtendedPublicKey()
+func TestGetHDKeyFromExtendedPublicKey(t *testing.T) {
+	t.Parallel()
+
+	// Create the list of tests
+	var tests = []struct {
+		input         string
+		expectedKey   string
+		expectedError bool
+		expectedNil   bool
+	}{
+		{
+			"xpub661MyMwAqRbcGjhmJnvR198z2x9XnnDhz2yBtLuTdXQ2VBQj8eJ9RnxmXxKnRPhYy6nLsmabmUfVkbajvP7aZASrrnoZkzmwgyjiNskiefG",
+			"xpub661MyMwAqRbcGjhmJnvR198z2x9XnnDhz2yBtLuTdXQ2VBQj8eJ9RnxmXxKnRPhYy6nLsmabmUfVkbajvP7aZASrrnoZkzmwgyjiNskiefG",
+			false,
+			false,
+		},
+		{
+			"xpub661MyMwAqRbcH3WGvLjupmr43L1GVH3MP2WQWvdreDraBeFJy64Xxv4LLX9ZVWWz3ZjZkMuZtSsc9qH9JZR74bR4PWkmtEvP423r6DJR8kA",
+			"xpub661MyMwAqRbcH3WGvLjupmr43L1GVH3MP2WQWvdreDraBeFJy64Xxv4LLX9ZVWWz3ZjZkMuZtSsc9qH9JZR74bR4PWkmtEvP423r6DJR8kA",
+			false,
+			false,
+		},
+		{
+			"",
+			"",
+			true,
+			true,
+		},
+		{
+			"0",
+			"",
+			true,
+			true,
+		},
+	}
+
+	// Run tests
+	for _, test := range tests {
+		if xPub, err := GetHDKeyFromExtendedPublicKey(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+		} else if xPub == nil && !test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+		} else if xPub != nil && test.expectedNil {
+			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+		} else if xPub != nil && xPub.String() != test.expectedKey {
+			t.Errorf("%s Failed: [%s] inputted and [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, xPub)
+		}
+	}
+}
+
+// ExampleGetHDKeyFromExtendedPublicKey example using GetHDKeyFromExtendedPublicKey()
+func ExampleGetHDKeyFromExtendedPublicKey() {
+	// Start with an existing xPub
+	xPub := "xpub661MyMwAqRbcH3WGvLjupmr43L1GVH3MP2WQWvdreDraBeFJy64Xxv4LLX9ZVWWz3ZjZkMuZtSsc9qH9JZR74bR4PWkmtEvP423r6DJR8kA"
+
+	// Convert to a HD key
+	key, err := GetHDKeyFromExtendedPublicKey(xPub)
+	if err != nil {
+		log.Fatalf("error occurred: %s", err.Error())
+	}
+
+	fmt.Printf("key: %s", key.String())
+	// Output:key: xpub661MyMwAqRbcH3WGvLjupmr43L1GVH3MP2WQWvdreDraBeFJy64Xxv4LLX9ZVWWz3ZjZkMuZtSsc9qH9JZR74bR4PWkmtEvP423r6DJR8kA
+}
+
+// BenchmarkGetHDKeyFromExtendedPublicKey benchmarks the method GetHDKeyFromExtendedPublicKey()
+func BenchmarkGetHDKeyFromExtendedPublicKey(b *testing.B) {
+	xPub := "xpub661MyMwAqRbcH3WGvLjupmr43L1GVH3MP2WQWvdreDraBeFJy64Xxv4LLX9ZVWWz3ZjZkMuZtSsc9qH9JZR74bR4PWkmtEvP423r6DJR8kA"
+	for i := 0; i < b.N; i++ {
+		_, _ = GetHDKeyFromExtendedPublicKey(xPub)
 	}
 }

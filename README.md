@@ -54,6 +54,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [Get HD Child Key](hd_key.go)
   - [Get Addresses from HD Key](hd_key.go)
   - [Get XPub from HD Key](hd_key.go)
+  - [Get HD Key from XPub](hd_key.go)
   - [Get PublicKeys for Path](hd_key.go)
   - [Get Addresses for Path](hd_key.go)
 - **PubKeys**

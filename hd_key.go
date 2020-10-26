@@ -199,3 +199,8 @@ func GetExtendedPublicKey(hdKey *hdkeychain.ExtendedKey) (string, error) {
 	// Return the string version
 	return pub.String(), nil
 }
+
+// GetHDKeyFromExtendedPublicKey will get the hd key from an existing extended public key (xPub)
+func GetHDKeyFromExtendedPublicKey(xPublicKey string) (*hdkeychain.ExtendedKey, error) {
+	return hdkeychain.NewKeyFromString(xPublicKey)
+}
