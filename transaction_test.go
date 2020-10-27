@@ -329,29 +329,6 @@ func TestCreateTxErrors(t *testing.T) {
 	}
 }
 
-// TestCreateTxPanic tests for nil case in CreateTx()
-func TestCreateTxPanic(t *testing.T) {
-	t.Parallel()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
-		}
-	}()
-
-	privateKey, _ := WifToPrivateKey("")
-
-	_, _ = CreateTx([]*Utxo{{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
-	}}, []*PayToAddress{{
-		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-		Satoshis: 500,
-	}}, []OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}}, privateKey)
-}
-
 // TestCreateTxUsingWif will test the method CreateTxUsingWif()
 func TestCreateTxUsingWif(t *testing.T) {
 
@@ -933,29 +910,6 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.ToString())
 		}
 	}
-}
-
-// TestCreateTxWithChangePanic tests for nil case in CreateTxWithChange()
-func TestCreateTxWithChangePanic(t *testing.T) {
-	t.Parallel()
-
-	defer func() {
-		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
-		}
-	}()
-
-	privateKey, _ := WifToPrivateKey("")
-
-	_, _ = CreateTxWithChange([]*Utxo{{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
-	}}, []*PayToAddress{{
-		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-		Satoshis: 500,
-	}}, []OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}}, "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", nil, nil, privateKey)
 }
 
 // ExampleCreateTxWithChange example using CreateTxWithChange()
