@@ -104,6 +104,23 @@ func TestCreateTx(t *testing.T) {
 	t.Logf("created tx: %s", rawTx.ToString())
 }
 
+func TestCreateEmptyTx(t *testing.T) {
+	// Generate the TX
+	var rawTx *transaction.Transaction
+	rawTx, err := CreateTx(
+		nil,
+		nil,
+		nil,
+		nil,
+	)
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Show the results
+	t.Logf("created tx: %s", rawTx.ToString())
+}
+
 // ExampleCreateTx example using CreateTx()
 func ExampleCreateTx() {
 

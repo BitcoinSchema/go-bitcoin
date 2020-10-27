@@ -157,11 +157,6 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*transaction.Transaction, error) {
 
-	// Missing utxo(s)
-	if len(utxos) == 0 {
-		return nil, errors.New("utxo(s) are required to create a tx")
-	}
-
 	// Start creating a new transaction
 	tx := transaction.New()
 
@@ -193,17 +188,20 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 		tx.AddOutput(outPut)
 	}
 
-	// Sanity check - not enough satoshis in utxo(s) to cover all paid amount(s)
-	// They should never be equal, since the fee is the spread between the two amounts
-	totalOutputSatoshis := tx.GetTotalOutputSatoshis() // Does not work properly
-	if totalOutputSatoshis >= totalSatoshis {
-		return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
-	}
-
 	// Sign the transaction
-	signer := signature.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
-	if err = tx.SignAuto(&signer); err != nil {
-		return nil, err
+	if privateKey != nil {
+
+		// Sanity check - not enough satoshis in utxo(s) to cover all paid amount(s)
+		// They should never be equal, since the fee is the spread between the two amounts
+		totalOutputSatoshis := tx.GetTotalOutputSatoshis() // Does not work properly
+		if totalOutputSatoshis >= totalSatoshis {
+			return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
+		}
+
+		signer := signature.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
+		if err = tx.SignAuto(&signer); err != nil {
+			return nil, err
+		}
 	}
 
 	// Return the transaction as a raw string
