@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"encoding/hex"
 	"errors"
-	"log"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 )
@@ -34,7 +33,6 @@ func PubKeyFromString(pubKey string) (*bsvec.PublicKey, error) {
 	// Decode from hex string
 	decoded, err := hex.DecodeString(pubKey)
 	if err != nil {
-		log.Println("log", err.Error())
 		return nil, err
 	}
 

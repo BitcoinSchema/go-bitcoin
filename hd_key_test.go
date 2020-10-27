@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"encoding/hex"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
@@ -1056,7 +1055,8 @@ func ExampleGetHDKeyFromExtendedPublicKey() {
 	// Convert to a HD key
 	key, err := GetHDKeyFromExtendedPublicKey(xPub)
 	if err != nil {
-		log.Fatalf("error occurred: %s", err.Error())
+		fmt.Printf("error occurred: %s", err.Error())
+		return
 	}
 
 	fmt.Printf("key: %s", key.String())
