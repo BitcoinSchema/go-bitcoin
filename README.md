@@ -1,13 +1,13 @@
 # go-bitcoin
 > A small collection of utility functions for working with Bitcoin (BSV)
 
-[![Release](https://img.shields.io/github/release-pre/BitcoinSchema/go-bitcoin.svg?logo=github&style=flat&v=3)](https://github.com/BitcoinSchema/go-bitcoin/releases)
-[![Build Status](https://travis-ci.com/BitcoinSchema/go-bitcoin.svg?branch=master&v=3)](https://travis-ci.com/BitcoinSchema/go-bitcoin)
-[![Report](https://goreportcard.com/badge/github.com/BitcoinSchema/go-bitcoin?style=flat&v=3)](https://goreportcard.com/report/github.com/BitcoinSchema/go-bitcoin)
-[![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=3)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
-[![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=3)](https://golang.org/)
-[![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=3)](https://github.com/sponsors/BitcoinSchema)
-[![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=3)](https://gobitcoinsv.com/#sponsor)
+[![Release](https://img.shields.io/github/release-pre/BitcoinSchema/go-bitcoin.svg?logo=github&style=flat&v=4)](https://github.com/BitcoinSchema/go-bitcoin/releases)
+[![Build Status](https://travis-ci.com/BitcoinSchema/go-bitcoin.svg?branch=master&v=4)](https://travis-ci.com/BitcoinSchema/go-bitcoin)
+[![Report](https://goreportcard.com/badge/github.com/BitcoinSchema/go-bitcoin?style=flat&v=4)](https://goreportcard.com/report/github.com/BitcoinSchema/go-bitcoin)
+[![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=4)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
+[![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=4)](https://golang.org/)
+[![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=4)](https://github.com/sponsors/BitcoinSchema)
+[![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=4)](https://gobitcoinsv.com/#sponsor)
 
 <br/>
 
@@ -196,4 +196,4 @@ or by making a [**bitcoin donation**](https://gobitcoinsv.com/#sponsor) to ensur
 
 ## License
 
-![License](https://img.shields.io/github/license/BitcoinSchema/go-bitcoin.svg?style=flat&v=3)
+![License](https://img.shields.io/github/license/BitcoinSchema/go-bitcoin.svg?style=flat&v=4)
