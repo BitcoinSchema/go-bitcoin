@@ -188,15 +188,18 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 		tx.AddOutput(outPut)
 	}
 
-	// Sign the transaction
-	if privateKey != nil {
-
+	// If inputs are supplied, make sure they are sufficient for this transaction
+	if len(tx.GetInputs()) > 0 {
 		// Sanity check - not enough satoshis in utxo(s) to cover all paid amount(s)
 		// They should never be equal, since the fee is the spread between the two amounts
 		totalOutputSatoshis := tx.GetTotalOutputSatoshis() // Does not work properly
 		if totalOutputSatoshis >= totalSatoshis {
 			return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
 		}
+	}
+
+	// Sign the transaction
+	if privateKey != nil {
 
 		signer := signature.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
 		if err = tx.SignAuto(&signer); err != nil {

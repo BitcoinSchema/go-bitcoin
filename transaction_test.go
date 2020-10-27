@@ -244,9 +244,9 @@ func TestCreateTxErrors(t *testing.T) {
 			}},
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"",
-			true,
-			true,
+			"010000000002f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			false,
+			false,
 		},
 		{[]*Utxo{{
 			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
@@ -307,8 +307,9 @@ func TestCreateTxErrors(t *testing.T) {
 	}
 
 	// Run tests
-	for _, test := range tests {
+	for idx, test := range tests {
 
+		fmt.Println("Test", idx)
 		// Private key (from wif)
 		privateKey, err := WifToPrivateKey(test.inputWif)
 		if err != nil && !test.expectedError {
