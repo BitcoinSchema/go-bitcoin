@@ -9,6 +9,6 @@ require (
 	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/itchyny/base58-go v0.1.0
 	github.com/libsv/libsv v0.0.11
-	github.com/piotrnar/gocoin v0.0.0-20201004105208-19152002e94e
+	github.com/piotrnar/gocoin v0.0.0-20201027184336-0c389d7eb2c0
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
 )
