@@ -588,6 +588,81 @@ func BenchmarkGetPrivateKeyFromHDKey(b *testing.B) {
 	}
 }
 
+// TestGetPrivateKeyStringFromHDKey will test the method GetPrivateKeyStringFromHDKey()
+func TestGetPrivateKeyStringFromHDKey(t *testing.T) {
+	t.Parallel()
+
+	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Create the list of tests
+	var tests = []struct {
+		input         *hdkeychain.ExtendedKey
+		expectedKey   string
+		expectedError bool
+	}{
+		{new(hdkeychain.ExtendedKey), "", true},
+		{validHdKey, "8511f5e1e35ab748e7639aa68666df71857866af13fda1d081d5917948a6cd34", false},
+	}
+
+	// Run tests
+	var privateKey string
+	for _, test := range tests {
+		if privateKey, err = GetPrivateKeyStringFromHDKey(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
+		} else if privateKey != test.expectedKey {
+			t.Errorf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, privateKey)
+		}
+	}
+}
+
+// TestGetPrivateKeyStringFromHDKeyPanic tests for nil case in GetPrivateKeyStringFromHDKey()
+func TestGetPrivateKeyStringFromHDKeyPanic(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("the code did not panic")
+		}
+	}()
+
+	_, err := GetPrivateKeyStringFromHDKey(nil)
+	if err == nil {
+		t.Fatalf("error expected")
+	}
+}
+
+// ExampleGetPrivateKeyStringFromHDKey example using GetPrivateKeyStringFromHDKey()
+func ExampleGetPrivateKeyStringFromHDKey() {
+
+	hdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K3PZSwbEeXEYq74EbnfMngzAiMCZcfjzyRpUvt2vQJnaHRTZjeuEmLXeN6BzYRoFsEckfobxE9XaRzeLGfQoxzPzTRyRb6oE")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	var privateKey string
+	if privateKey, err = GetPrivateKeyStringFromHDKey(hdKey); err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	fmt.Printf("private key: %s", privateKey)
+	// Output:private key: 0ccf07f2cbe10dbe6f6034b7efbf62fc83cac3d44f49d67aa22ac8893d294e7a
+}
+
+// BenchmarkGetPrivateKeyStringFromHDKey benchmarks the method GetPrivateKeyStringFromHDKey()
+func BenchmarkGetPrivateKeyStringFromHDKey(b *testing.B) {
+	hdKey, _ := GenerateHDKey(SecureSeedLength)
+	for i := 0; i < b.N; i++ {
+		_, _ = GetPrivateKeyStringFromHDKey(hdKey)
+	}
+}
+
 // TestGetPublicKeyFromHDKey will test the method GetPublicKeyFromHDKey()
 func TestGetPublicKeyFromHDKey(t *testing.T) {
 	t.Parallel()
