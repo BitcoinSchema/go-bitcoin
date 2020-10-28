@@ -748,6 +748,81 @@ func BenchmarkGetAddressFromHDKey(b *testing.B) {
 	}
 }
 
+// TestGetAddressStringFromHDKey will test the method GetAddressStringFromHDKey()
+func TestGetAddressStringFromHDKey(t *testing.T) {
+	t.Parallel()
+
+	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
+	if err != nil {
+		t.Fatalf("error occurred: %s", err.Error())
+	}
+
+	// Create the list of tests
+	var tests = []struct {
+		input           *hdkeychain.ExtendedKey
+		expectedAddress string
+		expectedError   bool
+	}{
+		{new(hdkeychain.ExtendedKey), "", true},
+		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false},
+	}
+
+	// Run tests
+	var address string
+	for _, test := range tests {
+		if address, err = GetAddressStringFromHDKey(test.input); err != nil && !test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+		} else if err == nil && test.expectedError {
+			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
+		} else if address != test.expectedAddress {
+			t.Errorf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedAddress, address)
+		}
+	}
+}
+
+// TestGetAddressStringFromHDKeyPanic tests for nil case in GetAddressStringFromHDKey()
+func TestGetAddressStringFromHDKeyPanic(t *testing.T) {
+	t.Parallel()
+
+	defer func() {
+		if r := recover(); r == nil {
+			t.Errorf("the code did not panic")
+		}
+	}()
+
+	_, err := GetAddressStringFromHDKey(nil)
+	if err == nil {
+		t.Fatalf("error expected")
+	}
+}
+
+// ExampleGetAddressStringFromHDKey example using GetAddressStringFromHDKey()
+func ExampleGetAddressStringFromHDKey() {
+
+	hdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K3PZSwbEeXEYq74EbnfMngzAiMCZcfjzyRpUvt2vQJnaHRTZjeuEmLXeN6BzYRoFsEckfobxE9XaRzeLGfQoxzPzTRyRb6oE")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	var address string
+	if address, err = GetAddressStringFromHDKey(hdKey); err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+
+	fmt.Printf("address: %s", address)
+	// Output:address: 18G2YRH3nRKRx8pnqVFUM5nAJhTZJ3YA4W
+}
+
+// BenchmarkGetAddressStringFromHDKey benchmarks the method GetAddressStringFromHDKey()
+func BenchmarkGetAddressStringFromHDKey(b *testing.B) {
+	hdKey, _ := GenerateHDKey(SecureSeedLength)
+	for i := 0; i < b.N; i++ {
+		_, _ = GetAddressStringFromHDKey(hdKey)
+	}
+}
+
 // TestGetPublicKeysForPath will test the method GetPublicKeysForPath()
 func TestGetPublicKeysForPath(t *testing.T) {
 	t.Parallel()

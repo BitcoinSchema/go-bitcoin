@@ -127,6 +127,17 @@ func GetAddressFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvutil.LegacyAddressP
 	return GetAddressFromPubKey(pubKey)
 }
 
+// GetAddressStringFromHDKey is a helper function to get the Address (string) associated with a given hdKey
+//
+// Expects hdKey to not be nil (otherwise will panic)
+func GetAddressStringFromHDKey(hdKey *hdkeychain.ExtendedKey) (string, error) {
+	address, err := GetAddressFromHDKey(hdKey)
+	if err != nil {
+		return "", err
+	}
+	return address.String(), nil
+}
+
 // GetPublicKeysForPath gets the PublicKeys for a given derivation path
 // Uses the standard m/0/0 (internal) and m/0/1 (external) paths
 // Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
