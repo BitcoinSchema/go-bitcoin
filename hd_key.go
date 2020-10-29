@@ -1,6 +1,8 @@
 package bitcoin
 
 import (
+	"encoding/hex"
+
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvutil"
@@ -102,11 +104,24 @@ func GetPrivateKeyByPath(hdKey *hdkeychain.ExtendedKey, chain, num uint32) (*bsv
 	return childKeyNum.ECPrivKey()
 }
 
-// GetPrivateKeyFromHDKey is a helper function to get the Private Key associated with a given hdKey
+// GetPrivateKeyFromHDKey is a helper function to get the Private Key associated
+// with a given hdKey
 //
 // Expects hdKey to not be nil (otherwise will panic)
 func GetPrivateKeyFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvec.PrivateKey, error) {
 	return hdKey.ECPrivKey()
+}
+
+// GetPrivateKeyStringFromHDKey is a helper function to get the Private Key (string)
+// associated with a given hdKey
+//
+// Expects hdKey to not be nil (otherwise will panic)
+func GetPrivateKeyStringFromHDKey(hdKey *hdkeychain.ExtendedKey) (string, error) {
+	key, err := GetPrivateKeyFromHDKey(hdKey)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(key.Serialize()), nil
 }
 
 // GetPublicKeyFromHDKey is a helper function to get the Public Key associated with a given hdKey
@@ -125,6 +140,17 @@ func GetAddressFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvutil.LegacyAddressP
 		return nil, err
 	}
 	return GetAddressFromPubKey(pubKey)
+}
+
+// GetAddressStringFromHDKey is a helper function to get the Address (string) associated with a given hdKey
+//
+// Expects hdKey to not be nil (otherwise will panic)
+func GetAddressStringFromHDKey(hdKey *hdkeychain.ExtendedKey) (string, error) {
+	address, err := GetAddressFromHDKey(hdKey)
+	if err != nil {
+		return "", err
+	}
+	return address.String(), nil
 }
 
 // GetPublicKeysForPath gets the PublicKeys for a given derivation path
