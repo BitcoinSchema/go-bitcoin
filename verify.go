@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/btcsuite/btcd/btcec"
+	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/itchyny/base58-go"
 	"github.com/piotrnar/gocoin/lib/secp256k1"
 	"golang.org/x/crypto/ripemd160"
@@ -58,8 +58,8 @@ func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified 
 	}
 
 	// Parse the signature
-	var sig *btcec.Signature
-	if sig, err = btcec.ParseDERSignature(sigBytes, btcec.S256()); err != nil {
+	var sig *bsvec.Signature
+	if sig, err = bsvec.ParseDERSignature(sigBytes, bsvec.S256()); err != nil {
 		return
 	}
 
@@ -70,8 +70,8 @@ func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified 
 	}
 
 	// Parse the pubKey
-	var rawPubKey *btcec.PublicKey
-	if rawPubKey, err = btcec.ParsePubKey(pubKeyBytes, btcec.S256()); err != nil {
+	var rawPubKey *bsvec.PublicKey
+	if rawPubKey, err = bsvec.ParsePubKey(pubKeyBytes, bsvec.S256()); err != nil {
 		return
 	}
 
