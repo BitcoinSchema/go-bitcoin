@@ -104,20 +104,3 @@ func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified 
 	verified = sig.Verify(hash[:], rawPubKey)
 	return
 }
-
-// messageHash will compute a hash for the given message & header
-// func messageHash(message, header string) ([]byte, error) {
-// 	headerLength := len(header)
-// 	if headerLength >= 0xfd {
-// 		return nil, fmt.Errorf("long header is not supported")
-// 	}
-// 	messageLength := len(message)
-// 	// if messageLength >= 0xfd {
-// 	// 	return nil, fmt.Errorf("long message is not supported")
-// 	// }
-// 	bitcoinMsg := string([]byte{byte(headerLength)})
-// 	bitcoinMsg += header
-// 	bitcoinMsg += string([]byte{byte(messageLength)})
-// 	bitcoinMsg += message
-// 	return chainhash.DoubleHashB([]byte(bitcoinMsg)), nil
-// }
