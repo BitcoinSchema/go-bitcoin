@@ -79,7 +79,11 @@ func EncryptShared(user1PrivateKey *bsvec.PrivateKey, user2PubKey *bsvec.PublicK
 func EncryptSharedString(user1PrivateKey *bsvec.PrivateKey, user2PubKey *bsvec.PublicKey, data string) (
 	*bsvec.PrivateKey, *bsvec.PublicKey, string, error) {
 
-	sharedPrivKey, sharedPubKey, encryptedData, err := EncryptShared(user1PrivateKey, user2PubKey, []byte(data))
+	// Generate shared keys that can be decrypted by either user
+	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(user1PrivateKey, user2PubKey)
+
+	// Encrypt data with shared key
+	encryptedData, err := bsvec.Encrypt(sharedPubKey, []byte(data))
 
 	return sharedPrivKey, sharedPubKey, hex.EncodeToString(encryptedData), err
 }
