@@ -416,6 +416,7 @@ func BenchmarkDecryptWithPrivateKeyString(b *testing.B) {
 
 // TestEncryptShared will test the method EncryptShared()
 func TestEncryptShared(t *testing.T) {
+	t.Parallel()
 
 	// User 1's private key
 	privKey1, _ := CreatePrivateKey()
@@ -469,6 +470,7 @@ func TestEncryptSharedPanic(t *testing.T) {
 
 // TestEncryptSharedString will test the method EncryptSharedString()
 func TestEncryptSharedString(t *testing.T) {
+	t.Parallel()
 
 	// User 1's private key
 	privKey1, _ := CreatePrivateKey()

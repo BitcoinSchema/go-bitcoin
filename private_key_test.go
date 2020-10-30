@@ -12,6 +12,7 @@ import (
 // encrypt data that can be decrypted by yourself (privkey) and also the owner
 // of the given public key
 func TestGenerateSharedKeyPair(t *testing.T) {
+	t.Parallel()
 
 	// User 1
 	privKey1, _ := CreatePrivateKey()
