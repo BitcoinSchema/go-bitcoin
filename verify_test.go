@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"strconv"
 	"testing"
 
@@ -302,34 +301,6 @@ func TestVerifyMessageSigRecoverFailed(t *testing.T) {
 		}
 	}
 
-}
-
-// TestVerifyMessageGetBin will test the method getBin()
-func TestVerifyMessageGetBin(t *testing.T) {
-	t.Parallel()
-
-	var (
-		// Testing private methods
-		tests = []struct {
-			inputNumber   *secp256k1.Number
-			inputLength   int
-			expectedError bool
-		}{
-			{nil, 1, true},
-			{&secp256k1.Number{Int: *big.NewInt(400)}, 1, true},
-			{&secp256k1.Number{Int: *big.NewInt(1)}, 1, false},
-		}
-	)
-
-	// Run tests
-	for _, test := range tests {
-		if _, err := getBin(test.inputNumber, test.inputLength); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.inputNumber, test.inputLength, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Log(len(test.inputNumber.Bytes()), test.inputLength)
-			t.Errorf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.inputNumber, test.inputLength)
-		}
-	}
 }
 
 // TestVerifyMessageDER will test the method VerifyMessageDER()

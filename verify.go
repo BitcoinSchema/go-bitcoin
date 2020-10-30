@@ -124,24 +124,6 @@ func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (add
 	return bsvecAddress.String()
 }
 
-// This function is copied from "piotrnar/gocoin/lib/secp256k1".
-// And modified for local package.
-// License is:
-//   https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/COPYING
-func getBin(num *secp256k1.Number, le int) ([]byte, error) {
-	if num == nil {
-		return nil, errors.New("secp256k1.Number is nil")
-	}
-	bts := num.Bytes()
-	if len(bts) > le {
-		return nil, errors.New("buffer too small")
-	}
-	if len(bts) == le {
-		return bts, nil
-	}
-	return append(make([]byte, le-len(bts)), bts...), nil
-}
-
 // sigMessageToAddress will convert a signature & message to a list of addresses
 func sigMessageToAddress(signature, message string) ([]string, error) {
 
