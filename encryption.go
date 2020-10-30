@@ -64,11 +64,25 @@ func DecryptWithPrivateKeyString(privateKey, data string) (string, error) {
 }
 
 // EncryptShared will encrypt data and provide shared keys for decryption
-func EncryptShared(u1priv *bsvec.PrivateKey, u2pub *bsvec.PublicKey, in []byte) (
+func EncryptShared(user1PrivateKey *bsvec.PrivateKey, user2PubKey *bsvec.PublicKey, data []byte) (
 	*bsvec.PrivateKey, *bsvec.PublicKey, []byte, error) {
+
 	// Generate shared keys that can be decrypted by either user
-	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(u1priv, u2pub)
+	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(user1PrivateKey, user2PubKey)
+
 	// Encrypt data with shared key
-	encryptedData, err := bsvec.Encrypt(sharedPubKey, in)
+	encryptedData, err := bsvec.Encrypt(sharedPubKey, data)
 	return sharedPrivKey, sharedPubKey, encryptedData, err
+}
+
+// EncryptSharedString will encrypt data and provide shared keys for decryption
+func EncryptSharedString(user1PrivateKey *bsvec.PrivateKey, user2PubKey *bsvec.PublicKey, data string) (
+	*bsvec.PrivateKey, *bsvec.PublicKey, string, error) {
+
+	// Generate shared keys that can be decrypted by either user
+	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(user1PrivateKey, user2PubKey)
+
+	// Encrypt data with shared key
+	encryptedData, err := bsvec.Encrypt(sharedPubKey, []byte(data))
+	return sharedPrivKey, sharedPubKey, hex.EncodeToString(encryptedData), err
 }

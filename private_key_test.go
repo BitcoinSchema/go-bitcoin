@@ -8,11 +8,10 @@ import (
 	"github.com/bitcoinsv/bsvd/bsvec"
 )
 
-// TestGenerateSharedKeyPair will test creating a shared key that can be used to encrypt data that can be decrypted by yourself (privkey) and also the owner of the given public key
+// TestGenerateSharedKeyPair will test creating a shared key that can be used to
+// encrypt data that can be decrypted by yourself (privkey) and also the owner
+// of the given public key
 func TestGenerateSharedKeyPair(t *testing.T) {
-
-	// The data that will be encrypted / shared
-	testString := "testing 1, 2, 3..."
 
 	// User 1
 	privKey1, _ := CreatePrivateKey()
@@ -23,7 +22,7 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	_, user1SharedPubKey := GenerateSharedKeyPair(privKey1, privKey2.PubKey())
 
 	// encrypt something with the shared public key
-	eciesTest, err := bsvec.Encrypt(user1SharedPubKey, []byte(testString))
+	encryptTest, err := bsvec.Encrypt(user1SharedPubKey, []byte(testEncryptionMessage))
 	if err != nil {
 		t.Errorf("Failed to encrypt test data %s", err)
 	}
@@ -31,15 +30,18 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	// user 2 decrypts it
 	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
 
-	decryptedTestData, err := bsvec.Decrypt(user2SharedPrivKey, eciesTest)
+	var decryptedTestData []byte
+	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, encryptTest)
 	if err != nil {
 		t.Errorf("Failed to decrypt test data %s", err)
 	}
 
-	if string(decryptedTestData) != testString {
+	if string(decryptedTestData) != testEncryptionMessage {
 		t.Errorf("Decrypted string doesnt match %s", decryptedTestData)
 	}
 }
+
+// todo: examples and benchmark for GenerateSharedKeyPair()
 
 // TestCreatePrivateKey will test the method CreatePrivateKey()
 func TestCreatePrivateKey(t *testing.T) {

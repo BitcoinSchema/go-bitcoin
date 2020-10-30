@@ -12,10 +12,13 @@ import (
 )
 
 // GenerateSharedKeyPair creates shared keys that can be used to encrypt/decrypt data
-// that can be decrypted by yourself (privkey) and also the owner of the given public key
-func GenerateSharedKeyPair(privKey *bsvec.PrivateKey, pubKey *bsvec.PublicKey) (*bsvec.PrivateKey, *bsvec.PublicKey) {
-	sharedSecret := bsvec.GenerateSharedSecret(privKey, pubKey)
-	return bsvec.PrivKeyFromBytes(bsvec.S256(), sharedSecret)
+// that can be decrypted by yourself (privateKey) and also the owner of the given public key
+func GenerateSharedKeyPair(privateKey *bsvec.PrivateKey,
+	pubKey *bsvec.PublicKey) (*bsvec.PrivateKey, *bsvec.PublicKey) {
+	return bsvec.PrivKeyFromBytes(
+		bsvec.S256(),
+		bsvec.GenerateSharedSecret(privateKey, pubKey),
+	)
 }
 
 // PrivateKeyFromString turns a private key (hex encoded string) into an bsvec.PrivateKey
