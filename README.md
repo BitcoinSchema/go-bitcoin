@@ -50,6 +50,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - **Encryption**
   - [Encrypt With Private Key](encryption.go)
   - [Decrypt With Private Key](encryption.go)
+  - [Encrypt Shared](encryption.go)
 - **HD Keys** _(Master / xPub)_
   - [Generate HD Keys](hd_key.go)
   - [Generate HD Key from string](hd_key.go)
