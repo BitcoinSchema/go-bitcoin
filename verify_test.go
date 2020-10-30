@@ -28,14 +28,65 @@ func TestVerifyMessage(t *testing.T) {
 		inputData      string
 		expectedError  bool
 	}{
-		{"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", "Testing!", false},
-		{"", "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", "Testing!", true},
-		{"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "", "Testing!", true},
-		{"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", "", true},
-		{"0", "IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=", "Testing!", true},
-		{"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "GBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4naZ=", "Testing!", true},
-		{"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "GBD=", "Testing!", true},
-		{"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ", "GBse5w0f839t8wej8f2D=", "Testing!", true},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
+			"Testing!",
+			false,
+		},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"IIIjej1rrUaPXYBPWVPjqyO29vbGCAA6SyMVGebk3nUjIypyRnJj58DSchfalVfkUZ+1VxRaKOx92TzC0I7UlKU=",
+			"This is very very very very very very very very very very very very very very very very very" +
+				" very very very very very very very very very very very very very very very very very very very very " +
+				"very very very very very very very very very very very very very very very very very very very very " +
+				"very very very very very very very very very very very very very very very very very very very very " +
+				"very very very very very very very very very very very very very very very very very very very very " +
+				"very very very very very very very very long message",
+			true,
+		},
+		{
+			"",
+			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
+			"Testing!",
+			true,
+		},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"",
+			"Testing!",
+			true,
+		},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
+			"",
+			true,
+		},
+		{
+			"0",
+			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
+			"Testing!",
+			true,
+		},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"GBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4naZ=",
+			"Testing!",
+			true,
+		},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"GBD=",
+			"Testing!",
+			true,
+		},
+		{
+			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
+			"GBse5w0f839t8wej8f2D=",
+			"Testing!",
+			true,
+		},
 	}
 
 	// Run tests
@@ -90,8 +141,7 @@ func TestVerifyMessageMessageHash(t *testing.T) {
 		{"", hBSV, "80e795d4a4caadd7047af389d9f7f220562feb6196032e2131e10563352c4bcc", false},
 		{"example message", "", "f91e1e5a01b6aad5ec785946e4233b0613bf6183ffde8da9879949cbf7d7ca57", false},
 		{"", "4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", true},
-		// @mrz - Disabled testing message length
-		// {"4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", "", true},
+		{"4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", "", true},
 	}
 
 	// Run tests

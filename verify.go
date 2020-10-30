@@ -94,12 +94,9 @@ func messageHash(message, header string) ([]byte, error) {
 		return nil, fmt.Errorf("long header is not supported")
 	}
 	messageLength := len(message)
-	/*
-		// @mrz testing with no limit to the size of the message
-		if messageLength >= 0xfd {
-			return nil, fmt.Errorf("long message is not supported")
-		}
-	*/
+	if messageLength >= 0xfd {
+		return nil, fmt.Errorf("long message is not supported")
+	}
 	bitcoinMsg := string([]byte{byte(headerLength)})
 	bitcoinMsg += header
 	bitcoinMsg += string([]byte{byte(messageLength)})
