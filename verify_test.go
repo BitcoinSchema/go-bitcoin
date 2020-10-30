@@ -227,10 +227,7 @@ func TestVerifyMessageSigRecoverFailed(t *testing.T) {
 		exp.X.SetHex(vs[i][4])
 		exp.Y.SetHex(vs[i][5])
 
-		var success bool
-		success = secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey)
-
-		if success {
+		if secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey) {
 			t.Fatalf("sigRecover should have failed")
 		}
 	}

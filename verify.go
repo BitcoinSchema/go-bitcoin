@@ -33,24 +33,31 @@ func VerifyMessage(address, sig, data string) error {
 	// Validate the signature - this just shows that it was valid at all.
 	// we will compare it with the key next.
 	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, hBSV)
-	wire.WriteVarString(&buf, 0, data)
+	if err = wire.WriteVarString(&buf, 0, hBSV); err != nil {
+		return err
+	}
+	if err = wire.WriteVarString(&buf, 0, data); err != nil {
+		return err
+	}
+
+	// Create the hash
 	expectedMessageHash := chainhash.DoubleHashB(buf.Bytes())
 
-	pk, wasCompressed, err := bsvec.RecoverCompact(bsvec.S256(), decodedSig, expectedMessageHash)
-	if err != nil {
+	var publicKey *bsvec.PublicKey
+	var wasCompressed bool
+	if publicKey, wasCompressed, err = bsvec.RecoverCompact(bsvec.S256(), decodedSig, expectedMessageHash); err != nil {
 		return err
 	}
 
 	// Reconstruct the pubkey hash.
 	var serializedPK []byte
 	if wasCompressed {
-		serializedPK = pk.SerializeCompressed()
+		serializedPK = publicKey.SerializeCompressed()
 	} else {
-		serializedPK = pk.SerializeUncompressed()
+		serializedPK = publicKey.SerializeUncompressed()
 	}
-	bsvecAddress, err := bsvutil.NewAddressPubKey(serializedPK, &chaincfg.MainNetParams)
-	if err != nil {
+	var bsvecAddress *bsvutil.AddressPubKey
+	if bsvecAddress, err = bsvutil.NewAddressPubKey(serializedPK, &chaincfg.MainNetParams); err != nil {
 		return err
 	}
 

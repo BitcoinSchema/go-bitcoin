@@ -19,18 +19,26 @@ func SignMessage(privateKey string, message string) (string, error) {
 	}
 
 	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, hBSV)
-	wire.WriteVarString(&buf, 0, message)
-
-	messageHash := chainhash.DoubleHashB(buf.Bytes())
-
-	ecdsaPrivateKey, err := PrivateKeyFromString(privateKey)
-	if err != nil {
+	var err error
+	if err = wire.WriteVarString(&buf, 0, hBSV); err != nil {
 		return "", err
 	}
+	if err = wire.WriteVarString(&buf, 0, message); err != nil {
+		return "", err
+	}
+
+	// Create the hash
+	messageHash := chainhash.DoubleHashB(buf.Bytes())
+
+	// Get the private key
+	var ecdsaPrivateKey *bsvec.PrivateKey
+	if ecdsaPrivateKey, err = PrivateKeyFromString(privateKey); err != nil {
+		return "", err
+	}
+
+	// Sign
 	var sigBytes []byte
-	sigBytes, err = bsvec.SignCompact(bsvec.S256(), ecdsaPrivateKey, messageHash, true)
-	if err != nil {
+	if sigBytes, err = bsvec.SignCompact(bsvec.S256(), ecdsaPrivateKey, messageHash, true); err != nil {
 		return "", err
 	}
 	return base64.StdEncoding.EncodeToString(sigBytes), nil
