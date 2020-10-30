@@ -89,8 +89,9 @@ func TestVerifyMessageMessageHash(t *testing.T) {
 		{"example message", hBSV, "002c483012a3c71d36349682d5ef6495926d4712b5cd2462f1e3c9f57bd4449f", false},
 		{"", hBSV, "80e795d4a4caadd7047af389d9f7f220562feb6196032e2131e10563352c4bcc", false},
 		{"example message", "", "f91e1e5a01b6aad5ec785946e4233b0613bf6183ffde8da9879949cbf7d7ca57", false},
-		{"4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", "", true},
 		{"", "4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", true},
+		// @mrz - Disabled testing message length
+		// {"4qdD3HdK7SC4R9wTgfhr4QkNqRCKunbtRFlYPRYY6lGPiTbA9wZplnscnazyK0NMAx3KtvjDwWIX4J8djkSIYZaSNFEmztekNoe8NR0MLydp21U6Ayfm97oHelvTBcI5hQYccY45oI2KKEB1gyS0V6pbxoDtgjbCAGcnQvLB2iFykNcdU7A6Yntx812tKp90KilPADcEoKfkexMddqJ1pMz262MNhpTWmC4QOFMlB3xB5iTy2fxm6DgT3QLkiesk3kwM", "", "", true},
 	}
 
 	// Run tests
