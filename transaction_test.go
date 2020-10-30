@@ -307,9 +307,8 @@ func TestCreateTxErrors(t *testing.T) {
 	}
 
 	// Run tests
-	for idx, test := range tests {
+	for _, test := range tests {
 
-		fmt.Println("Test", idx)
 		// Private key (from wif)
 		privateKey, err := WifToPrivateKey(test.inputWif)
 		if err != nil && !test.expectedError {

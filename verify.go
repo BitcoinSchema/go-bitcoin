@@ -1,14 +1,17 @@
 package bitcoin
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/hex"
-	"errors"
 	"fmt"
+	"log"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
-	"github.com/piotrnar/gocoin/lib/secp256k1"
+	"github.com/bitcoinsv/bsvd/wire"
+	"github.com/bitcoinsv/bsvutil"
 )
 
 const (
@@ -21,22 +24,47 @@ const (
 //
 // Error will occur if verify fails or verification is not successful (no bool)
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
-func VerifyMessage(address, signature, data string) error {
-	if len(address) == 0 {
-		return errors.New("address is missing")
-	} else if len(signature) == 0 {
-		return errors.New("signature is missing")
-	}
-	addresses, err := sigMessageToAddress(signature, data)
+func VerifyMessage(address, sig, data string) error {
+
+	decodedSig, err := base64.StdEncoding.DecodeString(sig)
 	if err != nil {
 		return err
 	}
-	for _, testAddress := range addresses {
-		if address == testAddress {
-			return nil
-		}
+
+	// Validate the signature - this just shows that it was valid at all.
+	// we will compare it with the key next.
+	var buf bytes.Buffer
+	wire.WriteVarString(&buf, 0, hBSV)
+	// TODO!!! The 0 here controls the variable length integer
+	if len(data) > 0xFD {
+		// https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
+		log.Println("Long message! Change varint!")
 	}
-	return fmt.Errorf("address: %s not found in %s", address, addresses)
+	wire.WriteVarString(&buf, 0, data)
+	expectedMessageHash := chainhash.DoubleHashB(buf.Bytes())
+
+	pk, wasCompressed, err := bsvec.RecoverCompact(bsvec.S256(), decodedSig, expectedMessageHash)
+	if err != nil {
+		return err
+	}
+
+	// Reconstruct the pubkey hash.
+	var serializedPK []byte
+	if wasCompressed {
+		serializedPK = pk.SerializeCompressed()
+	} else {
+		serializedPK = pk.SerializeUncompressed()
+	}
+	bsvecAddress, err := bsvutil.NewAddressPubKey(serializedPK, &chaincfg.MainNetParams)
+	if err != nil {
+		return err
+	}
+
+	// Return nil if addresses match.
+	if bsvecAddress.EncodeAddress() == address {
+		return nil
+	}
+	return fmt.Errorf("address: %s not found vs %s", address, bsvecAddress.EncodeAddress())
 }
 
 // VerifyMessageDER will take a message string, a public key string and a signature string
@@ -78,83 +106,18 @@ func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified 
 }
 
 // messageHash will compute a hash for the given message & header
-func messageHash(message, header string) ([]byte, error) {
-	headerLength := len(header)
-	if headerLength >= 0xfd {
-		return nil, fmt.Errorf("long header is not supported")
-	}
-	messageLength := len(message)
-	if messageLength >= 0xfd {
-		return nil, fmt.Errorf("long message is not supported")
-	}
-	bitcoinMsg := string([]byte{byte(headerLength)})
-	bitcoinMsg += header
-	bitcoinMsg += string([]byte{byte(messageLength)})
-	bitcoinMsg += message
-	return chainhash.DoubleHashB([]byte(bitcoinMsg)), nil
-}
-
-// parseSignature will parse the given signature
-func parseSignature(signature string) (sig secp256k1.Signature, recID int, err error) {
-	// todo: is this 64 or 65? is it always the same?
-	// panic was occurring: sig.R.SetBytes(sigRaw[1 : 1+32])
-	if len(signature) < 64 {
-		err = fmt.Errorf("signature is less than %d characters", 64)
-		return
-	}
-	var sigRaw []byte
-	if sigRaw, err = base64.StdEncoding.DecodeString(signature); err != nil {
-		return
-	}
-	r0 := sigRaw[0] - 27
-	recID = int(r0 & 3)
-	if (r0 & 4) == 1 {
-		err = fmt.Errorf("compressed type is not supported")
-		return
-	}
-	sig.R.SetBytes(sigRaw[1 : 1+32])
-	sig.S.SetBytes(sigRaw[1+32 : 1+32+32])
-	return
-}
-
-// pubKeyToAddress will convert a pubkey to an address
-func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (address string) {
-	pubkey, _ := bsvec.ParsePubKey(pubkeyXy2.Bytes(compressed), bsvec.S256())
-	bsvecAddress, _ := GetAddressFromPubKey(pubkey)
-	return bsvecAddress.String()
-}
-
-// sigMessageToAddress will convert a signature & message to a list of addresses
-func sigMessageToAddress(signature, message string) ([]string, error) {
-
-	// Get message hash
-	msgHash, err := messageHash(message, hBSV)
-	if err != nil {
-		return nil, err
-	}
-
-	// Parse the signature
-	var sig secp256k1.Signature
-	var recID int
-	sig, recID, err = parseSignature(signature)
-	if err != nil {
-		return nil, err
-	}
-
-	var msg secp256k1.Number
-	msg.SetBytes(msgHash)
-
-	var pubkeyXy2 secp256k1.XY
-	var ret bool
-	ret = secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msgHash, recID, &pubkeyXy2)
-	if !ret {
-		return nil, fmt.Errorf("recover pubkey failed")
-	}
-
-	addresses := make([]string, 2)
-	for i, compressed := range []bool{true, false} {
-		addressString := pubKeyToAddress(pubkeyXy2, compressed, []byte{byte(0)})
-		addresses[i] = addressString
-	}
-	return addresses, nil
-}
+// func messageHash(message, header string) ([]byte, error) {
+// 	headerLength := len(header)
+// 	if headerLength >= 0xfd {
+// 		return nil, fmt.Errorf("long header is not supported")
+// 	}
+// 	messageLength := len(message)
+// 	// if messageLength >= 0xfd {
+// 	// 	return nil, fmt.Errorf("long message is not supported")
+// 	// }
+// 	bitcoinMsg := string([]byte{byte(headerLength)})
+// 	bitcoinMsg += header
+// 	bitcoinMsg += string([]byte{byte(messageLength)})
+// 	bitcoinMsg += message
+// 	return chainhash.DoubleHashB([]byte(bitcoinMsg)), nil
+// }
