@@ -142,57 +142,6 @@ func getBin(num *secp256k1.Number, le int) ([]byte, error) {
 	return append(make([]byte, le-len(bts)), bts...), nil
 }
 
-// This function is copied from "piotrnar/gocoin/lib/secp256k1".
-// And modified for local package.
-// License is:
-//   https://github.com/piotrnar/gocoin/blob/master/lib/secp256k1/COPYING
-func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Number, recID int) (bool, error) {
-	if sig == nil {
-		return false, errors.New("sig is nil")
-	}
-
-	var rx, rn, u1, u2 secp256k1.Number
-	var fx secp256k1.Field
-	var X secp256k1.XY
-	var xj, qj secp256k1.XYZ
-
-	rx.Set(&sig.R.Int)
-	if (recID & 2) != 0 {
-		rx.Add(&rx.Int, &secp256k1.TheCurve.Order.Int)
-		if rx.Cmp(bsvec.S256().B) >= 0 {
-			return false, errors.New("error in recoverSig")
-		}
-	}
-
-	bin, err := getBin(&rx, 32)
-	if err != nil {
-		return false, err
-	}
-
-	fx.SetB32(bin)
-
-	X.SetXO(&fx, (recID&1) != 0)
-	if !X.IsValid() {
-		return false, errors.New("x.IsValid failed")
-	}
-
-	xj.SetXY(&X)
-	rn.ModInverse(&sig.R.Int, &secp256k1.TheCurve.Order.Int)
-
-	u1.Mul(&rn.Int, &m.Int)
-	u1.Mod(&u1.Int, &secp256k1.TheCurve.Order.Int)
-
-	u1.Sub(&secp256k1.TheCurve.Order.Int, &u1.Int)
-
-	u2.Mul(&rn.Int, &sig.S.Int)
-	u2.Mod(&u2.Int, &secp256k1.TheCurve.Order.Int)
-
-	xj.ECmult(&qj, &u2, &u1)
-	pubkey.SetXYZ(&qj)
-
-	return true, nil
-}
-
 // sigMessageToAddress will convert a signature & message to a list of addresses
 func sigMessageToAddress(signature, message string) ([]string, error) {
 
@@ -209,15 +158,14 @@ func sigMessageToAddress(signature, message string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	var msg secp256k1.Number
 	msg.SetBytes(msgHash)
 
 	var pubkeyXy2 secp256k1.XY
 	var ret bool
-	ret, err = recoverSig(&sig, &pubkeyXy2, &msg, recID)
-	if err != nil {
-		return nil, err
-	} else if !ret {
+	ret = secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msgHash, recID, &pubkeyXy2)
+	if !ret {
 		return nil, fmt.Errorf("recover pubkey failed")
 	}
 

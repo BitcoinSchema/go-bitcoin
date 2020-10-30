@@ -225,7 +225,7 @@ func TestVerifyMessageSigRecover(t *testing.T) {
 		exp.X.SetHex(vs[i][4])
 		exp.Y.SetHex(vs[i][5])
 
-		success, _ := recoverSig(&sig, &pubkey, &msg, int(rid))
+		success := secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey)
 
 		if success {
 			if !exp.X.Equals(&pubkey.X) {
@@ -295,19 +295,13 @@ func TestVerifyMessageSigRecoverFailed(t *testing.T) {
 		exp.Y.SetHex(vs[i][5])
 
 		var success bool
-		success, err = recoverSig(&sig, &pubkey, &msg, int(rid))
+		success = secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey)
 
 		if success {
 			t.Fatalf("sigRecover should have failed")
-		} else if err == nil {
-			t.Error("sigRecover should have thrown an error")
 		}
 	}
 
-	// Test nil case
-	if _, err := recoverSig(nil, &pubkey, &msg, 1); err == nil {
-		t.Fatalf("error was expected with nil sig")
-	}
 }
 
 // TestVerifyMessageGetBin will test the method getBin()
