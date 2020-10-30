@@ -39,7 +39,7 @@ func VerifyMessage(address, signature, data string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("address: %s not found", address)
+	return fmt.Errorf("address: %s not found in: %v ", address, addresses)
 }
 
 // VerifyMessageDER will take a message string, a public key string and a signature string
