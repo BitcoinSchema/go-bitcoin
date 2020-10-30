@@ -119,7 +119,6 @@ func parseSignature(signature string) (sig secp256k1.Signature, recID int, err e
 
 // pubKeyToAddress will convert a pubkey to an address
 func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (address string) {
-
 	pubkey, _ := bsvec.ParsePubKey(pubkeyXy2.Bytes(compressed), bsvec.S256())
 	bsvecAddress, _ := GetAddressFromPubKey(pubkey)
 	return bsvecAddress.String()
@@ -151,8 +150,6 @@ func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Num
 	if sig == nil {
 		return false, errors.New("sig is nil")
 	}
-
-	bsvec.ParseSignature(sig.Bytes(), bsvec.S256())
 
 	var rx, rn, u1, u2 secp256k1.Number
 	var fx secp256k1.Field
