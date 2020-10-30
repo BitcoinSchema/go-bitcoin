@@ -413,18 +413,19 @@ func BenchmarkDecryptWithPrivateKeyString(b *testing.B) {
 
 func TestEncryptShared(t *testing.T) {
 
-	// The data that will be encrypted / shared
+	// This data will be encrypted / shared
 	testString := "testing 1, 2, 3..."
 
-	// User 1
+	// user 1
 	privKey1, _ := CreatePrivateKey()
 
-	// User 2
+	// user 2
 	privKey2, _ := CreatePrivateKey()
 
+	// user 1 encrypts it
 	_, _, encryptedData, err := EncryptShared(privKey1, privKey2.PubKey(), []byte(testString))
 	if err != nil {
-		t.Errorf("Failed to generate a shared key pair %s", err)
+		t.Errorf("Failed to encrypt data for sharing %s", err)
 	}
 
 	// user 2 decrypts it
@@ -441,6 +442,4 @@ func TestEncryptShared(t *testing.T) {
 	if string(decryptedTestData) != testString {
 		t.Errorf("Decrypted string doesnt match %s", decryptedTestData)
 	}
-
-	return
 }
