@@ -34,14 +34,14 @@ func TestVerifyMessage(t *testing.T) {
 		},
 		{
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
-			"IIIjej1rrUaPXYBPWVPjqyO29vbGCAA6SyMVGebk3nUjIypyRnJj58DSchfalVfkUZ+1VxRaKOx92TzC0I7UlKU=",
+			"Hzy3iX82OKqLHEErf4YyzoZW+SvO7WLBtl6SuK/HfY0zJHguR0JqzurZkSz9kz2RFboGOzKENf2jMUIE/Pm0tIY=",
 			"This is very very very very very very very very very very very very very very very very very" +
 				" very very very very very very very very very very very very very very very very very very very very " +
 				"very very very very very very very very very very very very very very very very very very very very " +
 				"very very very very very very very very very very very very very very very very very very very very " +
 				"very very very very very very very very very very very very very very very very very very very very " +
 				"very very very very very very very very long message",
-			true,
+			false,
 		},
 		{
 			"",

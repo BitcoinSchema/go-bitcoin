@@ -31,7 +31,7 @@ func TestSignMessage(t *testing.T) {
 				"very very very very very very very very very very very very very very very very very very very very " +
 				"very very very very very very very very very very very very very very very very very very very very " +
 				"very very very very very very very very long message",
-			"IIIjej1rrUaPXYBPWVPjqyO29vbGCAA6SyMVGebk3nUjIypyRnJj58DSchfalVfkUZ+1VxRaKOx92TzC0I7UlKU=",
+			"Hzy3iX82OKqLHEErf4YyzoZW+SvO7WLBtl6SuK/HfY0zJHguR0JqzurZkSz9kz2RFboGOzKENf2jMUIE/Pm0tIY=",
 			false,
 		},
 		{

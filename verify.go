@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"fmt"
-	"log"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
@@ -35,11 +34,6 @@ func VerifyMessage(address, sig, data string) error {
 	// we will compare it with the key next.
 	var buf bytes.Buffer
 	wire.WriteVarString(&buf, 0, hBSV)
-	// TODO!!! The 0 here controls the variable length integer
-	if len(data) > 0xFD {
-		// https://en.bitcoin.it/wiki/Protocol_documentation#Variable_length_integer
-		log.Println("Long message! Change varint!")
-	}
 	wire.WriteVarString(&buf, 0, data)
 	expectedMessageHash := chainhash.DoubleHashB(buf.Bytes())
 
