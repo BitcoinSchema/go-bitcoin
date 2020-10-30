@@ -20,10 +20,7 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	// User 2
 	privKey2, _ := CreatePrivateKey()
 
-	_, user1SharedPubKey, err := GenerateSharedKeyPair(privKey1, privKey2.PubKey())
-	if err != nil {
-		t.Errorf("Failed to generate a shared key pair %s", err)
-	}
+	_, user1SharedPubKey := GenerateSharedKeyPair(privKey1, privKey2.PubKey())
 
 	// encrypt something with the shared public key
 	eciesTest, err := bsvec.Encrypt(user1SharedPubKey, []byte(testString))
@@ -32,10 +29,7 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	}
 
 	// user 2 decrypts it
-	user2SharedPrivKey, _, err := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
-	if err != nil {
-		t.Errorf("Failed to generate a shared key pair %s", err)
-	}
+	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
 
 	decryptedTestData, err := bsvec.Decrypt(user2SharedPrivKey, eciesTest)
 	if err != nil {
@@ -45,8 +39,6 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	if string(decryptedTestData) != testString {
 		t.Errorf("Decrypted string doesnt match %s", decryptedTestData)
 	}
-
-	return
 }
 
 // TestCreatePrivateKey will test the method CreatePrivateKey()

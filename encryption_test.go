@@ -429,10 +429,7 @@ func TestEncryptShared(t *testing.T) {
 	}
 
 	// user 2 decrypts it
-	user2SharedPrivKey, _, err := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
-	if err != nil {
-		t.Errorf("Failed to generate a shared key pair %s", err)
-	}
+	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
 
 	decryptedTestData, err := bsvec.Decrypt(user2SharedPrivKey, encryptedData)
 	if err != nil {
