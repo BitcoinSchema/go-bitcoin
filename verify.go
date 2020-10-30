@@ -1,17 +1,14 @@
 package bitcoin
 
 import (
-	"crypto/sha256"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/big"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
-	"github.com/itchyny/base58-go"
+	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 	"github.com/piotrnar/gocoin/lib/secp256k1"
-	"golang.org/x/crypto/ripemd160"
 )
 
 const (
@@ -39,7 +36,7 @@ func VerifyMessage(address, signature, data string) error {
 			return nil
 		}
 	}
-	return fmt.Errorf("address: %s not found in: %v ", address, addresses)
+	return fmt.Errorf("address: %s not found in %s", address, addresses)
 }
 
 // VerifyMessageDER will take a message string, a public key string and a signature string
@@ -80,13 +77,6 @@ func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified 
 	return
 }
 
-// sha256d is a double sha256
-func sha256d(body []byte) []byte {
-	msgHash1 := sha256.Sum256(body)
-	msgHash2 := sha256.Sum256(msgHash1[:])
-	return msgHash2[:]
-}
-
 // messageHash will compute a hash for the given message & header
 func messageHash(message, header string) ([]byte, error) {
 	headerLength := len(header)
@@ -101,7 +91,7 @@ func messageHash(message, header string) ([]byte, error) {
 	bitcoinMsg += header
 	bitcoinMsg += string([]byte{byte(messageLength)})
 	bitcoinMsg += message
-	return sha256d([]byte(bitcoinMsg)), nil
+	return chainhash.DoubleHashB([]byte(bitcoinMsg)), nil
 }
 
 // parseSignature will parse the given signature
@@ -128,44 +118,11 @@ func parseSignature(signature string) (sig secp256k1.Signature, recID int, err e
 }
 
 // pubKeyToAddress will convert a pubkey to an address
-func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (byteCopy []byte) {
-	size := 65
-	if compressed {
-		size = 33
-	}
-	out := make([]byte, size)
-	pubkeyXy2.GetPublicKey(out)
-	sha256H := sha256.New()
-	sha256H.Reset()
-	_, _ = sha256H.Write(out)
-	pubHash1 := sha256H.Sum(nil)
-	ripemd160H := ripemd160.New()
-	ripemd160H.Reset()
-	_, _ = ripemd160H.Write(pubHash1)
-	pubHash2 := ripemd160H.Sum(nil)
-	byteCopy = append(magic, pubHash2...)
-	hash2 := sha256d(byteCopy)
-	byteCopy = append(byteCopy, hash2[0:4]...)
-	return
-}
+func pubKeyToAddress(pubkeyXy2 secp256k1.XY, compressed bool, magic []byte) (address string) {
 
-// addressToString will convert a raw address to a string version
-func addressToString(byteCopy []byte) (s string, err error) {
-	z := new(big.Int)
-	z.SetBytes(byteCopy)
-	enc := base58.BitcoinEncoding
-	var encodeResults []byte
-	if encodeResults, err = enc.Encode([]byte(z.String())); err != nil {
-		return
-	}
-	s = string(encodeResults)
-	for _, v := range byteCopy {
-		if v != 0 {
-			break
-		}
-		s = "1" + s
-	}
-	return
+	pubkey, _ := bsvec.ParsePubKey(pubkeyXy2.Bytes(compressed), bsvec.S256())
+	bsvecAddress, _ := GetAddressFromPubKey(pubkey)
+	return bsvecAddress.String()
 }
 
 // This function is copied from "piotrnar/gocoin/lib/secp256k1".
@@ -194,10 +151,9 @@ func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Num
 	if sig == nil {
 		return false, errors.New("sig is nil")
 	}
-	var theCurveP secp256k1.Number
-	theCurveP.SetBytes([]byte{
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
-		0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFE, 0xFF, 0xFF, 0xFC, 0x2F})
+
+	bsvec.ParseSignature(sig.Bytes(), bsvec.S256())
+
 	var rx, rn, u1, u2 secp256k1.Number
 	var fx secp256k1.Field
 	var X secp256k1.XY
@@ -206,7 +162,7 @@ func recoverSig(sig *secp256k1.Signature, pubkey *secp256k1.XY, m *secp256k1.Num
 	rx.Set(&sig.R.Int)
 	if (recID & 2) != 0 {
 		rx.Add(&rx.Int, &secp256k1.TheCurve.Order.Int)
-		if rx.Cmp(&theCurveP.Int) >= 0 {
+		if rx.Cmp(bsvec.S256().B) >= 0 {
 			return false, errors.New("error in recoverSig")
 		}
 	}
@@ -270,13 +226,7 @@ func sigMessageToAddress(signature, message string) ([]string, error) {
 
 	addresses := make([]string, 2)
 	for i, compressed := range []bool{true, false} {
-		byteCopy := pubKeyToAddress(pubkeyXy2, compressed, []byte{byte(0)})
-
-		var addressString string
-		addressString, err = addressToString(byteCopy)
-		if err != nil {
-			return nil, err
-		}
+		addressString := pubKeyToAddress(pubkeyXy2, compressed, []byte{byte(0)})
 		addresses[i] = addressString
 	}
 	return addresses, nil
