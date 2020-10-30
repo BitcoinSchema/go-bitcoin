@@ -11,6 +11,13 @@ import (
 	"github.com/bitcoinsv/bsvutil"
 )
 
+// GenerateSharedKeyPair creates shared keys that can be used to encrypt/decrypt data that can be decrypted by yourself (privkey) and also the owner of the given public key
+func GenerateSharedKeyPair(privKey *bsvec.PrivateKey, pubKey *bsvec.PublicKey) (sharedPrivKey *bsvec.PrivateKey, sharedPubKey *bsvec.PublicKey, err error) {
+	sharedSecret := bsvec.GenerateSharedSecret(privKey, pubKey)
+	sharedPrivKey, sharedPubKey = bsvec.PrivKeyFromBytes(bsvec.S256(), sharedSecret)
+	return
+}
+
 // PrivateKeyFromString turns a private key (hex encoded string) into an bsvec.PrivateKey
 func PrivateKeyFromString(privateKey string) (*bsvec.PrivateKey, error) {
 	if len(privateKey) == 0 {
