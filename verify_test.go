@@ -34,8 +34,17 @@ func TestVerifyMessage(t *testing.T) {
 		},
 		{
 			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
-			"IFTYA0Vd/fBSl8XwgTDNcQ6LxIl6+Pz7wrOgNs1qyr/zb7R7FZvdISLHp6/TlHvUYqFzWvGbX1WvHPvrYXPkVx8=",
-			"This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af.",
+			"IKmgOFrfWRffRNjrQcJQHSBD7WL2di+4doWdaz/a/p5RUiT7ErpUqbYeLi0yzmONFaV8uLWF2vydTjA8W8KnjZU=",
+			"This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af.",
 			false,
 		},
 		{

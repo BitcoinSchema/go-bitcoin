@@ -1,6 +1,7 @@
 package bitcoin
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -24,8 +25,17 @@ func TestSignMessage(t *testing.T) {
 		},
 		{
 			"ef0b8bad0be285099534277fde328f8f19b3be9cadcd4c08e6ac0b5f863745ac",
-			"This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af.",
-			"IFTYA0Vd/fBSl8XwgTDNcQ6LxIl6+Pz7wrOgNs1qyr/zb7R7FZvdISLHp6/TlHvUYqFzWvGbX1WvHPvrYXPkVx8=",
+			"This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af. This time I'm writing a new message that is obnoxiously " +
+				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
+				"new message that is obnoxiously long af.",
+			"IKmgOFrfWRffRNjrQcJQHSBD7WL2di+4doWdaz/a/p5RUiT7ErpUqbYeLi0yzmONFaV8uLWF2vydTjA8W8KnjZU=",
 			false,
 		},
 		{
@@ -91,15 +101,15 @@ func TestSignMessage(t *testing.T) {
 }
 
 // ExampleSignMessage example using SignMessage()
-// func ExampleSignMessage() {
-// 	signature, err := SignMessage("ef0b8bad0be285099534277fde328f8f19b3be9cadcd4c08e6ac0b5f863745ac", "This is a test message")
-// 	if err != nil {
-// 		fmt.Printf("error occurred: %s", err.Error())
-// 		return
-// 	}
-// 	fmt.Printf("signature created: %s", signature)
-// 	// Output:signature created: H+zZagsyz7ioC/ZOa5EwsaKice0vs2BvZ0ljgkFHxD3vGsMlGeD4sXHEcfbI4h8lP29VitSBdf4A+nHXih7svf4=
-// }
+func ExampleSignMessage() {
+	signature, err := SignMessage("ef0b8bad0be285099534277fde328f8f19b3be9cadcd4c08e6ac0b5f863745ac", "This is a test message")
+	if err != nil {
+		fmt.Printf("error occurred: %s", err.Error())
+		return
+	}
+	fmt.Printf("signature created: %s", signature)
+	// Output:signature created: H+zZagsyz7ioC/ZOa5EwsaKice0vs2BvZ0ljgkFHxD3vGsMlGeD4sXHEcfbI4h8lP29VitSBdf4A+nHXih7svf4=
+}
 
 // BenchmarkSignMessage benchmarks the method SignMessage()
 func BenchmarkSignMessage(b *testing.B) {
