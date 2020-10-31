@@ -27,9 +27,9 @@ func TestVerifyMessage(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
-			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
-			"Testing!",
+			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
+			"H+zZagsyz7ioC/ZOa5EwsaKice0vs2BvZ0ljgkFHxD3vGsMlGeD4sXHEcfbI4h8lP29VitSBdf4A+nHXih7svf4=",
+			"This is a test message",
 			false,
 		},
 		{
