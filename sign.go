@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"errors"
+	"fmt"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
@@ -29,7 +30,7 @@ func SignMessage(privateKey string, message string) (string, error) {
 
 	// Create the hash
 	messageHash := chainhash.DoubleHashB(buf.Bytes())
-
+	fmt.Printf("%x", messageHash)
 	// Get the private key
 	var ecdsaPrivateKey *bsvec.PrivateKey
 	if ecdsaPrivateKey, err = PrivateKeyFromString(privateKey); err != nil {

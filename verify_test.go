@@ -33,14 +33,9 @@ func TestVerifyMessage(t *testing.T) {
 			false,
 		},
 		{
-			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
-			"Hzy3iX82OKqLHEErf4YyzoZW+SvO7WLBtl6SuK/HfY0zJHguR0JqzurZkSz9kz2RFboGOzKENf2jMUIE/Pm0tIY=",
-			"This is very very very very very very very very very very very very very very very very very" +
-				" very very very very very very very very very very very very very very very very very very very very " +
-				"very very very very very very very very very very very very very very very very very very very very " +
-				"very very very very very very very very very very very very very very very very very very very very " +
-				"very very very very very very very very very very very very very very very very very very very very " +
-				"very very very very very very very very long message",
+			"12FCbWJg5vnQh1q3dWs9shCuH8JBruHrXq",
+			"IO9lCLi5pdMWKnVQVzAnwlbGulVgqLTx9ec3cQbFUTr9ZqJTyHp81CM5KfdXSXj0IYG+pNAL4vhxABoIbqCWeYA=",
+			"This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af.",
 			false,
 		},
 		{
