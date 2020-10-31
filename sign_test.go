@@ -9,8 +9,6 @@ func TestSignMessage(t *testing.T) {
 
 	t.Parallel()
 
-	pk, _ := WifToPrivateKeyString("L4T5p9Fo7p9n2eTyrnikeEbJu9toTbMEkJoUhi5P34LnyZRLRkmU")
-
 	// Create the list of tests
 	var tests = []struct {
 		inputKey          string
@@ -25,9 +23,9 @@ func TestSignMessage(t *testing.T) {
 			false,
 		},
 		{
-			pk,
+			"ef0b8bad0be285099534277fde328f8f19b3be9cadcd4c08e6ac0b5f863745ac",
 			"This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af.",
-			"IO9lCLi5pdMWKnVQVzAnwlbGulVgqLTx9ec3cQbFUTr9ZqJTyHp81CM5KfdXSXj0IYG+pNAL4vhxABoIbqCWeYA=",
+			"IFTYA0Vd/fBSl8XwgTDNcQ6LxIl6+Pz7wrOgNs1qyr/zb7R7FZvdISLHp6/TlHvUYqFzWvGbX1WvHPvrYXPkVx8=",
 			false,
 		},
 		{

@@ -33,8 +33,8 @@ func TestVerifyMessage(t *testing.T) {
 			false,
 		},
 		{
-			"12FCbWJg5vnQh1q3dWs9shCuH8JBruHrXq",
-			"IO9lCLi5pdMWKnVQVzAnwlbGulVgqLTx9ec3cQbFUTr9ZqJTyHp81CM5KfdXSXj0IYG+pNAL4vhxABoIbqCWeYA=",
+			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
+			"IFTYA0Vd/fBSl8XwgTDNcQ6LxIl6+Pz7wrOgNs1qyr/zb7R7FZvdISLHp6/TlHvUYqFzWvGbX1WvHPvrYXPkVx8=",
 			"This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af. This time I'm writing a new message that is obnixiously long af.",
 			false,
 		},
