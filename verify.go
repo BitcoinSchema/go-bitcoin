@@ -19,7 +19,7 @@ const (
 )
 
 // PublicKeyFromSignature gets a publickey for a signature and tells you whether is was compressed
-func PublicKeyFromSignature(sig, data string) (pubKey *bsvec.PublicKey, wasCompressed bool, err error) {
+func PubKeyFromSignature(sig, data string) (pubKey *bsvec.PublicKey, wasCompressed bool, err error) {
 	decodedSig, err := base64.StdEncoding.DecodeString(sig)
 	if err != nil {
 		return nil, false, err
@@ -43,7 +43,7 @@ func PublicKeyFromSignature(sig, data string) (pubKey *bsvec.PublicKey, wasCompr
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func VerifyMessage(address, sig, data string) error {
 
-	publicKey, wasCompressed, err := PublicKeyFromSignature(sig, data)
+	publicKey, wasCompressed, err := PubKeyFromSignature(sig, data)
 	if err != nil {
 		return err
 	}
