@@ -96,20 +96,27 @@ func GetAddressFromPrivateKey(privateKey string) (string, error) {
 		return "", err
 	}
 	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = GetAddressFromPubKey(rawKey.PubKey()); err != nil {
+	if address, err = GetAddressFromPubKey(rawKey.PubKey(), true); err != nil {
 		return "", err
 	}
 	return address.EncodeAddress(), nil
 }
 
 // GetAddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bsvec.PublicKey
-func GetAddressFromPubKey(publicKey *bsvec.PublicKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
+func GetAddressFromPubKey(publicKey *bsvec.PublicKey, compressed bool) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	if publicKey == nil {
 		return nil, fmt.Errorf("publicKey cannot be nil")
 	} else if publicKey.X == nil {
 		return nil, fmt.Errorf("publicKey.X cannot be nil")
 	}
-	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(publicKey.SerializeCompressed()), &chaincfg.MainNetParams)
+	var serializedPublicKey []byte
+	if compressed {
+		serializedPublicKey = publicKey.SerializeCompressed()
+	} else {
+		serializedPublicKey = publicKey.SerializeUncompressed()
+	}
+
+	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(serializedPublicKey), &chaincfg.MainNetParams)
 }
 
 // GetAddressFromPubKeyString is a convenience function to use a hex string pubKey
@@ -118,7 +125,7 @@ func GetAddressFromPubKeyString(pubKey string) (*bsvutil.LegacyAddressPubKeyHash
 	if err != nil {
 		return nil, err
 	}
-	return GetAddressFromPubKey(rawPubKey)
+	return GetAddressFromPubKey(rawPubKey, true)
 }
 
 // GetAddressFromScript will take an output script and extract a standard bitcoin address

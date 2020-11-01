@@ -139,7 +139,7 @@ func GetAddressFromHDKey(hdKey *hdkeychain.ExtendedKey) (*bsvutil.LegacyAddressP
 	if err != nil {
 		return nil, err
 	}
-	return GetAddressFromPubKey(pubKey)
+	return GetAddressFromPubKey(pubKey, true)
 }
 
 // GetAddressStringFromHDKey is a helper function to get the Address (string) associated with a given hdKey
@@ -202,7 +202,7 @@ func GetAddressesForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (addresses [
 	// Loop, get address and append to results
 	var address *bsvutil.LegacyAddressPubKeyHash
 	for _, key := range pubKeys {
-		if address, err = GetAddressFromPubKey(key); err != nil {
+		if address, err = GetAddressFromPubKey(key, true); err != nil {
 			// Should never error if the pubKeys are valid keys
 			return
 		}
