@@ -29,7 +29,11 @@ func SignMessage(privateKey string, message string) (string, error) {
 
 	// Create the hash
 	messageHash := chainhash.DoubleHashB(buf.Bytes())
+<<<<<<< HEAD
 	// fmt.Printf("%x", messageHash)
+=======
+
+>>>>>>> 8d7d6e33b2784fbeaf5bd30a409422d3bd573994
 	// Get the private key
 	var ecdsaPrivateKey *bsvec.PrivateKey
 	if ecdsaPrivateKey, err = PrivateKeyFromString(privateKey); err != nil {
