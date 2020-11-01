@@ -19,8 +19,8 @@ func TestSignMessage(t *testing.T) {
 	}{
 		{
 			"0499f8239bfe10eb0f5e53d543635a423c96529dd85fa4bad42049a0b435ebdd",
-			"testing",
-			"G1ecUtmqAoM5QjwHh9p/V8VA/IwRRLds+pCXgrDZFuZDRugxQhDEo0L/dPscfTJk0v9T+DxFkc69H1OLwzqGyS4=",
+			"test message",
+			"HFxPx8JHsCiivB+DW/RgNpCLT6yG3j436cUNWKekV3ORBrHNChIjeVReyAco7PVmmDtVD3POs9FhDlm/nk5I6O8=",
 			false,
 		},
 		{
