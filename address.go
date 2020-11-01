@@ -90,13 +90,13 @@ func ValidA58(a58 []byte) (bool, error) {
 }
 
 // GetAddressFromPrivateKey takes a private key string and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey string) (string, error) {
+func GetAddressFromPrivateKey(privateKey string, compressed bool) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}
 	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = GetAddressFromPubKey(rawKey.PubKey(), true); err != nil {
+	if address, err = GetAddressFromPubKey(rawKey.PubKey(), compressed); err != nil {
 		return "", err
 	}
 	return address.EncodeAddress(), nil
@@ -120,12 +120,12 @@ func GetAddressFromPubKey(publicKey *bsvec.PublicKey, compressed bool) (*bsvutil
 }
 
 // GetAddressFromPubKeyString is a convenience function to use a hex string pubKey
-func GetAddressFromPubKeyString(pubKey string) (*bsvutil.LegacyAddressPubKeyHash, error) {
+func GetAddressFromPubKeyString(pubKey string, compressed bool) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	rawPubKey, err := PubKeyFromString(pubKey)
 	if err != nil {
 		return nil, err
 	}
-	return GetAddressFromPubKey(rawPubKey, true)
+	return GetAddressFromPubKey(rawPubKey, compressed)
 }
 
 // GetAddressFromScript will take an output script and extract a standard bitcoin address

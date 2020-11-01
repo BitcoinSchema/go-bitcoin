@@ -86,7 +86,7 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if address, err := GetAddressFromPrivateKey(test.input); err != nil && !test.expectedError {
+		if address, err := GetAddressFromPrivateKey(test.input, true); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
@@ -98,7 +98,7 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
 func ExampleGetAddressFromPrivateKey() {
-	address, err := GetAddressFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	address, err := GetAddressFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -111,7 +111,7 @@ func ExampleGetAddressFromPrivateKey() {
 func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
-		_, _ = GetAddressFromPrivateKey(key)
+		_, _ = GetAddressFromPrivateKey(key, true)
 	}
 }
 
@@ -250,7 +250,7 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if rawKey, err := GetAddressFromPubKeyString(test.input); err != nil && !test.expectedError {
+		if rawKey, err := GetAddressFromPubKeyString(test.input, true); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
@@ -266,7 +266,7 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 
 // ExampleGetAddressFromPubKeyString example using GetAddressFromPubKeyString()
 func ExampleGetAddressFromPubKeyString() {
-	rawAddress, err := GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
+	rawAddress, err := GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf", true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -278,6 +278,6 @@ func ExampleGetAddressFromPubKeyString() {
 // BenchmarkGetAddressFromPubKeyString benchmarks the method GetAddressFromPubKeyString()
 func BenchmarkGetAddressFromPubKeyString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		_, _ = GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf")
+		_, _ = GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf", true)
 	}
 }

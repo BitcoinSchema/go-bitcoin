@@ -14,7 +14,7 @@ func main() {
 	message := "This is the example message"
 
 	// Get an address from private key
-	address, err := bitcoin.GetAddressFromPrivateKey(privateKey)
+	address, err := bitcoin.GetAddressFromPrivateKey(privateKey, true)
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
