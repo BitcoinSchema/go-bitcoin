@@ -65,7 +65,7 @@ func VerifyMessage(address, sig, data string) error {
 	if bsvecAddress.EncodeAddress() == address {
 		return nil
 	}
-	return fmt.Errorf("address: %s not found vs %s", address, bsvecAddress.EncodeAddress())
+	return fmt.Errorf("Address (%s) not found. Was compressed: %t\n%s was found instead", address, wasCompressed, bsvecAddress.EncodeAddress())
 }
 
 // VerifyMessageDER will take a message string, a public key string and a signature string
