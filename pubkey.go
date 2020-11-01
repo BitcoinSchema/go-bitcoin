@@ -8,18 +8,22 @@ import (
 )
 
 // PubKeyFromPrivateKeyString will derive a pubKey (hex encoded) from a given private key
-func PubKeyFromPrivateKeyString(privateKey string) (string, error) {
+func PubKeyFromPrivateKeyString(privateKey string, compressed bool) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	return PubKeyFromPrivateKey(rawKey), nil
+	return PubKeyFromPrivateKey(rawKey, compressed), nil
 }
 
 // PubKeyFromPrivateKey will derive a pubKey (hex encoded) from a given private key
-func PubKeyFromPrivateKey(privateKey *bsvec.PrivateKey) string {
-	return hex.EncodeToString(privateKey.PubKey().SerializeCompressed())
+func PubKeyFromPrivateKey(privateKey *bsvec.PrivateKey, compressed bool) string {
+	if compressed {
+		return hex.EncodeToString(privateKey.PubKey().SerializeCompressed())
+	}
+	return hex.EncodeToString(privateKey.PubKey().SerializeUncompressed())
+
 }
 
 // PubKeyFromString will convert a pubKey (string) into a pubkey (*bsvec.PublicKey)

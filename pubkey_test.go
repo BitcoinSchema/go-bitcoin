@@ -25,7 +25,7 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey); err != nil && !test.expectedError {
+		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, true); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
@@ -37,7 +37,7 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 
 // ExamplePubKeyFromPrivateKeyString example using PubKeyFromPrivateKeyString()
 func ExamplePubKeyFromPrivateKeyString() {
-	pubKey, err := PubKeyFromPrivateKeyString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	pubKey, err := PubKeyFromPrivateKeyString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -50,7 +50,7 @@ func ExamplePubKeyFromPrivateKeyString() {
 func BenchmarkPubKeyFromPrivateKeyString(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
-		_, _ = PubKeyFromPrivateKeyString(key)
+		_, _ = PubKeyFromPrivateKeyString(key, true)
 	}
 }
 
@@ -74,7 +74,7 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 
 	// Run tests
 	for _, test := range tests {
-		if pubKey := PubKeyFromPrivateKey(test.inputKey); pubKey != test.expectedPubKey {
+		if pubKey := PubKeyFromPrivateKey(test.inputKey, true); pubKey != test.expectedPubKey {
 			t.Errorf("%s Failed: [%v] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
 		}
 	}
@@ -90,7 +90,7 @@ func TestPubKeyFromPrivateKeyPanic(t *testing.T) {
 		}
 	}()
 
-	pubKey := PubKeyFromPrivateKey(nil)
+	pubKey := PubKeyFromPrivateKey(nil, true)
 	if len(pubKey) > 0 {
 		t.Fatalf("no pubkey expected, got: %s", pubKey)
 	}
@@ -104,7 +104,7 @@ func ExamplePubKeyFromPrivateKey() {
 		return
 	}
 
-	pubKey := PubKeyFromPrivateKey(privateKey)
+	pubKey := PubKeyFromPrivateKey(privateKey, true)
 	fmt.Printf("pubkey generated: %s", pubKey)
 	// Output:pubkey generated: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
 }
@@ -113,7 +113,7 @@ func ExamplePubKeyFromPrivateKey() {
 func BenchmarkPubKeyFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKey()
 	for i := 0; i < b.N; i++ {
-		_ = PubKeyFromPrivateKey(key)
+		_ = PubKeyFromPrivateKey(key, true)
 	}
 }
 

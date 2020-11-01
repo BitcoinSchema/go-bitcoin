@@ -16,7 +16,7 @@ func main() {
 
 	// Create a pubkey
 	var pubKey string
-	if pubKey, err = bitcoin.PubKeyFromPrivateKeyString(privateKey); err != nil {
+	if pubKey, err = bitcoin.PubKeyFromPrivateKeyString(privateKey, true); err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 
