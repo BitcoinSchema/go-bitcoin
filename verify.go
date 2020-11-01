@@ -7,10 +7,8 @@ import (
 	"fmt"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
-	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 	"github.com/bitcoinsv/bsvd/wire"
-	"github.com/bitcoinsv/bsvutil"
 )
 
 const (
@@ -43,24 +41,17 @@ func PubKeyFromSignature(sig, data string) (pubKey *bsvec.PublicKey, wasCompress
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func VerifyMessage(address, sig, data string) error {
 
+	// Reconstruct the pubkey
 	publicKey, wasCompressed, err := PubKeyFromSignature(sig, data)
 	if err != nil {
 		return err
 	}
-	// Reconstruct the pubkey hash.
-	var serializedPK []byte
-	if wasCompressed {
-		serializedPK = publicKey.SerializeCompressed()
-	} else {
-		serializedPK = publicKey.SerializeUncompressed()
-	}
-	var bsvecAddress *bsvutil.AddressPubKey
-	if bsvecAddress, err = bsvutil.NewAddressPubKey(serializedPK, &chaincfg.MainNetParams); err != nil {
-		return err
-	}
+
+	// Get the address
+	bsvecAddress, err := GetAddressFromPubKey(publicKey, wasCompressed)
 
 	// Return nil if addresses match.
-	if bsvecAddress.EncodeAddress() == address {
+	if bsvecAddress.String() == address {
 		return nil
 	}
 	return fmt.Errorf("Address (%s) not found. Was compressed: %t\n%s was found instead", address, wasCompressed, bsvecAddress.EncodeAddress())
