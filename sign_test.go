@@ -105,7 +105,7 @@ func ExampleSignMessage() {
 		return
 	}
 	fmt.Printf("signature created: %s", signature)
-	// Output:signature created: H+zZagsyz7ioC/ZOa5EwsaKice0vs2BvZ0ljgkFHxD3vGsMlGeD4sXHEcfbI4h8lP29VitSBdf4A+nHXih7svf4=
+	// Output:signature created: G+zZagsyz7ioC/ZOa5EwsaKice0vs2BvZ0ljgkFHxD3vGsMlGeD4sXHEcfbI4h8lP29VitSBdf4A+nHXih7svf4=
 }
 
 // BenchmarkSignMessage benchmarks the method SignMessage()
