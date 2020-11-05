@@ -11,6 +11,7 @@ github.com/libsv/libsv v0.0.11/go.mod h1:jhXD2sLtYUNMWoD9mWmsQN0hoGZUK1wCvindT1O
 github.com/piotrnar/gocoin v0.0.0-20201027184336-0c389d7eb2c0 h1:PuqJFsnjEnbgSk7b629KC4jyuWqr5tM09k80ZpyptHY=
 github.com/piotrnar/gocoin v0.0.0-20201027184336-0c389d7eb2c0/go.mod h1:sW6i99ojgdRHcz53PCjyEeoTEDFh9dfP5iiEIiNfcaM=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
+golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9 h1:psW17arqaxU48Z5kZ0CQnkZWQJsqcURM6tKiBApRjXI=
 golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
 golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897 h1:pLI5jrR7OSLijeIDcmRxNmw2api+jEfxLoykJVice/E=
 golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897/go.mod h1:LzIPMQfyMNhhGPhUkYOs5KpL4U8rLKemX1yGLhDgUto=
