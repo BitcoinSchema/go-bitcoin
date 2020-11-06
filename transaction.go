@@ -108,6 +108,10 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	// Calculate the fees for the "Draft tx"
 	fee := CalculateFeeForTx(tx, standardRate, dataRate)
 
+	// todo: replace with Libsv's new way to create change tx (when released)
+	// for now (hacking the fee) (ensure we are over the min fee for the miner)
+	fee++
+
 	// Check that we have enough to cover the fee
 	if (totalPayToSatoshis + fee) > totalSatoshis {
 		return nil, fmt.Errorf("not enough in utxo(s) to cover: %d found: %d", totalPayToSatoshis+fee, totalSatoshis)
