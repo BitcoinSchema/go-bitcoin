@@ -13,8 +13,14 @@ func main() {
 	signature := "H/sEz5QDQYkXCox9shPB4MMVAVUM/JzfbPHNpPRwNl+hMI2gxy3x7xs9Ed5ryuny5s2hY4Qxc5uirqjMyEEON6k="
 	message := "This is the example message"
 
+	rawKey, err := bitcoin.PrivateKeyFromString(privateKey)
+	if err != nil {
+		log.Fatalf("error occurred: %s", err.Error())
+	}
+
 	// Get an address from private key
-	address, err := bitcoin.GetAddressFromPrivateKey(privateKey, true)
+	var address string
+	address, err = bitcoin.GetAddressFromPrivateKey(rawKey, true)
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
