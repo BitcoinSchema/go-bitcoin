@@ -89,8 +89,22 @@ func ValidA58(a58 []byte) (bool, error) {
 	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
 }
 
-// GetAddressFromPrivateKey takes a private key string and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey string, compressed bool) (string, error) {
+// GetAddressFromPrivateKey takes a bsvec private key and returns a Bitcoin address
+func GetAddressFromPrivateKey(privateKey *bsvec.PrivateKey, compressed bool) (string, error) {
+
+	rawKey, err := PrivateKeyFromString(fmt.Sprintf("%x", privateKey.Serialize()))
+	if err != nil {
+		return "", err
+	}
+	var address *bsvutil.LegacyAddressPubKeyHash
+	if address, err = GetAddressFromPubKey(rawKey.PubKey(), compressed); err != nil {
+		return "", err
+	}
+	return address.EncodeAddress(), nil
+}
+
+// GetAddressFromPrivateKeyString takes a private key string and returns a Bitcoin address
+func GetAddressFromPrivateKeyString(privateKey string, compressed bool) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err

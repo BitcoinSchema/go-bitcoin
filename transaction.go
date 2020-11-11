@@ -149,8 +149,8 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 
 // CreateTx will create a basic transaction and return the raw transaction (*transaction.Transaction)
 //
-// Note: this will NOT create a "change" address (it's assumed you have already specified an address)
-// Note: this will NOT handle "fee" calculation (it's assumed you have already calculated the fee)
+// Note: this will NOT create a change output (funds are sent to "addresses")
+// Note: this will NOT handle fee calculation (it's assumed you have already calculated the fee)
 //
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
@@ -193,7 +193,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 		// Sanity check - not enough satoshis in utxo(s) to cover all paid amount(s)
 		// They should never be equal, since the fee is the spread between the two amounts
 		totalOutputSatoshis := tx.GetTotalOutputSatoshis() // Does not work properly
-		if totalOutputSatoshis >= totalSatoshis {
+		if totalOutputSatoshis > totalSatoshis {
 			return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
 		}
 	}

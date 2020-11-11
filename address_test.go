@@ -74,19 +74,20 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 	var tests = []struct {
 		input           string
 		expectedAddress string
+		compressed      bool
 		expectedError   bool
 	}{
-		{"0", "", true},
-		{"00000", "", true},
-		{"12345678", "1BHxe5Yw72oYoV8tFjySYrV9Y2JwMpAZEy", false},
-		{"54035dd4c7dda99ac473905a3d82", "1L5GmmuGeS3HwoEDv7zkWcheayXrRsurUm", false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9", "13dnka5SaugRchayN84EED7a2E8dCNMLXQ", false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false},
+		{"0", "", true, true},
+		{"00000", "", true, true},
+		{"12345678", "1BHxe5Yw72oYoV8tFjySYrV9Y2JwMpAZEy", true, false},
+		{"54035dd4c7dda99ac473905a3d82", "1L5GmmuGeS3HwoEDv7zkWcheayXrRsurUm", true, false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9", "13dnka5SaugRchayN84EED7a2E8dCNMLXQ", true, false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", true, false},
 	}
 
 	// Run tests
 	for _, test := range tests {
-		if address, err := GetAddressFromPrivateKey(test.input, true); err != nil && !test.expectedError {
+		if address, err := GetAddressFromPrivateKeyString(test.input, test.compressed); err != nil && !test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
@@ -96,9 +97,31 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 	}
 }
 
+func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
+
+	privateKey, err := bsvec.NewPrivateKey(bsvec.S256())
+	if err != nil {
+		t.Error(err)
+	}
+
+	addressUncompressed, err := GetAddressFromPrivateKey(privateKey, false)
+	if err != nil {
+		t.Error(err)
+	}
+
+	addressCompressed, err := GetAddressFromPrivateKey(privateKey, true)
+	if err != nil {
+		t.Error(err)
+	}
+
+	if addressCompressed == addressUncompressed {
+		t.Errorf("Compressed and uncompressed addresses cannot match")
+	}
+}
+
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
 func ExampleGetAddressFromPrivateKey() {
-	address, err := GetAddressFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", true)
+	address, err := GetAddressFromPrivateKeyString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -111,7 +134,7 @@ func ExampleGetAddressFromPrivateKey() {
 func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
-		_, _ = GetAddressFromPrivateKey(key, true)
+		_, _ = GetAddressFromPrivateKeyString(key, true)
 	}
 }
 
