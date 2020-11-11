@@ -40,11 +40,11 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 	var encrypted string
 	for _, test := range tests {
 		if encrypted, err = EncryptWithPrivateKey(test.inputKey, test.inputData); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputData, err.Error())
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputData, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputData)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputData)
 		} else if len(encrypted) == 0 {
-			t.Errorf("%s Failed: [%s] [%s] inputted and expected length > 0, but got: 0", t.Name(), test.inputKey, test.inputData)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and expected length > 0, but got: 0", t.Name(), test.inputKey, test.inputData)
 		}
 	}
 }
@@ -55,7 +55,7 @@ func TestEncryptWithPrivateKeyPanic(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
+			t.Fatalf("the code did not panic")
 		}
 	}()
 
@@ -129,11 +129,11 @@ func TestEncryptWithPrivateKeyString(t *testing.T) {
 	var encrypted string
 	for _, test := range tests {
 		if encrypted, err = EncryptWithPrivateKeyString(test.inputKey, test.inputData); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputData, err.Error())
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputData, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputData)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputData)
 		} else if err == nil && len(encrypted) == 0 {
-			t.Errorf("%s Failed: [%s] [%s] inputted and expected length > 0, but got: 0", t.Name(), test.inputKey, test.inputData)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and expected length > 0, but got: 0", t.Name(), test.inputKey, test.inputData)
 		}
 	}
 }
@@ -249,11 +249,11 @@ func TestDecryptWithPrivateKey(t *testing.T) {
 	var decrypted string
 	for _, test := range tests {
 		if decrypted, err = DecryptWithPrivateKey(test.inputKey, test.inputEncrypted); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputEncrypted, err.Error())
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputEncrypted, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputEncrypted)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputEncrypted)
 		} else if decrypted != test.expectedData {
-			t.Errorf("%s Failed: [%s] [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.inputEncrypted, test.expectedData, decrypted)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.inputEncrypted, test.expectedData, decrypted)
 		}
 	}
 }
@@ -375,11 +375,11 @@ func TestDecryptWithPrivateKeyString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if decrypted, err := DecryptWithPrivateKeyString(test.inputKey, test.inputEncrypted); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputEncrypted, err.Error())
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, test.inputEncrypted, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputEncrypted)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and error was expected", t.Name(), test.inputKey, test.inputEncrypted)
 		} else if decrypted != test.expectedData {
-			t.Errorf("%s Failed: [%s] [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.inputEncrypted, test.expectedData, decrypted)
+			t.Fatalf("%s Failed: [%s] [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.inputEncrypted, test.expectedData, decrypted)
 		}
 	}
 }
@@ -454,7 +454,7 @@ func TestEncryptSharedPanic(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
+			t.Fatalf("the code did not panic")
 		}
 	}()
 
@@ -512,7 +512,7 @@ func TestEncryptSharedStringPanic(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
+			t.Fatalf("the code did not panic")
 		}
 	}()
 

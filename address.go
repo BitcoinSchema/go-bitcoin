@@ -91,13 +91,8 @@ func ValidA58(a58 []byte) (bool, error) {
 
 // GetAddressFromPrivateKey takes a bsvec private key and returns a Bitcoin address
 func GetAddressFromPrivateKey(privateKey *bsvec.PrivateKey, compressed bool) (string, error) {
-
-	rawKey, err := PrivateKeyFromString(fmt.Sprintf("%x", privateKey.Serialize()))
+	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed)
 	if err != nil {
-		return "", err
-	}
-	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = GetAddressFromPubKey(rawKey.PubKey(), compressed); err != nil {
 		return "", err
 	}
 	return address.EncodeAddress(), nil

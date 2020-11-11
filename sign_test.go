@@ -88,11 +88,11 @@ func TestSignMessage(t *testing.T) {
 	// Run tests
 	for idx, test := range tests {
 		if signature, err := SignMessage(test.inputKey, test.inputMessage); err != nil && !test.expectedError {
-			t.Errorf("%d %s Failed: [%s] [%s] inputted and error not expected but got: %s", idx, t.Name(), test.inputKey, test.inputMessage, err.Error())
+			t.Fatalf("%d %s Failed: [%s] [%s] inputted and error not expected but got: %s", idx, t.Name(), test.inputKey, test.inputMessage, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%d %s Failed: [%s] [%s] inputted and error was expected", idx, t.Name(), test.inputKey, test.inputMessage)
+			t.Fatalf("%d %s Failed: [%s] [%s] inputted and error was expected", idx, t.Name(), test.inputKey, test.inputMessage)
 		} else if signature != test.expectedSignature {
-			t.Errorf("%d %s Failed: [%s] [%s] inputted [%s] expected but got: %s", idx, t.Name(), test.inputKey, test.inputMessage, test.expectedSignature, signature)
+			t.Fatalf("%d %s Failed: [%s] [%s] inputted [%s] expected but got: %s", idx, t.Name(), test.inputKey, test.inputMessage, test.expectedSignature, signature)
 		}
 	}
 }

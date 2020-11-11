@@ -94,9 +94,9 @@ func TestVerifyMessage(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if err := VerifyMessage(test.inputAddress, test.inputSignature, test.inputData); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputAddress, test.inputSignature, test.inputData, err.Error())
+			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputAddress, test.inputSignature, test.inputData, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] [%s] [%s] inputted and error was expected", t.Name(), test.inputAddress, test.inputSignature, test.inputData)
+			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error was expected", t.Name(), test.inputAddress, test.inputSignature, test.inputData)
 		}
 	}
 

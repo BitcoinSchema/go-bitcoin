@@ -25,7 +25,7 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	// encrypt something with the shared public key
 	encryptTest, err := bsvec.Encrypt(user1SharedPubKey, []byte(testEncryptionMessage))
 	if err != nil {
-		t.Errorf("Failed to encrypt test data %s", err)
+		t.Fatalf("Failed to encrypt test data %s", err)
 	}
 
 	// user 2 decrypts it
@@ -34,11 +34,11 @@ func TestGenerateSharedKeyPair(t *testing.T) {
 	var decryptedTestData []byte
 	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, encryptTest)
 	if err != nil {
-		t.Errorf("Failed to decrypt test data %s", err)
+		t.Fatalf("Failed to decrypt test data %s", err)
 	}
 
 	if string(decryptedTestData) != testEncryptionMessage {
-		t.Errorf("Decrypted string doesnt match %s", decryptedTestData)
+		t.Fatalf("Decrypted string doesnt match %s", decryptedTestData)
 	}
 }
 
@@ -133,15 +133,15 @@ func TestPrivateKeyFromString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if rawKey, err := PrivateKeyFromString(test.input); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if rawKey == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		} else if rawKey != nil && hex.EncodeToString(rawKey.Serialize()) != test.expectedKey {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialize()))
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialize()))
 		}
 	}
 }
@@ -188,15 +188,15 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if privateKey, publicKey, err := PrivateAndPublicKeys(test.input); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if (privateKey == nil || publicKey == nil) && !test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
 		} else if (privateKey != nil || publicKey != nil) && test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedPrivateKey {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialize()))
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialize()))
 		}
 	}
 }
@@ -244,15 +244,15 @@ func TestPrivateKeyToWif(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if wif, err := PrivateKeyToWif(test.input); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if wif == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
 		} else if wif != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		} else if wif != nil && wif.String() != test.expectedWif {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif.String())
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif.String())
 		}
 	}
 
@@ -300,11 +300,11 @@ func TestPrivateKeyToWifString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if wif, err := PrivateKeyToWifString(test.input); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if wif != test.expectedWif {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif)
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif)
 		}
 	}
 
@@ -352,15 +352,15 @@ func TestWifToPrivateKey(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if privateKey, err := WifToPrivateKey(test.input); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if privateKey == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
 		} else if privateKey != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedKey {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
 		}
 	}
 }
@@ -405,11 +405,11 @@ func TestWifToPrivateKeyString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if privateKey, err := WifToPrivateKeyString(test.input); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if privateKey != test.expectedKey {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, privateKey)
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, privateKey)
 		}
 	}
 }

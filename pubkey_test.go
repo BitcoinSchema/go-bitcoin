@@ -26,11 +26,11 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, true); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
 		} else if pubKey != test.expectedPubKey {
-			t.Errorf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
+			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
 		}
 	}
 }
@@ -75,7 +75,7 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if pubKey := PubKeyFromPrivateKey(test.inputKey, true); pubKey != test.expectedPubKey {
-			t.Errorf("%s Failed: [%v] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
+			t.Fatalf("%s Failed: [%v] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
 		}
 	}
 }
@@ -86,7 +86,7 @@ func TestPubKeyFromPrivateKeyPanic(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
+			t.Fatalf("the code did not panic")
 		}
 	}()
 
@@ -138,15 +138,15 @@ func TestPubKeyFromString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if pubKey, err := PubKeyFromString(test.inputKey); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
 		} else if pubKey != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and nil was expected", t.Name(), test.inputKey)
+			t.Fatalf("%s Failed: [%s] inputted and nil was expected", t.Name(), test.inputKey)
 		} else if pubKey == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and nil was NOT expected", t.Name(), test.inputKey)
+			t.Fatalf("%s Failed: [%s] inputted and nil was NOT expected", t.Name(), test.inputKey)
 		} else if pubKey != nil && hex.EncodeToString(pubKey.SerializeCompressed()) != test.expectedPubKey {
-			t.Errorf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.SerializeCompressed()))
+			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.SerializeCompressed()))
 		}
 	}
 }

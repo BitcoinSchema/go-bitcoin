@@ -25,11 +25,11 @@ func TestScriptFromAddress(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if script, err := ScriptFromAddress(test.inputAddress); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputAddress, err.Error())
+			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputAddress, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputAddress)
+			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputAddress)
 		} else if script != test.expectedScript {
-			t.Errorf("%s Failed: [%v] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputAddress, test.expectedScript, script)
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputAddress, test.expectedScript, script)
 		}
 	}
 }

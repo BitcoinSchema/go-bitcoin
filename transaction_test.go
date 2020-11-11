@@ -28,15 +28,15 @@ func TestTxFromHex(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if rawTx, err := TxFromHex(test.inputHex); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputHex, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputHex, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputHex)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputHex)
 		} else if rawTx == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.inputHex)
+			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.inputHex)
 		} else if rawTx != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHex)
+			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHex)
 		} else if rawTx != nil && rawTx.GetTxID() != test.expectedTxID {
-			t.Errorf("%s Failed: [%s] inputted [%s] expected but failed comparison of txIDs, got: %s", t.Name(), test.inputHex, test.expectedTxID, rawTx.GetTxID())
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of txIDs, got: %s", t.Name(), test.inputHex, test.expectedTxID, rawTx.GetTxID())
 		}
 	}
 }
@@ -316,15 +316,15 @@ func TestCreateTxErrors(t *testing.T) {
 		}
 
 		if rawTx, err := CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
 		} else if rawTx == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
 		} else if rawTx != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
 		} else if rawTx != nil && rawTx.ToString() != test.expectedRawTx {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.ToString())
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.ToString())
 		}
 	}
 }
@@ -577,9 +577,9 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 		// Test the function
 		if satoshis = CalculateFeeForTx(tx, test.inputStandardRate, test.inputDataRate); satoshis != test.expectedSatoshis {
 			t.Log("tx size: ", len(tx.ToBytes()))
-			t.Errorf("%s Failed: [%s] [%v] [%v] inputted [%d] expected but got: %d", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedSatoshis, satoshis)
+			t.Fatalf("%s Failed: [%s] [%v] [%v] inputted [%d] expected but got: %d", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedSatoshis, satoshis)
 		} else if tx.GetTxID() != test.expectedTxID {
-			t.Errorf("%s Failed: [%s] [%v] [%v] inputted [%s] expected but got: %s", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedTxID, tx.GetTxID())
+			t.Fatalf("%s Failed: [%s] [%v] [%v] inputted [%s] expected but got: %s", t.Name(), test.inputHex, test.inputStandardRate, test.inputDataRate, test.expectedTxID, tx.GetTxID())
 		}
 	}
 }
@@ -639,7 +639,7 @@ func TestCalculateFeeForTxPanic(t *testing.T) {
 
 	defer func() {
 		if r := recover(); r == nil {
-			t.Errorf("the code did not panic")
+			t.Fatalf("the code did not panic")
 		}
 	}()
 
@@ -916,15 +916,15 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 		}
 
 		if rawTx, err = CreateTxWithChange(test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputChangeAddress, test.inputStandardRate, test.inputDataRate, privateKey); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
 		} else if rawTx == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
 		} else if rawTx != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
 		} else if rawTx != nil && rawTx.ToString() != test.expectedRawTx {
-			t.Errorf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.ToString())
+			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.ToString())
 		}
 	}
 }

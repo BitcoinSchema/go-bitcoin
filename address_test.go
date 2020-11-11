@@ -33,13 +33,13 @@ func TestValidA58(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if valid, err := ValidA58([]byte(test.input)); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if valid && !test.expectedValid {
-			t.Errorf("%s Failed: [%s] inputted and was valid but should NOT be valid", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was valid but should NOT be valid", t.Name(), test.input)
 		} else if !valid && test.expectedValid {
-			t.Errorf("%s Failed: [%s] inputted and was invalid but should be valid", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and was invalid but should be valid", t.Name(), test.input)
 		}
 	}
 }
@@ -88,34 +88,37 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if address, err := GetAddressFromPrivateKeyString(test.input, test.compressed); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
 		} else if address != test.expectedAddress {
-			t.Errorf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.input, test.expectedAddress, address)
+			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.input, test.expectedAddress, address)
 		}
 	}
 }
 
+// TestGetAddressFromPrivateKeyCompression will test the method GetAddressFromPrivateKey()
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 
 	privateKey, err := bsvec.NewPrivateKey(bsvec.S256())
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	addressUncompressed, err := GetAddressFromPrivateKey(privateKey, false)
+	var addressUncompressed string
+	addressUncompressed, err = GetAddressFromPrivateKey(privateKey, false)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
-	addressCompressed, err := GetAddressFromPrivateKey(privateKey, true)
+	var addressCompressed string
+	addressCompressed, err = GetAddressFromPrivateKey(privateKey, true)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	if addressCompressed == addressUncompressed {
-		t.Errorf("Compressed and uncompressed addresses cannot match")
+		t.Fatalf("compressed and uncompressed addresses cannot match")
 	}
 }
 
@@ -169,15 +172,15 @@ func TestGetAddressFromPubKey(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if rawKey, err := GetAddressFromPubKey(test.input, true); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
 		} else if rawKey == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
-			t.Errorf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
 		}
 	}
 }
@@ -227,11 +230,11 @@ func TestGetAddressFromScript(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if address, err := GetAddressFromScript(test.inputScript); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputScript, err.Error())
+			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputScript, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputScript)
+			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputScript)
 		} else if address != test.expectedAddress {
-			t.Errorf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.inputScript, test.expectedAddress, address)
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.inputScript, test.expectedAddress, address)
 		}
 	}
 }
@@ -274,15 +277,15 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 	// Run tests
 	for _, test := range tests {
 		if rawKey, err := GetAddressFromPubKeyString(test.input, true); err != nil && !test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
+			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
-			t.Errorf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
 		} else if rawKey == nil && !test.expectedNil {
-			t.Errorf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
-			t.Errorf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
+			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
-			t.Errorf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
 		}
 	}
 }
