@@ -9,25 +9,31 @@ import (
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 	"github.com/bitcoinsv/bsvd/wire"
+	"github.com/bitcoinsv/bsvutil"
 )
 
 const (
-	// H_BSV is the magic header string required fore Bitcoin Signed Messages
+	// hBSV is the magic header string required fore Bitcoin Signed Messages
 	hBSV string = "Bitcoin Signed Message:\n"
 )
 
-// PublicKeyFromSignature gets a publickey for a signature and tells you whether is was compressed
+// PubKeyFromSignature gets a publickey for a signature and tells you whether is was compressed
 func PubKeyFromSignature(sig, data string) (pubKey *bsvec.PublicKey, wasCompressed bool, err error) {
-	decodedSig, err := base64.StdEncoding.DecodeString(sig)
-	if err != nil {
+
+	var decodedSig []byte
+	if decodedSig, err = base64.StdEncoding.DecodeString(sig); err != nil {
 		return nil, false, err
 	}
 
-	// Validate the signature - this just shows that it was valid at all.
-	// we will compare it with the key next.
+	// Validate the signature - this just shows that it was valid at all
+	// we will compare it with the key next
 	var buf bytes.Buffer
-	wire.WriteVarString(&buf, 0, hBSV)
-	wire.WriteVarString(&buf, 0, data)
+	if err = wire.WriteVarString(&buf, 0, hBSV); err != nil {
+		return nil, false, err
+	}
+	if err = wire.WriteVarString(&buf, 0, data); err != nil {
+		return nil, false, err
+	}
 
 	// Create the hash
 	expectedMessageHash := chainhash.DoubleHashB(buf.Bytes())
@@ -48,13 +54,21 @@ func VerifyMessage(address, sig, data string) error {
 	}
 
 	// Get the address
-	bsvecAddress, err := GetAddressFromPubKey(publicKey, wasCompressed)
+	var bsvecAddress *bsvutil.LegacyAddressPubKeyHash
+	if bsvecAddress, err = GetAddressFromPubKey(publicKey, wasCompressed); err != nil {
+		return err
+	}
 
 	// Return nil if addresses match.
 	if bsvecAddress.String() == address {
 		return nil
 	}
-	return fmt.Errorf("Address (%s) not found. Was compressed: %t\n%s was found instead", address, wasCompressed, bsvecAddress.EncodeAddress())
+	return fmt.Errorf(
+		"address (%s) not found - compressed: %t\n%s was found instead",
+		address,
+		wasCompressed,
+		bsvecAddress.EncodeAddress(),
+	)
 }
 
 // VerifyMessageDER will take a message string, a public key string and a signature string
