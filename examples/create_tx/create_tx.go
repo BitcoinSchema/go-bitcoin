@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/bitcoinschema/go-bitcoin"
-	"github.com/libsv/libsv/transaction"
+	"github.com/libsv/go-bt"
 )
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	}
 
 	// Generate the TX
-	var rawTx *transaction.Transaction
+	var rawTx *bt.Tx
 	rawTx, err = bitcoin.CreateTx(
 		[]*bitcoin.Utxo{utxo},
 		[]*bitcoin.PayToAddress{payTo},

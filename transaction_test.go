@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/libsv/libsv/transaction"
+	"github.com/libsv/go-bt"
 )
 
 // TestTxFromHex will test the method TxFromHex()
@@ -62,7 +62,7 @@ func BenchmarkTxFromHex(b *testing.B) {
 // TestCreateTx will test the method CreateTx()
 func TestCreateTx(t *testing.T) {
 
-	// Example from: https://github.com/libsv/libsv
+	// Example from: https://github.com/libsv/go-bt
 
 	// Use a new UTXO
 	utxo := &Utxo{
@@ -89,7 +89,7 @@ func TestCreateTx(t *testing.T) {
 	}
 
 	// Generate the TX
-	var rawTx *transaction.Transaction
+	var rawTx *bt.Tx
 	rawTx, err = CreateTx(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
@@ -106,7 +106,7 @@ func TestCreateTx(t *testing.T) {
 
 func TestCreateEmptyTx(t *testing.T) {
 	// Generate the TX
-	var rawTx *transaction.Transaction
+	var rawTx *bt.Tx
 	rawTx, err := CreateTx(
 		nil,
 		nil,
@@ -332,7 +332,7 @@ func TestCreateTxErrors(t *testing.T) {
 // TestCreateTxUsingWif will test the method CreateTxUsingWif()
 func TestCreateTxUsingWif(t *testing.T) {
 
-	// Example from: https://github.com/libsv/libsv
+	// Example from: https://github.com/libsv/go-bt
 
 	// Use a new UTXO
 	utxo := &Utxo{
@@ -674,7 +674,7 @@ func TestCreateTxWithChange(t *testing.T) {
 	}
 
 	// Generate the TX
-	var rawTx *transaction.Transaction
+	var rawTx *bt.Tx
 	rawTx, err = CreateTxWithChange(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
@@ -908,7 +908,7 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 	}
 
 	// Run tests
-	var rawTx *transaction.Transaction
+	var rawTx *bt.Tx
 	for _, test := range tests {
 		privateKey, err := WifToPrivateKey(test.inputWif)
 		if err != nil && !test.expectedError {
@@ -958,7 +958,7 @@ func ExampleCreateTxWithChange() {
 	}
 
 	// Generate the TX
-	var rawTx *transaction.Transaction
+	var rawTx *bt.Tx
 	rawTx, err = CreateTxWithChange(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},

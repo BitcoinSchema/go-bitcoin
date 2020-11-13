@@ -6,9 +6,7 @@ import (
 	"strings"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
-	"github.com/libsv/libsv/transaction"
-	"github.com/libsv/libsv/transaction/output"
-	"github.com/libsv/libsv/transaction/signature"
+	"github.com/libsv/go-bt"
 )
 
 const (
@@ -56,8 +54,8 @@ type PayToAddress struct {
 type OpReturnData [][]byte
 
 // TxFromHex will return a libsv.tx from a raw hex string
-func TxFromHex(rawHex string) (*transaction.Transaction, error) {
-	return transaction.NewFromString(rawHex)
+func TxFromHex(rawHex string) (*bt.Tx, error) {
+	return bt.NewTxFromString(rawHex)
 }
 
 // CreateTxWithChange will automatically create the change output and calculate fees
@@ -65,7 +63,7 @@ func TxFromHex(rawHex string) (*transaction.Transaction, error) {
 // Use this if you don't want to figure out fees/change for a tx
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
 	changeAddress string, standardRate, dataRate *FeeAmount,
-	privateKey *bsvec.PrivateKey) (*transaction.Transaction, error) {
+	privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -139,7 +137,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 //
 // Use this if you don't want to figure out fees/change for a tx
 func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	changeAddress string, standardRate, dataRate *FeeAmount, wif string) (*transaction.Transaction, error) {
+	changeAddress string, standardRate, dataRate *FeeAmount, wif string) (*bt.Tx, error) {
 
 	// Decode the WIF
 	privateKey, err := WifToPrivateKey(wif)
@@ -159,10 +157,10 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
-	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*transaction.Transaction, error) {
+	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
 
 	// Start creating a new transaction
-	tx := transaction.New()
+	tx := bt.NewTx()
 
 	// Accumulate the total satoshis from all utxo(s)
 	var totalSatoshis uint64
@@ -184,9 +182,9 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	}
 
 	// Loop any op returns
-	var outPut *output.Output
+	var outPut *bt.Output
 	for _, op := range opReturns {
-		if outPut, err = output.NewOpReturnParts(op); err != nil {
+		if outPut, err = bt.NewOpReturnPartsOutput(op); err != nil {
 			return nil, err
 		}
 		tx.AddOutput(outPut)
@@ -205,7 +203,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	// Sign the transaction
 	if privateKey != nil {
 
-		signer := signature.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
+		signer := bt.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
 		if err = tx.SignAuto(&signer); err != nil {
 			return nil, err
 		}
@@ -223,7 +221,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
 func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
-	opReturns []OpReturnData, wif string) (*transaction.Transaction, error) {
+	opReturns []OpReturnData, wif string) (*bt.Tx, error) {
 
 	// Decode the WIF
 	privateKey, err := WifToPrivateKey(wif)
@@ -241,7 +239,7 @@ func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
 // Rate(s) can be derived from MinerAPI (default is DefaultDataRate and DefaultStandardRate)
 // If rate is nil it will use default rates (0.5 sat per byte)
 // Reference: https://tncpw.co/c215a75c
-func CalculateFeeForTx(tx *transaction.Transaction, standardRate, dataRate *FeeAmount) uint64 {
+func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *FeeAmount) uint64 {
 
 	// Set the totals
 	var totalFee uint64
