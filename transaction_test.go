@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/libsv/go-bt"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestTxFromHex will test the method TxFromHex()
@@ -84,41 +85,35 @@ func TestCreateTx(t *testing.T) {
 
 	// Private key (from wif)
 	privateKey, err := WifToPrivateKey("L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKey)
 
 	// Generate the TX
-	var rawTx *bt.Tx
-	rawTx, err = CreateTx(
+	var tx *bt.Tx
+	tx, err = CreateTx(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
 		[]OpReturnData{opReturn1, opReturn2},
 		privateKey,
 	)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-
-	// Show the results
-	t.Logf("created tx: %s", rawTx.ToString())
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	assert.Equal(t,
+		"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100eea3d606bd1627be6459a9de4860919225db74843d2fc7f4e7caa5e01f42c2d0022017978d9c6a0e934955a70e7dda71d68cb614f7dd89eb7b9d560aea761834ddd4412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000",
+		tx.ToString(),
+	)
 }
 
 func TestCreateEmptyTx(t *testing.T) {
-	// Generate the TX
-	var rawTx *bt.Tx
-	rawTx, err := CreateTx(
+	tx, err := CreateTx(
 		nil,
 		nil,
 		nil,
 		nil,
 	)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-
-	// Show the results
-	t.Logf("created tx: %s", rawTx.ToString())
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
+	assert.Equal(t, "01000000000000000000", tx.ToString())
 }
 
 // ExampleCreateTx example using CreateTx()
@@ -307,6 +302,7 @@ func TestCreateTxErrors(t *testing.T) {
 	}
 
 	// Run tests
+	var rawTx *bt.Tx
 	for _, test := range tests {
 
 		// Private key (from wif)
@@ -315,7 +311,7 @@ func TestCreateTxErrors(t *testing.T) {
 			t.Fatalf("error occurred: %s", err.Error())
 		}
 
-		if rawTx, err := CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey); err != nil && !test.expectedError {
+		if rawTx, err = CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
@@ -353,26 +349,24 @@ func TestCreateTxUsingWif(t *testing.T) {
 	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Generate the TX
-	_, err := CreateTxUsingWif(
+	tx, err := CreateTxUsingWif(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
 		[]OpReturnData{opReturn1, opReturn2},
 		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
 
 	// Invalid wif
-	_, err = CreateTxUsingWif(
+	tx, err = CreateTxUsingWif(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
 		[]OpReturnData{opReturn1, opReturn2},
 		"",
 	)
-	if err == nil {
-		t.Fatalf("error should have occurred")
-	}
+	assert.Error(t, err)
+	assert.Nil(t, tx)
 }
 
 // ExampleCreateTxUsingWif example using CreateTxUsingWif()
@@ -463,20 +457,14 @@ func TestCalculateFeeForTx(t *testing.T) {
 		[]OpReturnData{opReturn1, opReturn2},
 		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-
-	expectedFee := uint64(132)
+	assert.NoError(t, err)
 
 	// Tx to calculate
 	// t.Log(rawTx.ToString())
 	// t.Log("tx size: ", len(rawTx.ToBytes()))
 
 	// Calculate fee
-	if fee := CalculateFeeForTx(rawTx, nil, nil); fee != expectedFee {
-		t.Fatalf("expected fee: %d got: %d", expectedFee, fee)
-	}
+	assert.Equal(t, uint64(132), CalculateFeeForTx(rawTx, nil, nil))
 }
 
 // TestCalculateFeeForTxVariousTxs will test the method CalculateFeeForTx()
@@ -570,9 +558,8 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 
 		// Get the tx from hex string
 		tx, err := TxFromHex(test.inputHex)
-		if err != nil {
-			t.Fatalf("error occurred: %s", err.Error())
-		}
+		assert.NoError(t, err)
+		assert.NotNil(t, tx)
 
 		// Test the function
 		if satoshis = CalculateFeeForTx(tx, test.inputStandardRate, test.inputDataRate); satoshis != test.expectedSatoshis {
@@ -593,10 +580,8 @@ func TestA25_ComputeChecksum(t *testing.T) {
 		Satoshis:  1000,
 	}
 	tx, err := CreateTxUsingWif([]*Utxo{utxo}, nil, nil, "L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-	t.Log(tx.ToString())
+	assert.NoError(t, err)
+	assert.NotNil(t, tx)
 }
 
 // ExampleCalculateFeeForTx example using CalculateFeeForTx()
@@ -637,13 +622,9 @@ func BenchmarkCalculateFeeForTx(b *testing.B) {
 func TestCalculateFeeForTxPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_ = CalculateFeeForTx(nil, nil, nil)
+	assert.Panics(t, func() {
+		_ = CalculateFeeForTx(nil, nil, nil)
+	})
 }
 
 // TestCreateTxWithChange tests for nil case in CreateTxWithChange()
@@ -669,9 +650,8 @@ func TestCreateTxWithChange(t *testing.T) {
 
 	// Private key (from wif)
 	privateKey, err := WifToPrivateKey("L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKey)
 
 	// Generate the TX
 	var rawTx *bt.Tx
@@ -684,29 +664,18 @@ func TestCreateTxWithChange(t *testing.T) {
 		nil,
 		privateKey,
 	)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
 
 	// Show the results
-	t.Logf("created tx: %s", rawTx.ToString())
-
-	// Expected
-	expectedFee := uint64(149)
-	expectedChange := uint64(351)
+	// t.Logf("created tx: %s", rawTx.ToString())
 
 	// Test the right fee
-	fee := CalculateFeeForTx(rawTx, nil, nil)
-	if fee != expectedFee {
-		t.Fatalf("fee expected: %d vs %d", expectedFee, fee)
-	}
+	assert.Equal(t, uint64(149), CalculateFeeForTx(rawTx, nil, nil))
 
 	// Test that we got the right amount of change (satoshis)
 	for _, out := range rawTx.GetOutputs() {
 		if out.GetLockingScriptHexString() == "76a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac" {
-			if out.Satoshis != expectedChange {
-				t.Fatalf("incorrect change expected: %d vs %d", out.Satoshis, expectedChange)
-			}
+			assert.Equal(t, uint64(351), out.Satoshis)
 		}
 	}
 }
@@ -1036,34 +1005,21 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 		nil,
 		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 	)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-
-	// Show the results
-	t.Logf("created tx: %s", rawTx.ToString())
-
-	// Expected
-	expectedFee := uint64(149)
-	expectedChange := uint64(351)
+	assert.NoError(t, err)
+	assert.NotNil(t, rawTx)
 
 	// Test the right fee
-	fee := CalculateFeeForTx(rawTx, nil, nil)
-	if fee != expectedFee {
-		t.Fatalf("fee expected: %d vs %d", expectedFee, fee)
-	}
+	assert.Equal(t, uint64(149), CalculateFeeForTx(rawTx, nil, nil))
 
 	// Test that we got the right amount of change (satoshis)
 	for _, out := range rawTx.GetOutputs() {
 		if out.GetLockingScriptHexString() == "76a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac" {
-			if out.Satoshis != expectedChange {
-				t.Fatalf("incorrect change expected: %d vs %d", out.Satoshis, expectedChange)
-			}
+			assert.Equal(t, uint64(351), out.Satoshis)
 		}
 	}
 
 	// Invalid wif
-	_, err = CreateTxWithChangeUsingWif(
+	rawTx, err = CreateTxWithChangeUsingWif(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
 		[]OpReturnData{opReturn1, opReturn2},
@@ -1072,9 +1028,8 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 		nil,
 		"",
 	)
-	if err == nil {
-		t.Fatalf("error should have occurred")
-	}
+	assert.Error(t, err)
+	assert.Nil(t, rawTx)
 }
 
 // ExampleCreateTxWithChangeUsingWif example using CreateTxWithChangeUsingWif()

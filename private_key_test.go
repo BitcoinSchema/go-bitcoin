@@ -5,57 +5,15 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/stretchr/testify/assert"
 )
-
-// TestGenerateSharedKeyPair will test creating a shared key that can be used to
-// encrypt data that can be decrypted by yourself (privkey) and also the owner
-// of the given public key
-func TestGenerateSharedKeyPair(t *testing.T) {
-	t.Parallel()
-
-	// User 1
-	privKey1, _ := CreatePrivateKey()
-
-	// User 2
-	privKey2, _ := CreatePrivateKey()
-
-	_, user1SharedPubKey := GenerateSharedKeyPair(privKey1, privKey2.PubKey())
-
-	// encrypt something with the shared public key
-	encryptTest, err := bsvec.Encrypt(user1SharedPubKey, []byte(testEncryptionMessage))
-	if err != nil {
-		t.Fatalf("Failed to encrypt test data %s", err)
-	}
-
-	// user 2 decrypts it
-	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
-
-	var decryptedTestData []byte
-	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, encryptTest)
-	if err != nil {
-		t.Fatalf("Failed to decrypt test data %s", err)
-	}
-
-	if string(decryptedTestData) != testEncryptionMessage {
-		t.Fatalf("Decrypted string doesnt match %s", decryptedTestData)
-	}
-}
-
-// todo: examples and benchmark for GenerateSharedKeyPair()
 
 // TestCreatePrivateKey will test the method CreatePrivateKey()
 func TestCreatePrivateKey(t *testing.T) {
 	rawKey, err := CreatePrivateKey()
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-	if rawKey == nil {
-		t.Fatalf("private key was nil")
-	}
-	if len(rawKey.Serialize()) == 0 {
-		t.Fatalf("key length was invalid")
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, rawKey)
+	assert.Equal(t, 32, len(rawKey.Serialize()))
 }
 
 // ExampleCreatePrivateKey example using CreatePrivateKey()
@@ -80,15 +38,8 @@ func BenchmarkCreatePrivateKey(b *testing.B) {
 // TestCreatePrivateKeyString will test the method CreatePrivateKeyString()
 func TestCreatePrivateKeyString(t *testing.T) {
 	key, err := CreatePrivateKeyString()
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
-	if len(key) == 0 {
-		t.Fatalf("private key is empty")
-	}
-	if len(key) != 64 {
-		t.Fatalf("key length is not 64")
-	}
+	assert.NoError(t, err)
+	assert.Equal(t, 64, len(key))
 }
 
 // ExampleCreatePrivateKeyString example using CreatePrivateKeyString()

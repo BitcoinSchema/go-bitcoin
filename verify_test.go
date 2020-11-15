@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/piotrnar/gocoin/lib/secp256k1"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
@@ -163,17 +164,9 @@ func TestVerifyMessageSigRecover(t *testing.T) {
 		exp.Y.SetHex(vs[i][5])
 
 		success := secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey)
-
-		if success {
-			if !exp.X.Equals(&pubkey.X) {
-				t.Error("X mismatch at vector", i)
-			}
-			if !exp.Y.Equals(&pubkey.Y) {
-				t.Error("Y mismatch at vector", i)
-			}
-		} else {
-			t.Error("sig.recover failed")
-		}
+		assert.Equal(t, true, success)
+		assert.Equal(t, true, exp.X.Equals(&pubkey.X))
+		assert.Equal(t, true, exp.Y.Equals(&pubkey.Y))
 	}
 }
 
@@ -225,15 +218,15 @@ func TestVerifyMessageSigRecoverFailed(t *testing.T) {
 		sig.S.SetHex(vs[i][1])
 		msg.SetHex(vs[i][2])
 		rid, err := strconv.ParseInt(vs[i][3], 10, 32)
-		if err != nil {
-			t.Fatalf("failed in ParseInt: %s", err.Error())
-		}
+		assert.NoError(t, err)
+
 		exp.X.SetHex(vs[i][4])
 		exp.Y.SetHex(vs[i][5])
 
-		if secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey) {
-			t.Fatalf("sigRecover should have failed")
-		}
+		assert.Equal(t,
+			false,
+			secp256k1.RecoverPublicKey(sig.R.Bytes(), sig.S.Bytes(), msg.Bytes(), int(rid), &pubkey),
+		)
 	}
 
 }
@@ -246,61 +239,47 @@ func TestVerifyMessageDER(t *testing.T) {
 	invalidMessage := []byte("invalid-message")
 	validHash := sha256.Sum256(message)
 
-	// Test a valid signature
-	verified, err := VerifyMessageDER(validHash, testDERPubKey, testDERSignature)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	} else if !verified {
-		t.Fatalf("expected verified to be true")
-	}
+	t.Run("valid signature", func(t *testing.T) {
+		verified, err := VerifyMessageDER(validHash, testDERPubKey, testDERSignature)
+		assert.NoError(t, err)
+		assert.Equal(t, true, verified)
+	})
 
-	// Test an invalid pubkey
-	verified, err = VerifyMessageDER(validHash, testDERPubKey+"00", testDERSignature)
-	if err == nil {
-		t.Fatalf("error should have occurred")
-	} else if verified {
-		t.Fatalf("expected verified to be false")
-	}
+	t.Run("invalid pubkey", func(t *testing.T) {
+		verified, err := VerifyMessageDER(validHash, testDERPubKey+"00", testDERSignature)
+		assert.Error(t, err)
+		assert.Equal(t, false, verified)
+	})
 
-	// Test an invalid pubkey
-	verified, err = VerifyMessageDER(validHash, "0", testDERSignature)
-	if err == nil {
-		t.Fatalf("error should have occurred")
-	} else if verified {
-		t.Fatalf("expected verified to be false")
-	}
+	t.Run("invalid pubkey 2", func(t *testing.T) {
+		verified, err := VerifyMessageDER(validHash, "0", testDERSignature)
+		assert.Error(t, err)
+		assert.Equal(t, false, verified)
+	})
 
-	// Test an invalid signature
-	verified, err = VerifyMessageDER(validHash, testDERPubKey, "0"+testDERSignature)
-	if verified {
-		t.Fatalf("expected verified to be false but got: %v", verified)
-	} else if err == nil {
-		t.Fatalf("expected error not be nil")
-	}
+	t.Run("invalid signature (prefix)", func(t *testing.T) {
+		verified, err := VerifyMessageDER(validHash, testDERPubKey, "0"+testDERSignature)
+		assert.Error(t, err)
+		assert.Equal(t, false, verified)
+	})
 
-	// Test an invalid signature
-	verified, err = VerifyMessageDER(validHash, testDERPubKey, testDERSignature+"-1")
-	if verified {
-		t.Fatalf("expected verified to be false but got: %v", verified)
-	} else if err == nil {
-		t.Fatalf("expected error not be nil")
-	}
+	t.Run("invalid signature (suffix)", func(t *testing.T) {
+		verified, err := VerifyMessageDER(validHash, testDERPubKey, testDERSignature+"-1")
+		assert.Error(t, err)
+		assert.Equal(t, false, verified)
+	})
 
-	// Test an invalid signature
-	verified, err = VerifyMessageDER(validHash, testDERPubKey, "1234567")
-	if verified {
-		t.Fatalf("expected verified to be false but got: %v", verified)
-	} else if err == nil {
-		t.Fatalf("expected error not be nil")
-	}
+	t.Run("invalid signature (length)", func(t *testing.T) {
+		verified, err := VerifyMessageDER(validHash, testDERPubKey, "1234567")
+		assert.Error(t, err)
+		assert.Equal(t, false, verified)
+	})
 
-	// Test an invalid message
-	verified, err = VerifyMessageDER(sha256.Sum256(invalidMessage), testDERPubKey, testDERSignature)
-	if verified {
-		t.Fatalf("expected verified to be false")
-	} else if err != nil {
-		t.Fatalf("expected error to be nil, but got: %s", err.Error())
-	}
+	t.Run("invalid message", func(t *testing.T) {
+		verified, err := VerifyMessageDER(sha256.Sum256(invalidMessage), testDERPubKey, testDERSignature)
+		assert.NoError(t, err)
+		assert.Equal(t, false, verified)
+	})
 }
 
 // ExampleVerifyMessageDER example using VerifyMessageDER()

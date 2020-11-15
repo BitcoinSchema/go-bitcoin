@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestValidA58 will test the method ValidA58()
@@ -101,25 +102,17 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 
 	privateKey, err := bsvec.NewPrivateKey(bsvec.S256())
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	var addressUncompressed string
 	addressUncompressed, err = GetAddressFromPrivateKey(privateKey, false)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
 	var addressCompressed string
 	addressCompressed, err = GetAddressFromPrivateKey(privateKey, true)
-	if err != nil {
-		t.Fatal(err)
-	}
+	assert.NoError(t, err)
 
-	if addressCompressed == addressUncompressed {
-		t.Fatalf("compressed and uncompressed addresses cannot match")
-	}
+	assert.NotEqual(t, addressCompressed, addressUncompressed)
 }
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()

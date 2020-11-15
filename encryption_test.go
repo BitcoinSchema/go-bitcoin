@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/stretchr/testify/assert"
 )
 
 const testEncryptionMessage = "testing 1, 2, 3..."
@@ -16,9 +17,8 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 
 	// Create a valid private key
 	privateKey, err := CreatePrivateKey()
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -53,16 +53,10 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 func TestEncryptWithPrivateKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := EncryptWithPrivateKey(nil, "")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.Panics(t, func() {
+		_, err := EncryptWithPrivateKey(nil, "")
+		assert.Error(t, err)
+	})
 }
 
 // ExampleEncryptWithPrivateKey example using EncryptWithPrivateKey()
@@ -104,9 +98,8 @@ func TestEncryptWithPrivateKeyString(t *testing.T) {
 
 	// Create a valid private key
 	privateKey, err := CreatePrivateKeyString()
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -177,9 +170,8 @@ func TestDecryptWithPrivateKey(t *testing.T) {
 
 	// Create a valid private key
 	privateKey, err := PrivateKeyFromString("bb66a48a9f6dd7b8fb469a6f08a75c25770591dc509c72129b2aaeca77a5269e")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, privateKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -419,31 +411,32 @@ func TestEncryptShared(t *testing.T) {
 	t.Parallel()
 
 	// User 1's private key
-	privKey1, _ := CreatePrivateKey()
+	privKey1, err := CreatePrivateKey()
+	assert.NoError(t, err)
+	assert.NotNil(t, privKey1)
 
 	// User 2's private key
-	privKey2, _ := CreatePrivateKey()
+	var privKey2 *bsvec.PrivateKey
+	privKey2, err = CreatePrivateKey()
+	assert.NoError(t, err)
+	assert.NotNil(t, privKey1)
 
 	// User 1 encrypts using their private key and user 2's pubkey
-	_, _, encryptedData, err := EncryptShared(privKey1, privKey2.PubKey(), []byte(testEncryptionMessage))
-	if err != nil {
-		t.Fatalf("failed to encrypt data for sharing %s", err)
-	}
+	var encryptedData []byte
+	_, _, encryptedData, err = EncryptShared(privKey1, privKey2.PubKey(), []byte(testEncryptionMessage))
+	assert.NoError(t, err)
 
 	// Generate the shared key
 	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
+	assert.NotNil(t, user2SharedPrivKey)
 
 	// User 2 can decrypt using the shared private key
 	var decryptedTestData []byte
 	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, encryptedData)
-	if err != nil {
-		t.Fatalf("failed to decrypt test data %s", err)
-	}
+	assert.NoError(t, err)
 
 	// Test the result
-	if string(decryptedTestData) != testEncryptionMessage {
-		t.Fatalf("decrypted string doesnt match %s", decryptedTestData)
-	}
+	assert.Equal(t, testEncryptionMessage, string(decryptedTestData))
 
 	// todo: test bad keys?
 }
@@ -452,18 +445,11 @@ func TestEncryptShared(t *testing.T) {
 func TestEncryptSharedPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	privateKey, _, _, err := EncryptShared(nil, nil, []byte(""))
-	if err == nil {
-		t.Fatalf("expected error")
-	} else if privateKey != nil {
-		t.Fatalf("expected privateKey to be nil")
-	}
+	assert.Panics(t, func() {
+		privateKey, _, _, err := EncryptShared(nil, nil, []byte(""))
+		assert.Error(t, err)
+		assert.Nil(t, privateKey)
+	})
 }
 
 // todo: examples and benchmark for EncryptShared()
@@ -473,35 +459,35 @@ func TestEncryptSharedString(t *testing.T) {
 	t.Parallel()
 
 	// User 1's private key
-	privKey1, _ := CreatePrivateKey()
+	privKey1, err := CreatePrivateKey()
+	assert.NoError(t, err)
+	assert.NotNil(t, privKey1)
 
 	// User 2's private key
-	privKey2, _ := CreatePrivateKey()
+	var privKey2 *bsvec.PrivateKey
+	privKey2, err = CreatePrivateKey()
+	assert.NoError(t, err)
+	assert.NotNil(t, privKey1)
 
 	// User 1 encrypts using their private key and user 2's pubkey
-	_, _, encryptedData, err := EncryptSharedString(privKey1, privKey2.PubKey(), testEncryptionMessage)
-	if err != nil {
-		t.Fatalf("failed to encrypt data for sharing %s", err)
-	}
+	var encryptedData string
+	_, _, encryptedData, err = EncryptSharedString(privKey1, privKey2.PubKey(), testEncryptionMessage)
+	assert.NoError(t, err)
 
 	// Generate the shared key
 	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
+	assert.NotNil(t, user2SharedPrivKey)
 
 	// User 2 can decrypt using the shared private key
 	var decryptedTestData, decoded []byte
 	decoded, err = hex.DecodeString(encryptedData)
-	if err != nil {
-		t.Fatalf("failed to decoded %s", err)
-	}
+	assert.NoError(t, err)
+
 	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, decoded)
-	if err != nil {
-		t.Fatalf("failed to decrypt test data %s", err)
-	}
+	assert.NoError(t, err)
 
 	// Test the result
-	if string(decryptedTestData) != testEncryptionMessage {
-		t.Fatalf("decrypted string doesnt match %s", decryptedTestData)
-	}
+	assert.Equal(t, testEncryptionMessage, string(decryptedTestData))
 
 	// todo: test bad keys?
 }

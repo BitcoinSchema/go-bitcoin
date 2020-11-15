@@ -8,6 +8,7 @@ import (
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvutil"
 	"github.com/bitcoinsv/bsvutil/hdkeychain"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestGenerateHDKey will test the method GenerateHDKey()
@@ -184,16 +185,10 @@ func TestGetPrivateKeyByPath(t *testing.T) {
 func TestGetPrivateKeyByPathPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetPrivateKeyByPath(nil, 0, 1)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetPrivateKeyByPath(nil, 0, 1)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetPrivateKeyByPath example using GetPrivateKeyByPath()
@@ -231,9 +226,8 @@ func TestGetHDKeyByPath(t *testing.T) {
 
 	// Generate a valid key
 	validKey, err := GenerateHDKey(RecommendedSeedLength)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validKey)
 
 	// Max depth key
 	/*
@@ -296,16 +290,10 @@ func TestGetHDKeyByPath(t *testing.T) {
 func TestGetHDKeyByPathPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetHDKeyByPath(nil, 0, 1)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetHDKeyByPath(nil, 0, 1)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetHDKeyByPath example using GetHDKeyByPath()
@@ -343,9 +331,8 @@ func TestGetHDKeyChild(t *testing.T) {
 
 	// Generate a valid key
 	validKey, err := GenerateHDKey(RecommendedSeedLength)
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validKey)
 
 	// Max depth key
 	/*
@@ -414,16 +401,10 @@ func TestGetHDKeyChild(t *testing.T) {
 func TestGetHDKeyChildPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetHDKeyChild(nil, 1)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetHDKeyChild(nil, 1)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetHDKeyChild example using GetHDKeyChild()
@@ -514,9 +495,8 @@ func TestGetPrivateKeyFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -549,16 +529,10 @@ func TestGetPrivateKeyFromHDKey(t *testing.T) {
 func TestGetPrivateKeyFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetPrivateKeyFromHDKey(nil)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetPrivateKeyFromHDKey(nil)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetPrivateKeyFromHDKey example using GetPrivateKeyFromHDKey()
@@ -593,9 +567,8 @@ func TestGetPrivateKeyStringFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -624,16 +597,10 @@ func TestGetPrivateKeyStringFromHDKey(t *testing.T) {
 func TestGetPrivateKeyStringFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetPrivateKeyStringFromHDKey(nil)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetPrivateKeyStringFromHDKey(nil)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetPrivateKeyStringFromHDKey example using GetPrivateKeyStringFromHDKey()
@@ -668,9 +635,8 @@ func TestGetPublicKeyFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -704,16 +670,10 @@ func TestGetPublicKeyFromHDKey(t *testing.T) {
 func TestGetPublicKeyFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetPublicKeyFromHDKey(nil)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetPublicKeyFromHDKey(nil)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetPublicKeyFromHDKey example using GetPublicKeyFromHDKey()
@@ -748,9 +708,8 @@ func TestGetAddressFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -784,16 +743,10 @@ func TestGetAddressFromHDKey(t *testing.T) {
 func TestGetAddressFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetAddressFromHDKey(nil)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetAddressFromHDKey(nil)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetAddressFromHDKey example using GetAddressFromHDKey()
@@ -828,9 +781,8 @@ func TestGetAddressStringFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -859,16 +811,10 @@ func TestGetAddressStringFromHDKey(t *testing.T) {
 func TestGetAddressStringFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetAddressStringFromHDKey(nil)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetAddressStringFromHDKey(nil)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetAddressStringFromHDKey example using GetAddressStringFromHDKey()
@@ -903,9 +849,8 @@ func TestGetPublicKeysForPath(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -946,16 +891,10 @@ func TestGetPublicKeysForPath(t *testing.T) {
 func TestGetPublicKeysForPathPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetPublicKeysForPath(nil, 1)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetPublicKeysForPath(nil, 1)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetPublicKeysForPath example using GetPublicKeysForPath()
@@ -991,9 +930,8 @@ func TestGetAddressesForPath(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -1032,16 +970,10 @@ func TestGetAddressesForPath(t *testing.T) {
 func TestGetAddressesForPathPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetAddressesForPath(nil, 1)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetAddressesForPath(nil, 1)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetAddressesForPath example using GetAddressesForPath()
@@ -1075,9 +1007,8 @@ func TestGetExtendedPublicKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, validHdKey)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -1106,16 +1037,10 @@ func TestGetExtendedPublicKey(t *testing.T) {
 func TestGetExtendedPublicKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	_, err := GetExtendedPublicKey(nil)
-	if err == nil {
-		t.Fatalf("error expected")
-	}
+	assert.Panics(t, func() {
+		_, err := GetExtendedPublicKey(nil)
+		assert.Error(t, err)
+	})
 }
 
 // ExampleGetExtendedPublicKey example using GetExtendedPublicKey()

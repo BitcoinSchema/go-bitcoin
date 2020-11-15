@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/stretchr/testify/assert"
 )
 
 // TestPubKeyFromPrivateKeyString will test the method PubKeyFromPrivateKeyString()
@@ -59,9 +60,8 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
 	priv, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
-	if err != nil {
-		t.Fatalf("error occurred: %s", err.Error())
-	}
+	assert.NoError(t, err)
+	assert.NotNil(t, priv)
 
 	// Create the list of tests
 	var tests = []struct {
@@ -84,16 +84,10 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 func TestPubKeyFromPrivateKeyPanic(t *testing.T) {
 	t.Parallel()
 
-	defer func() {
-		if r := recover(); r == nil {
-			t.Fatalf("the code did not panic")
-		}
-	}()
-
-	pubKey := PubKeyFromPrivateKey(nil, true)
-	if len(pubKey) > 0 {
-		t.Fatalf("no pubkey expected, got: %s", pubKey)
-	}
+	assert.Panics(t, func() {
+		pubKey := PubKeyFromPrivateKey(nil, true)
+		assert.NotEqual(t, 0, len(pubKey))
+	})
 }
 
 // ExamplePubKeyFromPrivateKey example using PubKeyFromPrivateKey()
