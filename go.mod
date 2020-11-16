@@ -9,5 +9,5 @@ require (
 	github.com/libsv/go-bt v0.0.1
 	github.com/piotrnar/gocoin v0.0.0-20201027184336-0c389d7eb2c0
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/crypto v0.0.0-20201112155050-0c6587e931a9 // indirect
+	golang.org/x/crypto v0.0.0-20201116153603-4be66e5b6582 // indirect
 )
