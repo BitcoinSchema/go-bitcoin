@@ -6,6 +6,7 @@
 [![Build Status](https://travis-ci.com/BitcoinSchema/go-bitcoin.svg?branch=master&v=4)](https://travis-ci.com/BitcoinSchema/go-bitcoin)
 [![Report](https://goreportcard.com/badge/github.com/BitcoinSchema/go-bitcoin?style=flat&v=4)](https://goreportcard.com/report/github.com/BitcoinSchema/go-bitcoin)
 [![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=4)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
+[![used by](https://sourcegraph.com/github.com/BitcoinSchema/go-bitcoin/-/badge.svg?v=4)](https://sourcegraph.com/github.com/BitcoinSchema/go-bitcoin)
 [![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=4)](https://golang.org/)
 [![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=4)](https://github.com/sponsors/BitcoinSchema)
 [![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=4)](https://gobitcoinsv.com/#sponsor)
