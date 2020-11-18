@@ -38,10 +38,10 @@ type FeeAmount struct {
 
 // Utxo is an unspent transaction output
 type Utxo struct {
-	Satoshis  uint64 `json:"satoshis"`
-	ScriptSig string `json:"string"`
-	TxID      string `json:"tx_id"`
-	Vout      uint32 `json:"vout"`
+	Satoshis     uint64 `json:"satoshis"`
+	ScriptPubKey string `json:"string"`
+	TxID         string `json:"tx_id"`
+	Vout         uint32 `json:"vout"`
 }
 
 // PayToAddress is the pay-to-address
@@ -168,7 +168,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	// Loop all utxos and add to the transaction
 	var err error
 	for _, utxo := range utxos {
-		if err = tx.From(utxo.TxID, utxo.Vout, utxo.ScriptSig, utxo.Satoshis); err != nil {
+		if err = tx.From(utxo.TxID, utxo.Vout, utxo.ScriptPubKey, utxo.Satoshis); err != nil {
 			return nil, err
 		}
 		totalSatoshis += utxo.Satoshis

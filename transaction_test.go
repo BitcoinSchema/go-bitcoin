@@ -67,10 +67,10 @@ func TestCreateTx(t *testing.T) {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -121,10 +121,10 @@ func ExampleCreateTx() {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -163,7 +163,7 @@ func ExampleCreateTx() {
 // BenchmarkCreateTx benchmarks the method CreateTx()
 func BenchmarkCreateTx(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
+	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", Satoshis: 500}
@@ -201,10 +201,10 @@ func TestCreateTxErrors(t *testing.T) {
 		expectedError  bool
 	}{
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -217,10 +217,10 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -244,10 +244,10 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}}, nil,
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
@@ -256,10 +256,10 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}}, nil,
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
@@ -268,10 +268,10 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "invalid-script",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "invalid-script",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -284,10 +284,10 @@ func TestCreateTxErrors(t *testing.T) {
 			true,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "invalid-address",
@@ -332,10 +332,10 @@ func TestCreateTxUsingWif(t *testing.T) {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -374,10 +374,10 @@ func ExampleCreateTxUsingWif() {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -409,7 +409,7 @@ func ExampleCreateTxUsingWif() {
 // BenchmarkCreateTxUsingWif benchmarks the method CreateTxUsingWif()
 func BenchmarkCreateTxUsingWif(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
+	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", Satoshis: 500}
@@ -434,10 +434,10 @@ func TestCalculateFeeForTx(t *testing.T) {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -574,10 +574,10 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 // TestA25_ComputeChecksum will test the method ComputeChecksum()
 func TestA25_ComputeChecksum(t *testing.T) {
 	utxo := &Utxo{
-		TxID:      "",
-		Vout:      0,
-		ScriptSig: "",
-		Satoshis:  1000,
+		TxID:         "",
+		Vout:         0,
+		ScriptPubKey: "",
+		Satoshis:     1000,
 	}
 	tx, err := CreateTxUsingWif([]*Utxo{utxo}, nil, nil, "L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
 	assert.NoError(t, err)
@@ -632,10 +632,10 @@ func TestCreateTxWithChange(t *testing.T) {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -698,10 +698,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 		expectedError      bool
 	}{
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -717,10 +717,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -750,10 +750,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			true,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}}, nil,
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
@@ -765,10 +765,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}}, nil,
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
@@ -780,10 +780,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			false,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "invalid-script",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "invalid-script",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -799,10 +799,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			true,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "invalid-address",
@@ -818,10 +818,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			true,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -837,10 +837,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			true,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -856,10 +856,10 @@ func TestCreateTxWithChangeErrors(t *testing.T) {
 			true,
 		},
 		{[]*Utxo{{
-			TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:      0,
-			ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:  1000,
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
 		}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
@@ -903,10 +903,10 @@ func ExampleCreateTxWithChange() {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -949,7 +949,7 @@ func ExampleCreateTxWithChange() {
 // BenchmarkCreateTxWithChange benchmarks the method CreateTxWithChange()
 func BenchmarkCreateTxWithChange(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
+	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", Satoshis: 500}
@@ -979,10 +979,10 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -1037,10 +1037,10 @@ func ExampleCreateTxWithChangeUsingWif() {
 
 	// Use a new UTXO
 	utxo := &Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
@@ -1075,7 +1075,7 @@ func ExampleCreateTxWithChangeUsingWif() {
 // BenchmarkCreateTxWithChangeUsingWif benchmarks the method CreateTxWithChangeUsingWif()
 func BenchmarkCreateTxWithChangeUsingWif(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
+	utxo := &Utxo{TxID: "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576", Vout: 0, ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac", Satoshis: 1000}
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", Satoshis: 500}

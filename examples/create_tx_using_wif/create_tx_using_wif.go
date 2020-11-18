@@ -10,10 +10,10 @@ func main() {
 
 	// Use a new UTXO
 	utxo := &bitcoin.Utxo{
-		TxID:      "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:      0,
-		ScriptSig: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:  1000,
+		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+		Vout:         0,
+		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+		Satoshis:     1000,
 	}
 
 	// Add a pay-to address
