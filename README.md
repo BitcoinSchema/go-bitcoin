@@ -91,9 +91,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 
 - [bitcoinsv/bsvd](https://github.com/bitcoinsv/bsvd)
 - [bitcoinsv/bsvutil](https://github.com/bitcoinsv/bsvutil)
-- [itchyny/base58-go](https://github.com/itchyny/base58-go)
 - [libsv/go-bt](https://github.com/libsv/go-bt)
-- [piotrnar/gocoin](https://github.com/piotrnar/gocoin)
 </details>
 
 <details>
