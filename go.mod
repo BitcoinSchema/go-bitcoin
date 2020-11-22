@@ -8,6 +8,5 @@ require (
 	github.com/bitcoinsv/bsvutil v0.0.0-20181216182056-1d77cf353ea9
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/libsv/go-bt v0.0.3
-	github.com/piotrnar/gocoin v0.0.0-20201027184336-0c389d7eb2c0
 	github.com/stretchr/testify v1.6.1
 )
