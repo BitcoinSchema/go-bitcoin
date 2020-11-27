@@ -11,9 +11,9 @@ import (
 )
 
 // SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
-//
+// sigRefCompressedKey bool determines whether the signature will reference a compressed or uncompresed key
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
-func SignMessage(privateKey string, message string) (string, error) {
+func SignMessage(privateKey string, message string, sigRefCompressedKey bool) (string, error) {
 	if len(privateKey) == 0 {
 		return "", errors.New("privateKey is empty")
 	}
@@ -38,7 +38,7 @@ func SignMessage(privateKey string, message string) (string, error) {
 
 	// Sign
 	var sigBytes []byte
-	if sigBytes, err = bsvec.SignCompact(bsvec.S256(), ecdsaPrivateKey, messageHash, false); err != nil {
+	if sigBytes, err = bsvec.SignCompact(bsvec.S256(), ecdsaPrivateKey, messageHash, sigRefCompressedKey); err != nil {
 		return "", err
 	}
 

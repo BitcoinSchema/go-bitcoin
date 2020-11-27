@@ -5,6 +5,43 @@ import (
 	"testing"
 )
 
+func TestSigningCompression(t *testing.T) {
+	testKey := "0499f8239bfe10eb0f5e53d543635a423c96529dd85fa4bad42049a0b435ebdd"
+	testData := "test message"
+
+	// Test sign uncompressed
+	address, err := GetAddressFromPrivateKeyString(testKey, false)
+	if err != nil {
+		t.Errorf("Get address err %s", err)
+	}
+	sig, err := SignMessage(testKey, testData, false)
+	if err != nil {
+		t.Errorf("Failed to sign uncompressed %s", err)
+	}
+
+	err = VerifyMessage(address, sig, testData)
+
+	if err != nil {
+		t.Errorf("Failed to validate uncompressed %s", err)
+	}
+
+	// Test sign compressed
+	address, err = GetAddressFromPrivateKeyString(testKey, true)
+	if err != nil {
+		t.Errorf("Get address err %s", err)
+	}
+	sig, err = SignMessage(testKey, testData, true)
+	if err != nil {
+		t.Errorf("Failed to sign compressed %s", err)
+	}
+
+	err = VerifyMessage(address, sig, testData)
+
+	if err != nil {
+		t.Errorf("Failed to validate compressed %s", err)
+	}
+}
+
 // TestSignMessage will test the method SignMessage()
 func TestSignMessage(t *testing.T) {
 
@@ -87,7 +124,7 @@ func TestSignMessage(t *testing.T) {
 
 	// Run tests
 	for idx, test := range tests {
-		if signature, err := SignMessage(test.inputKey, test.inputMessage); err != nil && !test.expectedError {
+		if signature, err := SignMessage(test.inputKey, test.inputMessage, false); err != nil && !test.expectedError {
 			t.Fatalf("%d %s Failed: [%s] [%s] inputted and error not expected but got: %s", idx, t.Name(), test.inputKey, test.inputMessage, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%d %s Failed: [%s] [%s] inputted and error was expected", idx, t.Name(), test.inputKey, test.inputMessage)
@@ -99,7 +136,7 @@ func TestSignMessage(t *testing.T) {
 
 // ExampleSignMessage example using SignMessage()
 func ExampleSignMessage() {
-	signature, err := SignMessage("ef0b8bad0be285099534277fde328f8f19b3be9cadcd4c08e6ac0b5f863745ac", "This is a test message")
+	signature, err := SignMessage("ef0b8bad0be285099534277fde328f8f19b3be9cadcd4c08e6ac0b5f863745ac", "This is a test message", false)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -112,6 +149,6 @@ func ExampleSignMessage() {
 func BenchmarkSignMessage(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
 	for i := 0; i < b.N; i++ {
-		_, _ = SignMessage(key, "This is a test message")
+		_, _ = SignMessage(key, "This is a test message", false)
 	}
 }

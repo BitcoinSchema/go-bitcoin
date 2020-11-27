@@ -14,8 +14,11 @@ func main() {
 	}
 
 	// Sign the message (returning a signature)
+
+	// Note: If your signature references a compressed key,
+	// the address you provide to verify must also come from a compressed key
 	var signature string
-	if signature, err = bitcoin.SignMessage(privateKey, "This is the example message"); err != nil {
+	if signature, err = bitcoin.SignMessage(privateKey, "This is the example message", false); err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 

@@ -41,7 +41,10 @@ func PubKeyFromSignature(sig, data string) (pubKey *bsvec.PublicKey, wasCompress
 }
 
 // VerifyMessage verifies a string and address against the provided
-// signature and assumes Bitcoin Signed Message encoding
+// signature and assumes Bitcoin Signed Message encoding.
+// The key referenced by the signature must relate to the address provided.
+// Do not provide an address from an uncompressed key along with
+// a signature from a compressed key
 //
 // Error will occur if verify fails or verification is not successful (no bool)
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html

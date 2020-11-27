@@ -19,6 +19,7 @@ func main() {
 	}
 
 	// Get an address from private key
+	// the compressed flag must match the flag provided during signing
 	var address string
 	address, err = bitcoin.GetAddressFromPrivateKey(rawKey, true)
 	if err != nil {
