@@ -9,6 +9,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/libsv/go-bt v0.0.3 h1:wuyubNlVQ8bay9jJy5JpolvMxoiwSA/u5y+zMnVrDIE=
 github.com/libsv/go-bt v0.0.3/go.mod h1:6/eqZS8F56KztrcUdoYXHFx8ZBr4cg5Hp0jf0cG73J4=
+github.com/libsv/go-bt v0.0.4 h1:dFcBC0RsjtvcFEi/OBf6BiVLYqA/vVnD4qw6MO6LbcA=
+github.com/libsv/go-bt v0.0.4/go.mod h1:wNTIsmjGBV2cVlTErmblhVy9s+8uX2M4qsst2qEt8e4=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=

@@ -204,7 +204,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	if privateKey != nil {
 
 		signer := bt.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
-		if err = tx.SignAuto(&signer); err != nil {
+		if _, err = tx.SignAuto(&signer); err != nil {
 			return nil, err
 		}
 	}
