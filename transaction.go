@@ -27,15 +27,6 @@ const (
 	DustLimit uint64 = 546
 )
 
-// FeeAmount is the actual fee for the given feeType (data or standard)
-//
-// Reference: https://github.com/tonicpow/go-minercraft/blob/b14d26a5d60436ecd3481f94d9cb468513dcf86b/fee_quote.go#L164
-// Spec: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec
-type FeeAmount struct {
-	Bytes    uint64 `json:"bytes"`
-	Satoshis uint64 `json:"satoshis"`
-}
-
 // Utxo is an unspent transaction output
 type Utxo struct {
 	Satoshis     uint64 `json:"satoshis"`
@@ -75,6 +66,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	// Accumulate the total satoshis from all utxo(s)
 	var totalSatoshis uint64
 	var totalPayToSatoshis uint64
+	var hasChange bool
 
 	// Loop utxos and get total usable satoshis
 	for _, utxo := range utxos {
@@ -87,50 +79,97 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	}
 
 	// Sanity check - already not enough satoshis?
-	if totalPayToSatoshis >= totalSatoshis {
-		return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalPayToSatoshis, totalSatoshis)
+	if totalPayToSatoshis > totalSatoshis {
+		return nil, fmt.Errorf(
+			"not enough in utxo(s) to cover: %d + (fee), total found: %d",
+			totalPayToSatoshis,
+			totalSatoshis,
+		)
 	}
 
 	// Add the change address as the difference (all change except 1 sat for Draft tx)
-	payToAddresses = append(payToAddresses, &PayToAddress{
-		Address:  changeAddress,
-		Satoshis: totalSatoshis - (totalPayToSatoshis + 1),
-	})
+	// Only if the tx is NOT for the full amount
+	if totalPayToSatoshis != totalSatoshis {
+		hasChange = true
+		payToAddresses = append(payToAddresses, &PayToAddress{
+			Address:  changeAddress,
+			Satoshis: totalSatoshis - (totalPayToSatoshis + 1),
+		})
+	}
 
 	// Create the "Draft tx"
-	tx, err := CreateTx(utxos, payToAddresses, opReturns, privateKey)
+	fee, err := draftTx(utxos, payToAddresses, opReturns, privateKey, standardRate, dataRate)
 	if err != nil {
 		return nil, err
 	}
 
-	// Calculate the fees for the "Draft tx"
-	fee := CalculateFeeForTx(tx, standardRate, dataRate)
-
-	// todo: replace with go-bt way to create change tx (when released)
-	// for now (hacking the fee) (ensure we are over the min fee for the miner)
-	fee++
-
 	// Check that we have enough to cover the fee
 	if (totalPayToSatoshis + fee) > totalSatoshis {
-		return nil, fmt.Errorf("not enough in utxo(s) to cover: %d found: %d", totalPayToSatoshis+fee, totalSatoshis)
+
+		// Remove temporary change address first
+		if hasChange {
+			payToAddresses = payToAddresses[:len(payToAddresses)-1]
+		}
+
+		// Re-run draft tx with no change address
+		if fee, err = draftTx(
+			utxos, payToAddresses, opReturns, privateKey, standardRate, dataRate,
+		); err != nil {
+			return nil, err
+		}
+
+		// Get the remainder missing
+		remainder := (totalPayToSatoshis + fee) - totalSatoshis
+
+		// Remove remainder from last used payToAddress (or continue until found)
+		feeAdjusted := false
+		for i := len(payToAddresses) - 1; i >= 0; i-- { // Working backwards
+			if payToAddresses[i].Satoshis > remainder {
+				payToAddresses[i].Satoshis = payToAddresses[i].Satoshis - remainder
+				feeAdjusted = true
+				break
+			}
+		}
+
+		// Fee was not adjusted (all inputs do not cover the fee)
+		if !feeAdjusted {
+			return nil, fmt.Errorf(
+				"auto-fee could not be applied without removing an input",
+			)
+		}
+
+	} else {
+
+		// Remove the change address (old version with original satoshis)
+		// Add the change address as the difference (now with adjusted fee)
+		if hasChange {
+			payToAddresses = payToAddresses[:len(payToAddresses)-1]
+
+			payToAddresses = append(payToAddresses, &PayToAddress{
+				Address:  changeAddress,
+				Satoshis: totalSatoshis - (totalPayToSatoshis + fee),
+			})
+		}
 	}
-
-	// Remove the change address (old version with original satoshis)
-	payToAddresses = payToAddresses[:len(payToAddresses)-1]
-
-	// If change is less than dust...
-	// if (totalSatoshis - (totalPayToSatoshis + fee)) < DustLimit {
-	// todo: Warn about change amount being < dust ?
-	// }
-
-	// Add the change address as the difference (now with adjusted fee)
-	payToAddresses = append(payToAddresses, &PayToAddress{
-		Address:  changeAddress,
-		Satoshis: totalSatoshis - (totalPayToSatoshis + fee),
-	})
 
 	// Create the "Final tx" (or error)
 	return CreateTx(utxos, payToAddresses, opReturns, privateKey)
+}
+
+// draftTx is a helper method to create a draft tx and associated fees
+func draftTx(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
+	privateKey *bsvec.PrivateKey, standardRate, dataRate *bt.Fee) (uint64, error) {
+
+	// Create the "Draft tx"
+	tx, err := CreateTx(utxos, payToAddresses, opReturns, privateKey)
+	if err != nil {
+		return 0, err
+	}
+
+	// Calculate the fees for the "Draft tx"
+	// todo: hack to add 1 extra sat - ensuring that fee is over the minimum with rounding issues in WOC and other systems
+	fee := CalculateFeeForTx(tx, standardRate, dataRate) + 1
+	return fee, nil
 }
 
 // CreateTxWithChangeUsingWif will automatically create the change output and calculate fees

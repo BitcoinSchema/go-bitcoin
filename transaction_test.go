@@ -12,7 +12,6 @@ import (
 func TestTxFromHex(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputHex      string
 		expectedTxID  string
@@ -26,7 +25,6 @@ func TestTxFromHex(t *testing.T) {
 		{"01000000012adda020db81f2155ebba69e7c841275517ebf91674268c32ff2f5c7e2853b2c010000006b483045022100872051ef0b6c47714130c12a067db4f38b988bfc22fe270731c2146f5229386b02207abf68bbf092ec03e2c616defcc4c868ad1fc3cdbffb34bcedfab391a1274f3e412102affe8c91d0a61235a3d07b1903476a2e2f7a90451b2ed592fea9937696a07077ffffffff02ed1a0000000000001976a91491b3753cf827f139d2dc654ce36f05331138ddb588acc9670300000000001976a914da036233873cc6489ff65a0185e207d243b5154888ac00000000", "64cd12102af20195d54a107e0ee5989ac5db3491893a0b9d42e24354732a22a5", false, false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if rawTx, err := TxFromHex(test.inputHex); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputHex, err.Error())
@@ -186,7 +184,6 @@ func TestCreateTxErrors(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputUtxos     []*Utxo
 		inputAddresses []*PayToAddress
@@ -297,7 +294,6 @@ func TestCreateTxErrors(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	var rawTx *bt.Tx
 	for _, test := range tests {
 
@@ -441,39 +437,39 @@ func BenchmarkCreateTxUsingWif(b *testing.B) {
 func TestCalculateFeeForTx(t *testing.T) {
 	t.Parallel()
 
-	// Use a new UTXO
-	utxo := &Utxo{
-		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-		Vout:         0,
-		ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-		Satoshis:     1000,
-	}
+	t.Run("valid tx", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
 
-	// Add a pay-to address
-	payTo := &PayToAddress{
-		Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-		Satoshis: 868,
-	}
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 868,
+		}
 
-	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
-	// Generate the TX
-	rawTx, err := CreateTxUsingWif(
-		[]*Utxo{utxo},
-		[]*PayToAddress{payTo},
-		[]OpReturnData{opReturn1, opReturn2},
-		"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-	)
-	assert.NoError(t, err)
+		rawTx, err := CreateTxUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			[]OpReturnData{opReturn1, opReturn2},
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
 
-	// Tx to calculate
-	// t.Log(rawTx.ToString())
-	// t.Log("tx size: ", len(rawTx.ToBytes()))
+		// Calculate fee
+		assert.Equal(t, uint64(132), CalculateFeeForTx(rawTx, nil, nil))
+	})
 
-	// Calculate fee
-	assert.Equal(t, uint64(132), CalculateFeeForTx(rawTx, nil, nil))
+	t.Run("panic on tx nil", func(t *testing.T) {
+		assert.Panics(t, func() {
+			_ = CalculateFeeForTx(nil, nil, nil)
+		})
+	})
 }
 
 // TestCalculateFeeForTxVariousTxs will test the method CalculateFeeForTx()
@@ -481,7 +477,6 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		name              string
 		inputHex          string
@@ -624,7 +619,6 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	var satoshis uint64
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -637,19 +631,6 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 			assert.Equal(t, test.expectedTxID, tx.GetTxID())
 		})
 	}
-}
-
-// TestA25_ComputeChecksum will test the method ComputeChecksum()
-func TestA25_ComputeChecksum(t *testing.T) {
-	utxo := &Utxo{
-		TxID:         "",
-		Vout:         0,
-		ScriptPubKey: "",
-		Satoshis:     1000,
-	}
-	tx, err := CreateTxUsingWif([]*Utxo{utxo}, nil, nil, "L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
-	assert.NoError(t, err)
-	assert.NotNil(t, tx)
 }
 
 // ExampleCalculateFeeForTx example using CalculateFeeForTx()
@@ -686,20 +667,11 @@ func BenchmarkCalculateFeeForTx(b *testing.B) {
 	}
 }
 
-// TestCalculateFeeForTxPanic tests for nil case in CalculateFeeForTx()
-func TestCalculateFeeForTxPanic(t *testing.T) {
-	t.Parallel()
-
-	assert.Panics(t, func() {
-		_ = CalculateFeeForTx(nil, nil, nil)
-	})
-}
-
 // TestCreateTxWithChange tests for nil case in CreateTxWithChange()
 func TestCreateTxWithChange(t *testing.T) {
 	t.Parallel()
 
-	t.Run("valid tx", func(t *testing.T) {
+	t.Run("basic tx", func(t *testing.T) {
 		utxo := &Utxo{
 			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
 			Vout:         0,
@@ -741,224 +713,246 @@ func TestCreateTxWithChange(t *testing.T) {
 			}
 		}
 	})
-}
 
-// TestCreateTxWithChangeErrors tests for nil case in CreateTxWithChange()
-func TestCreateTxWithChangeErrors(t *testing.T) {
-	t.Parallel()
-
-	// Create the list of tests
-	var tests = []struct {
-		inputUtxos         []*Utxo
-		inputAddresses     []*PayToAddress
-		inputOpReturns     []OpReturnData
-		inputWif           string
-		inputChangeAddress string
-		inputStandardRate  *bt.Fee
-		inputDataRate      *bt.Fee
-		expectedRawTx      string
-		expectedNil        bool
-		expectedError      bool
-	}{
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 500,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100b95aff403574aba31b1786e5f5ddb3c57356a13e6207b66babb16a6d851d7cfe02200d0f570f619e4c05b5b7213ce673f46549f9a7ee95814f3ec0cc0233fd54c85e412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac71010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
-			false,
-			false,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 1500,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100bd31b3d9fbe18468086c0470e99f096e370f0c6ff41b6bb71f1a1d5c1b068ce302204f0c83d792a40337909b8b1bcea192722161f48dc475c653b7c352baa38eea6c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff02f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
-			true,
-			true,
-		},
-		{nil,
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 500,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"",
-			true,
-			true,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}}, nil,
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b48304502210092b9d4a913d7103e8770bdeb45528b6aed02126fafdfc64c728243714eac250002205fa4963a90fd69f6ae4cbf02c2ecc2367d585eb616244fb7c85adf4fef468a21412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0277030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
-			false,
-			false,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}}, nil,
-			nil,
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a4730440220029595a3bc3e94f92b1d08faf298ba938cb7c9824393789a1f3afc5ea5e172a802204d224492ab440c8180b45f39a25e270b0fb0d2fc74d8362db52e3ff960d9dc5d412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0187030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000",
-			false,
-			false,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "invalid-script",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 500,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"",
-			true,
-			true,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "invalid-address",
-				Satoshis: 500,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"",
-			true,
-			true,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 500,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"",
-			nil,
-			nil,
-			"",
-			true,
-			true,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 1001,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"",
-			true,
-			true,
-		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
-			[]*PayToAddress{{
-				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
-				Satoshis: 950,
-			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
-			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
-			nil,
-			nil,
-			"",
-			true,
-			true,
-		},
-	}
-
-	// Run tests
-	var rawTx *bt.Tx
-	for _, test := range tests {
-		privateKey, err := WifToPrivateKey(test.inputWif)
-		if err != nil && !test.expectedError {
-			t.Fatalf("error occurred: %s", err.Error())
+	t.Run("valid txs", func(t *testing.T) {
+		var tests = []struct {
+			name               string
+			inputUtxos         []*Utxo
+			inputAddresses     []*PayToAddress
+			inputOpReturns     []OpReturnData
+			inputWif           string
+			inputChangeAddress string
+			inputStandardRate  *bt.Fee
+			inputDataRate      *bt.Fee
+			expectedRawTx      string
+		}{
+			{
+				"simple tx - 1000/500",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 500,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100b95aff403574aba31b1786e5f5ddb3c57356a13e6207b66babb16a6d851d7cfe02200d0f570f619e4c05b5b7213ce673f46549f9a7ee95814f3ec0cc0233fd54c85e412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac71010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			},
+			{
+				"simple tx with small op return",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}}, nil,
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b48304502210092b9d4a913d7103e8770bdeb45528b6aed02126fafdfc64c728243714eac250002205fa4963a90fd69f6ae4cbf02c2ecc2367d585eb616244fb7c85adf4fef468a21412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0277030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			},
+			{
+				"no pay-to, all goes to change",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}}, nil,
+				nil,
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a4730440220029595a3bc3e94f92b1d08faf298ba938cb7c9824393789a1f3afc5ea5e172a802204d224492ab440c8180b45f39a25e270b0fb0d2fc74d8362db52e3ff960d9dc5d412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0187030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000",
+			},
+			{
+				"fee is removed from pay-to",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 950,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100fdf1c12b1512db7ced357358a333f3abf0f7b2d0b1a62c8e727d07627d702d5502207446779354f63e785bb8a46c9b2fb9a6da8a6d5503ee90ff35bb4c0774d38e62412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0276030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			},
 		}
 
-		if rawTx, err = CreateTxWithChange(test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputChangeAddress, test.inputStandardRate, test.inputDataRate, privateKey); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		} else if rawTx == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		} else if rawTx != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		} else if rawTx != nil && rawTx.ToString() != test.expectedRawTx {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.ToString())
+		var rawTx *bt.Tx
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				privateKey, err := WifToPrivateKey(test.inputWif)
+				assert.NoError(t, err)
+				assert.NotNil(t, privateKey)
+
+				rawTx, err = CreateTxWithChange(
+					test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputChangeAddress,
+					test.inputStandardRate, test.inputDataRate, privateKey,
+				)
+				assert.NoError(t, err)
+				assert.NotNil(t, rawTx)
+				assert.Equal(t, test.expectedRawTx, rawTx.ToString())
+			})
 		}
-	}
+	})
+
+	t.Run("invalid txs", func(t *testing.T) {
+		var tests = []struct {
+			name               string
+			inputUtxos         []*Utxo
+			inputAddresses     []*PayToAddress
+			inputOpReturns     []OpReturnData
+			inputWif           string
+			inputChangeAddress string
+			inputStandardRate  *bt.Fee
+			inputDataRate      *bt.Fee
+			expectedRawTx      string
+		}{
+			{
+				"tx-2",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 1500,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100bd31b3d9fbe18468086c0470e99f096e370f0c6ff41b6bb71f1a1d5c1b068ce302204f0c83d792a40337909b8b1bcea192722161f48dc475c653b7c352baa38eea6c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff02f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
+			},
+			{
+				"tx-3",
+				nil,
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 500,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"",
+			},
+			{
+				"tx-6",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "invalid-script",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 500,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"",
+			},
+			{
+				"tx-7",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "invalid-address",
+					Satoshis: 500,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"",
+			},
+			{
+				"tx-7",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 500,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"",
+				nil,
+				nil,
+				"",
+			},
+			{
+				"tx-8",
+				[]*Utxo{{
+					TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+					Vout:         0,
+					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+					Satoshis:     1000,
+				}},
+				[]*PayToAddress{{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 1001,
+				}},
+				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				nil,
+				nil,
+				"",
+			},
+		}
+
+		var rawTx *bt.Tx
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				privateKey, err := WifToPrivateKey(test.inputWif)
+				assert.NoError(t, err)
+				assert.NotNil(t, privateKey)
+
+				rawTx, err = CreateTxWithChange(
+					test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputChangeAddress,
+					test.inputStandardRate, test.inputDataRate, privateKey,
+				)
+				assert.Error(t, err)
+				assert.Nil(t, rawTx)
+			})
+		}
+	})
 }
 
 // ExampleCreateTxWithChange example using CreateTxWithChange()
@@ -1078,6 +1072,395 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 				assert.Equal(t, uint64(351), out.Satoshis)
 			}
 		}
+	})
+
+	t.Run("send entire utxo amount", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 1000,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		// Test the right fee
+		assert.Equal(t, uint64(95), CalculateFeeForTx(rawTx, nil, nil))
+
+		// Test that we got the right amount of change (satoshis)
+		for _, out := range rawTx.GetOutputs() {
+			assert.Equal(t, uint64(904), out.Satoshis)
+			assert.Equal(t, "76a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac", out.GetLockingScriptHexString())
+		}
+	})
+
+	t.Run("send entire utxo amount - multiple pay to addresses", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{
+				{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 250,
+				},
+				{
+					Address:  "1vr42cDUPWd1vbBSmRTaP4RG3kjXSCCM4",
+					Satoshis: 250,
+				},
+				{
+					Address:  "1D59KQRed6Nw32q5cLkvKwcqn3cJccLPx7",
+					Satoshis: 250,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 250,
+				},
+			},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		// Test the right fee
+		assert.Equal(t, uint64(146), CalculateFeeForTx(rawTx, nil, nil))
+
+		// Test that we got the right amount of change (satoshis)
+		for _, out := range rawTx.GetOutputs() {
+			if out.GetLockingScriptHexString() == "76a9147dca96f8f7f4c4b400c46663b86a669bfb7e73c188ac" {
+				assert.Equal(t, uint64(103), out.Satoshis)
+			} else {
+				assert.Equal(t, uint64(250), out.Satoshis)
+			}
+		}
+	})
+
+	t.Run("send almost entire utxo amount", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 995,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		// Test the right fee
+		assert.Equal(t, uint64(95), CalculateFeeForTx(rawTx, nil, nil))
+		assert.Equal(t, "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a47304402206cb30774f7cd99db0a713ce164577ae94bbb3fde02f5e3b5afafe354458f4afc02204caa9804b352172d2b4260f5c99edb2091b6c4b5f9fbce12280f76d6371c9abc412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0188030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000", rawTx.ToString())
+
+		// Test that we got the right amount of change (satoshis)
+		for _, out := range rawTx.GetOutputs() {
+			if out.GetLockingScriptHexString() == "76a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac" {
+				assert.Equal(t, uint64(904), out.Satoshis)
+				assert.Equal(t, "76a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac", out.GetLockingScriptHexString())
+			}
+		}
+	})
+
+	t.Run("send more than utxos have - pay to", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 1001,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.Error(t, err)
+		assert.Nil(t, rawTx)
+	})
+
+	t.Run("send entire utxo - with op return", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 1000,
+		}
+
+		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			[]OpReturnData{opReturn1, opReturn2},
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		assert.Equal(t, uint64(132), CalculateFeeForTx(rawTx, nil, nil))
+		assert.Equal(t, "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100b8d6cf4362122a00fcc50195b6ecd75e08abf6dc427f1b75039c6355195a265202200c6eaf5c45c192b1fb1e6384b10d2f526d73edd996f03c43e48fe43b17e9869f412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0363030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000", rawTx.ToString())
+	})
+
+	t.Run("send entire utxo amount - last pay-to does not cover fee", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{
+				{
+					Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+					Satoshis: 950,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+			},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		// Test the right fee
+		assert.Equal(t, uint64(113), CalculateFeeForTx(rawTx, nil, nil))
+		assert.Equal(t, "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100ed46aac84c052c4b64c42782e2d09d0ebf679ba23c99cc22922c78d1ba185bc102204814d6d3d470e6c9ab46b4270ff98962dabd9df853d3856e73943433739faddd412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0245030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac32000000000000001976a9147dca96f8f7f4c4b400c46663b86a669bfb7e73c188ac00000000", rawTx.ToString())
+
+		// Test that we got the right amount of change (satoshis)
+		for _, out := range rawTx.GetOutputs() {
+			if out.GetLockingScriptHexString() == "76a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac" {
+				assert.Equal(t, uint64(837), out.Satoshis)
+			} else {
+				assert.Equal(t, uint64(50), out.Satoshis)
+			}
+		}
+	})
+
+	t.Run("send entire utxo - cannot cover fee in any pay-to", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+				{
+					Address:  "1CU8AAJoPTvLCph2mnpXarExQ1rKdVZum5",
+					Satoshis: 50,
+				},
+			},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.Error(t, err)
+		assert.Nil(t, rawTx)
+	})
+
+	t.Run("send entire utxo using data, leaving 1-2 sats", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 50,
+		}
+
+		// fee = 998
+		str := "043ce70e56f8f37ce5e00f992114594f24b45a49824321f9c9fe309cc3bc4112d546e88cdf95694278aaab92177b0e81a2d4bc4a1f8e18d2c28dae36b1f5a32be86f1c77191ef534d66a9e376472ea12d92e7b4e0f42874310d48189ad9d1c84bb9f3d7a84402565744d5721f67686baa55a3c2ba2865effa0c911e1565fa89d1dfdfa17ff42180435bd16b55076743d23dafc5af9fee20a3cddeb28b0dd86f058b8c49fa0249a50253331ee71c4455292222ec3f33450b95c0de42e68baeec7b5090862c41a19e903c2cc19df83ca3504b11f3e7142b063ed498226a0644d60524796ffbd16cfd50a7ce3dc81aaf4179035c46d0be00d200b1e90ea46b986045f24784a992bb323d7fbd9d694566ba566029f65a7edab65ad71bbffc49530219a5baa945ba59d3ec13a08dab88663694f733bf96e6ca07c5efc5e653bc0b12277812ba6d4f1c818384149b789b15583916a217c1b6bd971f628c70e660680edc8530296b6373f8db1d3bf2fd61c909775545fcc1d127d3e047d6740075398ff791a4eba34301efa928b6a3ace86af39ec4a8a7b88404c764a8038df81230be6e02ceb8808165b0a06e509fe94b8a644a14b5e7ee639f735c0125bbc64a52405dffb23f76e4211ea2fb86e9eadb5d130ee363998c7e1857097cdbe8f9c7b0143970402892ffe333de6da83190f6e6aabc21baacfb0924e3690db3d8ac282232d5be7c51f25409ceadf6a5f1f271844abf1fe5952af06a709ef2e3a722a54accd0291b926e2c29d7997c2e55989fa3d6ac2a72c47bf20b0d7d0d57f0ce358ed6dd6ded640d048108b92d6bac761734a98df9ae669f0de10fcd3f431ba0d7880e773d48c4eda955b66a7a7f6ffd0e7d151a45599de1173885754e8aa2c71aa9451a4cde2956f598d0db8013abc3d41b5acc1a99c6fe90218a565d55c81ca655ac1e196979f6b3aed7a6b643545cefdcfd57f03a24d3ee9e89a2acc2ed9234b628baef03f7c50d9d2e4ddc207a3377a911fd4b170483bd81b62958701fdfeb1dbc4b405d14437b60e25025350452531b90df95a21e9cbdc5093936392b80d68fbfe0066706857a9cfe6eea6944c2a548b4a0bb3560fc8ff0328d686c8deda686edce610eb8aadd06fbb4c8a54d8e9359c0507f7d2390b5139874198f6d66251123efae66606a99fad1c8676305c6f3590be8f9243942766714b59e66e4b8acbcd0c93e988b888c8243af505e52e01397290b7db6b773c65949bfe008b15e582"
+
+		opReturn1 := OpReturnData{[]byte(str)}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			[]OpReturnData{opReturn1},
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+		assert.Equal(t, "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100f1ab55c2f9fe4afb436ce18d097176eaca8a3d37a38966f606903fa1711f2bbe02202cedc7d854318c15e91fbdd779d427ef78e643e2dd9efa81ba5e245fad385ae9412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0201000000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac0000000000000000fd0107006a4dfc0630343363653730653536663866333763653565303066393932313134353934663234623435613439383234333231663963396665333039636333626334313132643534366538386364663935363934323738616161623932313737623065383161326434626334613166386531386432633238646165333662316635613332626538366631633737313931656635333464363661396533373634373265613132643932653762346530663432383734333130643438313839616439643163383462623966336437613834343032353635373434643537323166363736383662616135356133633262613238363565666661306339313165313536356661383964316466646661313766663432313830343335626431366235353037363734336432336461666335616639666565323061336364646562323862306464383666303538623863343966613032343961353032353333333165653731633434353532393232323265633366333334353062393563306465343265363862616565633762353039303836326334316131396539303363326363313964663833636133353034623131663365373134326230363365643439383232366130363434643630353234373936666662643136636664353061376365336463383161616634313739303335633436643062653030643230306231653930656134366239383630343566323437383461393932626233323364376662643964363934353636626135363630323966363561376564616236356164373162626666633439353330323139613562616139343562613539643365633133613038646162383836363336393466373333626639366536636130376335656663356536353362633062313232373738313262613664346631633831383338343134396237383962313535383339313661323137633162366264393731663632386337306536363036383065646338353330323936623633373366386462316433626632666436316339303937373535343566636331643132376433653034376436373430303735333938666637393161346562613334333031656661393238623661336163653836616633396563346138613762383834303463373634613830333864663831323330626536653032636562383830383136356230613036653530396665393462386136343461313462356537656536333966373335633031323562626336346135323430356466666232336637366534323131656132666238366539656164623564313330656533363339393863376531383537303937636462653866396337623031343339373034303238393266666533333364653664613833313930663665366161626332316261616366623039323465333639306462336438616332383232333264356265376335316632353430396365616466366135663166323731383434616266316665353935326166303661373039656632653361373232613534616363643032393162393236653263323964373939376332653535393839666133643661633261373263343762663230623064376430643537663063653335386564366464366465643634306430343831303862393264366261633736313733346139386466396165363639663064653130666364336634333162613064373838306537373364343863346564613935356236366137613766366666643065376431353161343535393964653131373338383537353465386161326337316161393435316134636465323935366635393864306462383031336162633364343162356163633161393963366665393032313861353635643535633831636136353561633165313936393739663662336165643761366236343335343563656664636664353766303361323464336565396538396132616363326564393233346236323862616566303366376335306439643265346464633230376133333737613931316664346231373034383362643831623632393538373031666466656231646263346234303564313434333762363065323530323533353034353235333162393064663935613231653963626463353039333933363339326238306436386662666530303636373036383537613963666536656561363934346332613534386234613062623335363066633866663033323864363836633864656461363836656463653631306562386161646430366662623463386135346438653933353963303530376637643233393062353133393837343139386636643636323531313233656661653636363036613939666164316338363736333035633666333539306265386639323433393432373636373134623539653636653462386163626364306339336539383862383838633832343361663530356535326530313339373239306237646236623737336336353934396266653030386231356535383200000000", rawTx.ToString())
+	})
+
+	t.Run("send entire utxo using data, too much data", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 50,
+		}
+
+		// fee = 1000+
+		str := "000000000043ce70e56f8f37ce5e00f992114594f24b45a49824321f9c9fe309cc3bc4112d546e88cdf95694278aaab92177b0e81a2d4bc4a1f8e18d2c28dae36b1f5a32be86f1c77191ef534d66a9e376472ea12d92e7b4e0f42874310d48189ad9d1c84bb9f3d7a84402565744d5721f67686baa55a3c2ba2865effa0c911e1565fa89d1dfdfa17ff42180435bd16b55076743d23dafc5af9fee20a3cddeb28b0dd86f058b8c49fa0249a50253331ee71c4455292222ec3f33450b95c0de42e68baeec7b5090862c41a19e903c2cc19df83ca3504b11f3e7142b063ed498226a0644d60524796ffbd16cfd50a7ce3dc81aaf4179035c46d0be00d200b1e90ea46b986045f24784a992bb323d7fbd9d694566ba566029f65a7edab65ad71bbffc49530219a5baa945ba59d3ec13a08dab88663694f733bf96e6ca07c5efc5e653bc0b12277812ba6d4f1c818384149b789b15583916a217c1b6bd971f628c70e660680edc8530296b6373f8db1d3bf2fd61c909775545fcc1d127d3e047d6740075398ff791a4eba34301efa928b6a3ace86af39ec4a8a7b88404c764a8038df81230be6e02ceb8808165b0a06e509fe94b8a644a14b5e7ee639f735c0125bbc64a52405dffb23f76e4211ea2fb86e9eadb5d130ee363998c7e1857097cdbe8f9c7b0143970402892ffe333de6da83190f6e6aabc21baacfb0924e3690db3d8ac282232d5be7c51f25409ceadf6a5f1f271844abf1fe5952af06a709ef2e3a722a54accd0291b926e2c29d7997c2e55989fa3d6ac2a72c47bf20b0d7d0d57f0ce358ed6dd6ded640d048108b92d6bac761734a98df9ae669f0de10fcd3f431ba0d7880e773d48c4eda955b66a7a7f6ffd0e7d151a45599de1173885754e8aa2c71aa9451a4cde2956f598d0db8013abc3d41b5acc1a99c6fe90218a565d55c81ca655ac1e196979f6b3aed7a6b643545cefdcfd57f03a24d3ee9e89a2acc2ed9234b628baef03f7c50d9d2e4ddc207a3377a911fd4b170483bd81b62958701fdfeb1dbc4b405d14437b60e25025350452531b90df95a21e9cbdc5093936392b80d68fbfe0066706857a9cfe6eea6944c2a548b4a0bb3560fc8ff0328d686c8deda686edce610eb8aadd06fbb4c8a54d8e9359c0507f7d2390b5139874198f6d66251123efae66606a99fad1c8676305c6f3590be8f9243942766714b59e66e4b8acbcd0c93e988b888c8243af505e52e01397290b7db6b773c65949bfe008b15e582"
+
+		opReturn1 := OpReturnData{[]byte(str)}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			[]OpReturnData{opReturn1},
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.Error(t, err)
+		assert.Nil(t, rawTx)
 	})
 
 	t.Run("invalid wif", func(t *testing.T) {
