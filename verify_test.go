@@ -18,7 +18,6 @@ func TestVerifyMessage(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputAddress   string
 		inputSignature string
@@ -90,7 +89,6 @@ func TestVerifyMessage(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if err := VerifyMessage(test.inputAddress, test.inputSignature, test.inputData); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputAddress, test.inputSignature, test.inputData, err.Error())

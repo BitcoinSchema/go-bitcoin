@@ -13,7 +13,6 @@ func TestValidA58(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input         string
 		expectedValid bool
@@ -31,7 +30,6 @@ func TestValidA58(t *testing.T) {
 		{"0", false, true},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if valid, err := ValidA58([]byte(test.input)); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -71,7 +69,6 @@ func BenchmarkValidA58(b *testing.B) {
 func TestGetAddressFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input           string
 		expectedAddress string
@@ -86,7 +83,6 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", true, false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if address, err := GetAddressFromPrivateKeyString(test.input, test.compressed); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -147,7 +143,6 @@ func testGetPublicKeyFromPrivateKey(privateKey string) *bsvec.PublicKey {
 func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input           *bsvec.PublicKey
 		expectedAddress string
@@ -162,7 +157,6 @@ func TestGetAddressFromPubKey(t *testing.T) {
 
 	// todo: add more error cases of invalid *bsvec.PublicKey
 
-	// Run tests
 	for _, test := range tests {
 		if rawKey, err := GetAddressFromPubKey(test.input, true); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -201,7 +195,6 @@ func BenchmarkGetAddressFromPubKey(b *testing.B) {
 func TestGetAddressFromScript(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputScript     string
 		expectedAddress string
@@ -220,7 +213,6 @@ func TestGetAddressFromScript(t *testing.T) {
 		{"47304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901", "", true},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if address, err := GetAddressFromScript(test.inputScript); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputScript, err.Error())
@@ -254,7 +246,6 @@ func BenchmarkGetAddressFromScript(b *testing.B) {
 func TestGetAddressFromPubKeyString(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input           string
 		expectedAddress string
@@ -267,7 +258,6 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 		{"0000", "", true, true},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if rawKey, err := GetAddressFromPubKeyString(test.input, true); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())

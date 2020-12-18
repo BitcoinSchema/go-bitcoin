@@ -9,7 +9,6 @@ import (
 func TestScriptFromAddress(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputAddress   string
 		expectedScript string
@@ -22,7 +21,6 @@ func TestScriptFromAddress(t *testing.T) {
 		{"13Rj7G3pn2GgG8KE6SFXLc7dCJdLNnNK7M", "76a9141a9d62736746f85ca872dc555ff51b1fed2471e288ac", false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if script, err := ScriptFromAddress(test.inputAddress); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputAddress, err.Error())

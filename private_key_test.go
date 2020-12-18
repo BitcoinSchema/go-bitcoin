@@ -65,7 +65,6 @@ func BenchmarkCreatePrivateKeyString(b *testing.B) {
 func TestPrivateKeyFromString(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input         string
 		expectedKey   string
@@ -81,7 +80,6 @@ func TestPrivateKeyFromString(t *testing.T) {
 		{"", "", true, true},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if rawKey, err := PrivateKeyFromString(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -121,7 +119,6 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input              string
 		expectedPrivateKey string
@@ -136,7 +133,6 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if privateKey, publicKey, err := PrivateAndPublicKeys(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -177,7 +173,6 @@ func TestPrivateKeyToWif(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input         string
 		expectedWif   string
@@ -192,7 +187,6 @@ func TestPrivateKeyToWif(t *testing.T) {
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false, false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if wif, err := PrivateKeyToWif(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -234,7 +228,6 @@ func TestPrivateKeyToWifString(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input         string
 		expectedWif   string
@@ -248,7 +241,6 @@ func TestPrivateKeyToWifString(t *testing.T) {
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if wif, err := PrivateKeyToWifString(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -285,7 +277,6 @@ func BenchmarkPrivateKeyToWifString(b *testing.B) {
 func TestWifToPrivateKey(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input         string
 		expectedKey   string
@@ -300,7 +291,6 @@ func TestWifToPrivateKey(t *testing.T) {
 		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if privateKey, err := WifToPrivateKey(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -339,7 +329,6 @@ func BenchmarkWifToPrivateKey(b *testing.B) {
 func TestWifToPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		input         string
 		expectedKey   string
@@ -353,7 +342,6 @@ func TestWifToPrivateKeyString(t *testing.T) {
 		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if privateKey, err := WifToPrivateKeyString(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())

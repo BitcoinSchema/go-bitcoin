@@ -13,7 +13,6 @@ import (
 func TestPubKeyFromPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputKey       string
 		expectedPubKey string
@@ -24,7 +23,6 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 		{"", "", true},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, true); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
@@ -63,7 +61,6 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, priv)
 
-	// Create the list of tests
 	var tests = []struct {
 		inputKey       *bsvec.PrivateKey
 		expectedPubKey string
@@ -72,7 +69,6 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 		{priv, "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if pubKey := PubKeyFromPrivateKey(test.inputKey, true); pubKey != test.expectedPubKey {
 			t.Fatalf("%s Failed: [%v] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
@@ -116,7 +112,6 @@ func TestPubKeyFromString(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputKey       string
 		expectedPubKey string
@@ -129,7 +124,6 @@ func TestPubKeyFromString(t *testing.T) {
 		{"031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false, false},
 	}
 
-	// Run tests
 	for _, test := range tests {
 		if pubKey, err := PubKeyFromString(test.inputKey); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())

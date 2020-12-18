@@ -47,7 +47,6 @@ func TestSignMessage(t *testing.T) {
 
 	t.Parallel()
 
-	// Create the list of tests
 	var tests = []struct {
 		inputKey          string
 		inputMessage      string
@@ -122,7 +121,6 @@ func TestSignMessage(t *testing.T) {
 		},
 	}
 
-	// Run tests
 	for idx, test := range tests {
 		if signature, err := SignMessage(test.inputKey, test.inputMessage, false); err != nil && !test.expectedError {
 			t.Fatalf("%d %s Failed: [%s] [%s] inputted and error not expected but got: %s", idx, t.Name(), test.inputKey, test.inputMessage, err.Error())
