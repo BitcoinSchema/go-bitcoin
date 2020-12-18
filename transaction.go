@@ -11,17 +11,6 @@ import (
 
 const (
 
-	// Spec: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec
-
-	// DefaultDataRate is the default rate for feeType: data (500 satoshis per X bytes)
-	DefaultDataRate int = 500
-
-	// DefaultStandardRate is the default rate for feeType: standard (500 satoshis per X bytes)
-	DefaultStandardRate int = 500
-
-	// DefaultRateBytes is the default amount of bytes to calculate fees (X Satoshis per X bytes)
-	DefaultRateBytes int = 1000
-
 	// DustLimit is the minimum value for a tx that can be spent
 	// Note: this is being deprecated in the new node software (TBD)
 	DustLimit uint64 = 546
@@ -52,6 +41,7 @@ func TxFromHex(rawHex string) (*bt.Tx, error) {
 // CreateTxWithChange will automatically create the change output and calculate fees
 //
 // Use this if you don't want to figure out fees/change for a tx
+// USE AT YOUR OWN RISK - this will modify a "pay-to" output to accomplish auto-fees
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
 	changeAddress string, standardRate, dataRate *bt.Fee,
 	privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
@@ -175,6 +165,7 @@ func draftTx(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturn
 // CreateTxWithChangeUsingWif will automatically create the change output and calculate fees
 //
 // Use this if you don't want to figure out fees/change for a tx
+// USE AT YOUR OWN RISK - this will modify a "pay-to" output to accomplish auto-fees
 func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
 	changeAddress string, standardRate, dataRate *bt.Fee, wif string) (*bt.Tx, error) {
 
