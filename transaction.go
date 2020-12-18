@@ -14,13 +14,13 @@ const (
 	// Spec: https://github.com/bitcoin-sv-specs/brfc-misc/tree/master/feespec
 
 	// DefaultDataRate is the default rate for feeType: data (500 satoshis per X bytes)
-	DefaultDataRate uint64 = 500
+	DefaultDataRate int = 500
 
 	// DefaultStandardRate is the default rate for feeType: standard (500 satoshis per X bytes)
-	DefaultStandardRate uint64 = 500
+	DefaultStandardRate int = 500
 
 	// DefaultRateBytes is the default amount of bytes to calculate fees (X Satoshis per X bytes)
-	DefaultRateBytes uint64 = 1000
+	DefaultRateBytes int = 1000
 
 	// DustLimit is the minimum value for a tx that can be spent
 	// Note: this is being deprecated in the new node software (TBD)
@@ -62,7 +62,7 @@ func TxFromHex(rawHex string) (*bt.Tx, error) {
 //
 // Use this if you don't want to figure out fees/change for a tx
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	changeAddress string, standardRate, dataRate *FeeAmount,
+	changeAddress string, standardRate, dataRate *bt.Fee,
 	privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
 
 	// Missing utxo(s) or change address
@@ -106,7 +106,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	// Calculate the fees for the "Draft tx"
 	fee := CalculateFeeForTx(tx, standardRate, dataRate)
 
-	// todo: replace with Libsv's new way to create change tx (when released)
+	// todo: replace with go-bt way to create change tx (when released)
 	// for now (hacking the fee) (ensure we are over the min fee for the miner)
 	fee++
 
@@ -137,7 +137,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 //
 // Use this if you don't want to figure out fees/change for a tx
 func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	changeAddress string, standardRate, dataRate *FeeAmount, wif string) (*bt.Tx, error) {
+	changeAddress string, standardRate, dataRate *bt.Fee, wif string) (*bt.Tx, error) {
 
 	// Decode the WIF
 	privateKey, err := WifToPrivateKey(wif)
@@ -239,41 +239,42 @@ func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
 // Rate(s) can be derived from MinerAPI (default is DefaultDataRate and DefaultStandardRate)
 // If rate is nil it will use default rates (0.5 sat per byte)
 // Reference: https://tncpw.co/c215a75c
-func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *FeeAmount) uint64 {
+func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 
 	// Set the totals
-	var totalFee uint64
-	var totalDataBytes uint64
+	var totalFee int
+	var totalDataBytes int
 
 	// Set defaults if not found
 	if standardRate == nil {
-		standardRate = &FeeAmount{Bytes: DefaultRateBytes, Satoshis: DefaultStandardRate}
+		standardRate = bt.DefaultStandardFee()
 	}
 	if dataRate == nil {
-		dataRate = &FeeAmount{Bytes: DefaultRateBytes, Satoshis: DefaultDataRate}
+		dataRate = bt.DefaultStandardFee()
+		// todo: adjusted to 5/10 for now, since all miners accept that rate
+		dataRate.FeeType = bt.FeeTypeData
 	}
 
 	// Set the total bytes of the tx
-	totalBytes := uint64(len(tx.ToBytes()))
+	totalBytes := len(tx.ToBytes())
 
 	// Loop all outputs and accumulate size (find data related outputs)
 	for _, out := range tx.GetOutputs() {
-		// todo: once libsv has outs.data.ToBytes() this can be removed/optimized
 		outHexString := out.GetLockingScriptHexString()
 		if strings.HasPrefix(outHexString, "006a") || strings.HasPrefix(outHexString, "6a") {
-			totalDataBytes += uint64(len(out.ToBytes()))
+			totalDataBytes += len(out.ToBytes())
 		}
 	}
 
 	// Got some data bytes?
 	if totalDataBytes > 0 {
 		totalBytes = totalBytes - totalDataBytes
-		totalFee += (dataRate.Satoshis * totalDataBytes) / dataRate.Bytes
+		totalFee += (dataRate.MiningFee.Satoshis * totalDataBytes) / dataRate.MiningFee.Bytes
 	}
 
 	// Still have regular standard bytes?
 	if totalBytes > 0 {
-		totalFee += (standardRate.Satoshis * totalBytes) / standardRate.Bytes
+		totalFee += (standardRate.MiningFee.Satoshis * totalBytes) / standardRate.MiningFee.Bytes
 	}
 
 	// Safety check (possible division by zero?)
@@ -282,5 +283,5 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *FeeAmount) uint64 {
 	}
 
 	// Return the total fee as a uint (easier to use with satoshi values)
-	return totalFee
+	return uint64(totalFee)
 }
