@@ -7,7 +7,7 @@
 [![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=4)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
 [![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=4)](https://golang.org/)
 [![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=4)](https://github.com/sponsors/BitcoinSchema)
-[![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=4)](https://gobitcoinsv.com/#sponsor)
+[![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=4)](https://gobitcoinsv.com/#sponsor?utm_source=github&utm_medium=sponsor-link&utm_campaign=go-bitcoin&utm_term=go-bitcoin&utm_content=go-bitcoin)
 
 <br/>
 
@@ -151,7 +151,7 @@ vet                  Run the Go vet application
 
 ## Examples & Tests
 All unit tests and [examples](examples) run via [Github Actions](https://github.com/BitcoinSchema/go-bitcoin/actions) and
-uses [Go version 1.15.x](https://golang.org/doc/go1.15). View the [configuration file](.github/workflows/run-tests.yml).
+uses [Go version 1.14.x and 1.15.x](https://golang.org/doc/go1.15). View the [configuration file](.github/workflows/run-tests.yml).
 
 Run all tests (including integration tests)
 
@@ -206,7 +206,7 @@ View the [contributing guidelines](CONTRIBUTING.md) and follow the [code of cond
 All kinds of contributions are welcome :raised_hands:!
 The most basic way to show your support is to star :star2: the project, or to raise issues :speech_balloon:.
 You can also support this project by [becoming a sponsor on GitHub](https://github.com/sponsors/BitcoinSchema) :clap:
-or by making a [**bitcoin donation**](https://gobitcoinsv.com/#sponsor) to ensure this journey continues indefinitely! :rocket:
+or by making a [**bitcoin donation**](https://gobitcoinsv.com/#sponsor?utm_source=github&utm_medium=sponsor-link&utm_campaign=go-bitcoin&utm_term=go-bitcoin&utm_content=go-bitcoin) to ensure this journey continues indefinitely! :rocket:
 
 <br/>
 
