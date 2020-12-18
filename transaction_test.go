@@ -1159,7 +1159,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 		}
 	})
 
-	t.Run("send almost entire utxo amount", func(t *testing.T) {
+	t.Run("send almost entire utxo amount - 5 sat diff", func(t *testing.T) {
 		utxo := &Utxo{
 			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
 			Vout:         0,
@@ -1197,7 +1197,43 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 		}
 	})
 
-	t.Run("send more than utxos have - pay to", func(t *testing.T) {
+	t.Run("send almost entire utxo amount - 1 sat diff", func(t *testing.T) {
+		utxo := &Utxo{
+			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+			Vout:         0,
+			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+			Satoshis:     1000,
+		}
+
+		payTo := &PayToAddress{
+			Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
+			Satoshis: 999,
+		}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{utxo},
+			[]*PayToAddress{payTo},
+			nil,
+			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			nil,
+			nil,
+			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		// Test the right fee
+		assert.Equal(t, uint64(96), CalculateFeeForTx(rawTx, nil, nil))
+		assert.Equal(t, "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100b7311ea368f243bae53913c8fd17a3a5774703fbb49ac1191d3331a1b2ef031d0220059f392cbe75eaa6d43adf45a6822c86c06c50e819a2352e5596f53049470f77412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0187030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000", rawTx.ToString())
+
+		// Test that we got the right amount of change (satoshis)
+		for _, out := range rawTx.GetOutputs() {
+			assert.Equal(t, uint64(903), out.Satoshis)
+			assert.Equal(t, "76a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac", out.GetLockingScriptHexString())
+		}
+	})
+
+	t.Run("send more than utxos provided - pay to", func(t *testing.T) {
 		utxo := &Utxo{
 			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
 			Vout:         0,
