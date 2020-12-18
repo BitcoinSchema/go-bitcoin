@@ -7,7 +7,7 @@ require (
 	github.com/bitcoinsv/bsvlog v0.0.0-20181216181007-cb81b076bf2e // indirect
 	github.com/bitcoinsv/bsvutil v0.0.0-20181216182056-1d77cf353ea9
 	github.com/davecgh/go-spew v1.1.1 // indirect
-	github.com/libsv/go-bt v0.0.5
+	github.com/libsv/go-bt v0.0.6-0.20201218191131-b9a1fc72f7d5
 	github.com/stretchr/testify v1.6.1
 	golang.org/x/crypto v0.0.0-20201217014255-9d1352758620 // indirect
 )
