@@ -1074,6 +1074,42 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 		}
 	})
 
+	t.Run("valid tx - multiple inputs - send all", func(t *testing.T) {
+
+		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
+		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
+
+		rawTx, err := CreateTxWithChangeUsingWif(
+			[]*Utxo{{
+				TxID:         "9e88ca8eec0845e9e864c024bc5e6711e670932c9c7d929f9fccdb2c440ae28e",
+				Vout:         0,
+				ScriptPubKey: "76a9147824dec00be2c45dad83c9b5e9f5d7ef05ba3cf988ac",
+				Satoshis:     5689,
+			}, {
+				TxID:         "4e25b077d4cbb955b5a215feb53f963cf04688ff1777b9bea097c7ddbdf7ea42",
+				Vout:         0,
+				ScriptPubKey: "76a9147824dec00be2c45dad83c9b5e9f5d7ef05ba3cf988ac",
+				Satoshis:     5689,
+			}},
+			[]*PayToAddress{{
+				Address:  "1DE7mZ9g3zmzWLM729fneui7eypfX8BBfC",
+				Satoshis: 5689 + 5689,
+			}},
+			[]OpReturnData{opReturn1, opReturn2},
+			"1BxGFoRPSFgYxoAStEncL6HuELqPkV3JVj",
+			nil,
+			nil,
+			"5JXAjNX7cbiWvmkdnj1EnTKPChauttKAJibXLm8tqWtDhXrRbKz",
+		)
+		assert.NoError(t, err)
+		assert.NotNil(t, rawTx)
+
+		// Test the right fee
+		assert.Equal(t, uint64(206), CalculateFeeForTx(rawTx, nil, nil))
+
+		assert.Equal(t, "01000000028ee20a442cdbcc9f9f927d9c2c9370e611675ebc24c064e8e94508ec8eca889e000000006b483045022100b79c96d45cb4bb9f2d1887ede3aced860c3d6d8fec169f710ec8a350d16004ad02205413acf2322aa9dbb5ea2a5166af8704ee354b941f4c04b60486e105c5c7ac344121034aaeabc056f33fd960d1e43fc8a0672723af02f275e54c31381af66a334634caffffffff42eaf7bdddc797a0beb97717ff8846f03c963fb5fe15a2b555b9cbd477b0254e000000006b483045022100f1cd918ebbaa7962d700c975cc793bf1351c4a064bf32685da40ac30194f13ea022062ad3e73b2cc96ed0e911f693d0dd844b6eff955f8d7e8f522594882a076f65c4121034aaeabc056f33fd960d1e43fc8a0672723af02f275e54c31381af66a334634caffffffff03a42b0000000000001976a914861c91132b67aec6d1bc111f13523cced19c9f2188ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000", rawTx.ToString())
+	})
+
 	t.Run("send entire utxo amount", func(t *testing.T) {
 		utxo := &Utxo{
 			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
