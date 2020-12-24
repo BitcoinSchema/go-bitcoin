@@ -56,6 +56,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	// Accumulate the total satoshis from all utxo(s)
 	var totalSatoshis uint64
 	var totalPayToSatoshis uint64
+	var remainder uint64
 	var hasChange bool
 
 	// Loop utxos and get total usable satoshis
@@ -109,7 +110,12 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 		}
 
 		// Get the remainder missing
-		remainder := (totalPayToSatoshis + fee) - totalSatoshis
+		totalToPay := totalPayToSatoshis + fee
+		if totalToPay >= totalSatoshis {
+			remainder = totalToPay - totalSatoshis
+		} else {
+			remainder = totalSatoshis - totalToPay
+		}
 
 		// Remove remainder from last used payToAddress (or continue until found)
 		feeAdjusted := false
