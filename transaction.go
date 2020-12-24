@@ -124,7 +124,8 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 		// Fee was not adjusted (all inputs do not cover the fee)
 		if !feeAdjusted {
 			return nil, fmt.Errorf(
-				"auto-fee could not be applied without removing an output (payTo %d) (amount %d) (remainder %d) (fee %d) (total %d)",
+				"auto-fee could not be applied without removing an output (payTo %d) "+
+					"(amount %d) (remainder %d) (fee %d) (total %d)",
 				len(payToAddresses), totalPayToSatoshis, remainder, fee, totalSatoshis,
 			)
 		}
