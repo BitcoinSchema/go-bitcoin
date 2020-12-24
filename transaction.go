@@ -3,6 +3,7 @@ package bitcoin
 import (
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/bitcoinsv/bsvd/bsvec"
@@ -110,6 +111,8 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 		// Get the remainder missing
 		remainder := (totalPayToSatoshis + fee) - totalSatoshis
+
+		log.Println(fee, totalPayToSatoshis, remainder, totalSatoshis)
 
 		// Remove remainder from last used payToAddress (or continue until found)
 		feeAdjusted := false
