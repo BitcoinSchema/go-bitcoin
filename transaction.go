@@ -109,7 +109,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 			return nil, err
 		}
 
-		// Get the remainder missing
+		// Get the remainder missing (handle negative overflow safer)
 		totalToPay := totalPayToSatoshis + fee
 		if totalToPay >= totalSatoshis {
 			remainder = totalToPay - totalSatoshis
