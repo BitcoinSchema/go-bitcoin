@@ -9,5 +9,5 @@ require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/libsv/go-bt v0.0.11
 	github.com/stretchr/testify v1.7.0
-	golang.org/x/crypto v0.0.0-20210220033148-5ea612d1eb83 // indirect
+	golang.org/x/crypto v0.0.0-20210506145944-38f3c27a63bf // indirect
 )
