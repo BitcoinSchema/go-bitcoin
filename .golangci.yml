@@ -197,9 +197,6 @@ linters-settings:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
     local-prefixes: github.com/org/project
-  golint:
-    # minimal confidence for issues, default is 0.8
-    min-confidence: 0.8
   gomnd:
     settings:
       mnd:
@@ -239,9 +236,6 @@ linters-settings:
     line-length: 120
     # tab width in spaces. Default to 1.
     tab-width: 1
-  maligned:
-    # print struct with more effective memory layout or not, false by default
-    suggest-new: true
   misspell:
     # Correct spellings using locale preferences for US or UK.
     # Default is to use a neutral variety of English.
@@ -336,10 +330,9 @@ linters:
     - govet
     - gosec
     - bodyclose
-    - golint
+    - revive
     - unconvert
     - dupl
-    - maligned
     - misspell
     - dogsled
     - prealloc
@@ -384,7 +377,6 @@ issues:
         - errcheck
         - dupl
         - gosec
-        - maligned
         - lll
 
     # Exclude known linters from partially hard-vendored code,
@@ -411,12 +403,8 @@ issues:
   exclude-use-default: false
 
   # The default value is false. If set to true exclude and exclude-rules
-  # regular expressions become case sensitive.
+  # regular expressions become case-sensitive.
   exclude-case-sensitive: false
-
-  # The list of ids of default excludes to include or disable. By default it's empty.
-  include:
-    - EXC0002 # disable excluding of issues about comments from golint
 
   # Maximum issues count per one linter. Set to 0 to disable. Default is 50.
   max-issues-per-linter: 0
