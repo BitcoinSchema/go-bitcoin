@@ -7,6 +7,7 @@
 [![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=4)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
 [![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=4)](https://golang.org/)
 <br>
+[![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod)](https://gitpod.io/#https://github.com/BitcoinSchema/go-bitcoin)
 [![Mergify Status](https://img.shields.io/endpoint.svg?url=https://gh.mergify.io/badges/BitcoinSchema/go-bitcoin&style=flat&v=4)](https://mergify.io)
 [![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=4)](https://github.com/sponsors/BitcoinSchema)
 [![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=4)](https://gobitcoinsv.com/#sponsor?utm_source=github&utm_medium=sponsor-link&utm_campaign=go-bitcoin&utm_term=go-bitcoin&utm_content=go-bitcoin)
@@ -218,4 +219,4 @@ or by making a [**bitcoin donation**](https://gobitcoinsv.com/#sponsor?utm_sourc
 
 ## License
 
-![License](https://img.shields.io/github/license/BitcoinSchema/go-bitcoin.svg?style=flat&v=4)
+[![License](https://img.shields.io/github/license/BitcoinSchema/go-bitcoin.svg?style=flat&v=4)](LICENSE)
