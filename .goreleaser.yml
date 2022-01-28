@@ -18,9 +18,9 @@ changelog:
 # ---------------------------
 # Publishers
 # ---------------------------
-publishers:
-  - name: "Publish GoDocs"
-    cmd: make godocs
+#publishers:
+#  - name: "Publish GoDocs"
+#    cmd: make godocs
 
 # ---------------------------
 # Builder
