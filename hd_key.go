@@ -154,7 +154,7 @@ func GetAddressStringFromHDKey(hdKey *hdkeychain.ExtendedKey) (string, error) {
 }
 
 // GetPublicKeysForPath gets the PublicKeys for a given derivation path
-// Uses the standard m/0/0 (internal) and m/0/1 (external) paths
+// Uses the standard m/0/0 (external) and m/0/1 (internal) paths
 // Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
 func GetPublicKeysForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (pubKeys []*bsvec.PublicKey, err error) {
 
@@ -164,7 +164,7 @@ func GetPublicKeysForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (pubKeys []
 		return
 	}
 
-	// Get the internal pubkey from m/0/x
+	// Get the external pubkey from m/0/x
 	var pubKey *bsvec.PublicKey
 	if pubKey, err = childM0x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
@@ -179,7 +179,7 @@ func GetPublicKeysForPath(hdKey *hdkeychain.ExtendedKey, num uint32) (pubKeys []
 		return
 	}
 
-	// Get the external pubkey from m/1/x
+	// Get the internal pubkey from m/1/x
 	if pubKey, err = childM1x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
 		return
