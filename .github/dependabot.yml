@@ -31,3 +31,35 @@ updates:
     labels:
       - "chore"
     open-pull-requests-limit: 10
+
+  # Maintain dependencies for the core library (deprecated V1)
+  - package-ecosystem: "gomod"
+    target-branch: "v1"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      time: "10:00"
+      timezone: "UTC"
+    reviewers:
+      - "mrz1836"
+    assignees:
+      - "mrz1836"
+    labels:
+      - "chore"
+    open-pull-requests-limit: 10
+
+  # Maintain dependencies for GitHub Actions (deprecated V1)
+  - package-ecosystem: "github-actions"
+    target-branch: "v1"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    reviewers:
+      - "mrz1836"
+    assignees:
+      - "mrz1836"
+    labels:
+      - "chore"
+    open-pull-requests-limit: 10
+

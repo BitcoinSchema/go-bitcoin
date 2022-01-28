@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"log"
 
-	"github.com/bitcoinschema/go-bitcoin"
+	"github.com/bitcoinschema/go-bitcoin/v2"
 	"github.com/bitcoinsv/bsvd/bsvec"
 )
 
