@@ -33,19 +33,17 @@ type PayToAddress struct {
 	Satoshis uint64 `json:"satoshis"`
 }
 
-// we need to create an interface for the unlocker
+// account is a struct/interface for implementing unlocker
 type account struct {
 	PrivateKey *bec.PrivateKey
 }
 
-// Unlocker get the correct un-locker for a given locking script.
-func (a *account) Unlocker(ctx context.Context, lockingScript *bscript.Script) (bt.Unlocker, error) {
+// Unlocker get the correct un-locker for a given locking script
+func (a *account) Unlocker(context.Context, *bscript.Script) (bt.Unlocker, error) {
 	return &unlocker.Simple{
 		PrivateKey: a.PrivateKey,
 	}, nil
 }
-
-// bec.PrivateKey bec.PrivateKey
 
 // OpReturnData is the op return data to include in the tx
 type OpReturnData [][]byte
@@ -356,6 +354,6 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 		totalFee = 1
 	}
 
-	// Return the total fee as a uint (easier to use with satoshi values)
+	// Return the total fee as an uint (easier to use with satoshi values)
 	return uint64(totalFee)
 }
