@@ -74,7 +74,7 @@ func PrivateAndPublicKeys(privateKey string) (*bec.PrivateKey, *bec.PublicKey, e
 	return rawKey, publicKey, nil
 }
 
-// PrivateKeyToWif will convert a private key to a WIF (*bsvutil.WIF)
+// PrivateKeyToWif will convert a private key to a WIF (*wif.WIF)
 func PrivateKeyToWif(privateKey string) (*wif.WIF, error) {
 
 	// Missing private key

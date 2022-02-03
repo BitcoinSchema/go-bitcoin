@@ -170,8 +170,8 @@ func TestGetAddressFromPubKey(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+		} else if rawKey != nil && rawKey.AddressString != test.expectedAddress {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
 		}
 	}
 }
@@ -183,7 +183,7 @@ func ExampleGetAddressFromPubKey() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("address found: %s", rawAddress.EncodeAddress())
+	fmt.Printf("address found: %s", rawAddress.AddressString)
 	// Output:address found: 1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK
 }
 
@@ -271,8 +271,8 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+		} else if rawKey != nil && rawKey.AddressString != test.expectedAddress {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
 		}
 	}
 }
@@ -284,7 +284,7 @@ func ExampleGetAddressFromPubKeyString() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("address found: %s", rawAddress.EncodeAddress())
+	fmt.Printf("address found: %s", rawAddress.AddressString)
 	// Output:address found: 17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ
 }
 

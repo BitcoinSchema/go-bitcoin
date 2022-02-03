@@ -3,8 +3,9 @@ package main
 import (
 	"log"
 
+	"github.com/libsv/go-bt/v2/bscript"
+
 	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/bitcoinsv/bsvutil"
 )
 
 func main() {
@@ -16,11 +17,11 @@ func main() {
 	}
 
 	// Get an address
-	var rawAddress *bsvutil.LegacyAddressPubKeyHash
+	var rawAddress *bscript.Address
 	if rawAddress, err = bitcoin.GetAddressFromHDKey(hdKey); err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 
 	// Success!
-	log.Printf("got address: %s", rawAddress.String())
+	log.Printf("got address: %s", rawAddress.AddressString)
 }

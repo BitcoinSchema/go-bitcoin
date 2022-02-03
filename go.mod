@@ -4,7 +4,6 @@ go 1.17
 
 require (
 	github.com/bitcoinsv/bsvd v0.0.0-20190609155523-4c29707f7173
-	github.com/bitcoinsv/bsvutil v0.0.0-20181216182056-1d77cf353ea9
 	github.com/libsv/go-bk v0.1.6
 	github.com/libsv/go-bt/v2 v2.1.0-beta.2.0.20211221142324-0d686850c5e0
 	github.com/stretchr/testify v1.7.0

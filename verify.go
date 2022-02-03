@@ -8,8 +8,8 @@ import (
 
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 	"github.com/bitcoinsv/bsvd/wire"
-	"github.com/bitcoinsv/bsvutil"
 	"github.com/libsv/go-bk/bec"
+	"github.com/libsv/go-bt/v2/bscript"
 )
 
 const (
@@ -57,20 +57,20 @@ func VerifyMessage(address, sig, data string) error {
 	}
 
 	// Get the address
-	var bsvutilAddress *bsvutil.LegacyAddressPubKeyHash
-	if bsvutilAddress, err = GetAddressFromPubKey(publicKey, wasCompressed); err != nil {
+	var bscriptAddress *bscript.Address
+	if bscriptAddress, err = GetAddressFromPubKey(publicKey, wasCompressed); err != nil {
 		return err
 	}
 
 	// Return nil if addresses match.
-	if bsvutilAddress.String() == address {
+	if bscriptAddress.AddressString == address {
 		return nil
 	}
 	return fmt.Errorf(
 		"address (%s) not found - compressed: %t\n%s was found instead",
 		address,
 		wasCompressed,
-		bsvutilAddress.EncodeAddress(),
+		bscriptAddress.AddressString,
 	)
 }
 

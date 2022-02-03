@@ -3,10 +3,10 @@ package bitcoin
 import (
 	"encoding/hex"
 
-	"github.com/bitcoinsv/bsvutil"
 	"github.com/libsv/go-bk/bec"
 	"github.com/libsv/go-bk/bip32"
 	"github.com/libsv/go-bk/chaincfg"
+	"github.com/libsv/go-bt/v2/bscript"
 )
 
 const (
@@ -134,7 +134,7 @@ func GetPublicKeyFromHDKey(hdKey *bip32.ExtendedKey) (*bec.PublicKey, error) {
 // GetAddressFromHDKey is a helper function to get the Address associated with a given hdKey
 //
 // Expects hdKey to not be nil (otherwise will panic)
-func GetAddressFromHDKey(hdKey *bip32.ExtendedKey) (*bsvutil.LegacyAddressPubKeyHash, error) {
+func GetAddressFromHDKey(hdKey *bip32.ExtendedKey) (*bscript.Address, error) {
 	pubKey, err := GetPublicKeyFromHDKey(hdKey)
 	if err != nil {
 		return nil, err
@@ -150,7 +150,7 @@ func GetAddressStringFromHDKey(hdKey *bip32.ExtendedKey) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return address.String(), nil
+	return address.AddressString, nil
 }
 
 // GetPublicKeysForPath gets the PublicKeys for a given derivation path
@@ -200,13 +200,13 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32) (addresses []stri
 	}
 
 	// Loop, get address and append to results
-	var address *bsvutil.LegacyAddressPubKeyHash
+	var address *bscript.Address
 	for _, key := range pubKeys {
 		if address, err = GetAddressFromPubKey(key, true); err != nil {
 			// Should never error if the pubKeys are valid keys
 			return
 		}
-		addresses = append(addresses, address.String())
+		addresses = append(addresses, address.AddressString)
 	}
 
 	return

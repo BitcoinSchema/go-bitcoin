@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bitcoinsv/bsvutil"
 	"github.com/libsv/go-bk/bec"
 	"github.com/libsv/go-bk/bip32"
+	"github.com/libsv/go-bt/v2/bscript"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -703,7 +703,7 @@ func TestGetAddressFromHDKey(t *testing.T) {
 		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false, false},
 	}
 
-	var address *bsvutil.LegacyAddressPubKeyHash
+	var address *bscript.Address
 	for _, test := range tests {
 		if address, err = GetAddressFromHDKey(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -713,8 +713,8 @@ func TestGetAddressFromHDKey(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if address != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if address != nil && address.String() != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedAddress, address.String())
+		} else if address != nil && address.AddressString != test.expectedAddress {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedAddress, address.AddressString)
 		}
 	}
 }
@@ -738,13 +738,13 @@ func ExampleGetAddressFromHDKey() {
 		return
 	}
 
-	var address *bsvutil.LegacyAddressPubKeyHash
+	var address *bscript.Address
 	if address, err = GetAddressFromHDKey(hdKey); err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
 
-	fmt.Printf("address: %s", address.String())
+	fmt.Printf("address: %s", address.AddressString)
 	// Output:address: 18G2YRH3nRKRx8pnqVFUM5nAJhTZJ3YA4W
 }
 
