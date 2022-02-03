@@ -260,6 +260,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	// Sign the transaction
 	if privateKey != nil {
 		myAccount := &account{PrivateKey: privateKey}
+		// todo: support context (ctx)
 		if err = tx.FillAllInputs(context.Background(), myAccount); err != nil {
 			return nil, err
 		}

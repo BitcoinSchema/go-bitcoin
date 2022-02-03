@@ -358,7 +358,7 @@ func TestGetHDKeyChild(t *testing.T) {
 		expectedNil   bool
 		expectedError bool
 	}{
-		//{nil, 0, true, true},
+		// {nil, 0, true, true},
 		{validKey, 0, false, false},
 		{validKey, 10, false, false},
 		{validKey, 100, false, false},

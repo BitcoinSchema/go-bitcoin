@@ -109,6 +109,10 @@ func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NotEqual(t, addressCompressed, addressUncompressed)
+
+	addressCompressed, err = GetAddressFromPrivateKey(&bec.PrivateKey{}, true)
+	assert.Error(t, err)
+	assert.Equal(t, "", addressCompressed)
 }
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()

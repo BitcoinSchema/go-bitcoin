@@ -25,7 +25,7 @@ const (
 	DefaultInternalChain = 1
 )
 
-// GenerateHDKey will create a new master node for use in creating a hierarchical deterministic key chain
+// GenerateHDKey will create a new master node for use in creating a hierarchical deterministic keychain
 func GenerateHDKey(seedLength uint8) (hdKey *bip32.ExtendedKey, err error) {
 
 	// Missing or invalid seed length
@@ -44,7 +44,7 @@ func GenerateHDKey(seedLength uint8) (hdKey *bip32.ExtendedKey, err error) {
 }
 
 // GenerateHDKeyFromString will create a new master node for use in creating a
-// hierarchical deterministic key chain from an xPrivKey string
+// hierarchical deterministic keychain from an xPrivKey string
 func GenerateHDKeyFromString(xPriv string) (hdKey *bip32.ExtendedKey, err error) {
 	return bip32.NewKeyFromString(xPriv)
 }
@@ -164,7 +164,7 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 		return
 	}
 
-	// Get the external pubkey from m/0/x
+	// Get the external pubKey from m/0/x
 	var pubKey *bec.PublicKey
 	if pubKey, err = childM0x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
@@ -179,7 +179,7 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 		return
 	}
 
-	// Get the internal pubkey from m/1/x
+	// Get the internal pubKey from m/1/x
 	if pubKey, err = childM1x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
 		return
