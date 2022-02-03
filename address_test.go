@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/libsv/go-bk/bec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -97,7 +97,7 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 // TestGetAddressFromPrivateKeyCompression will test the method GetAddressFromPrivateKey()
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 
-	privateKey, err := bsvec.NewPrivateKey(bsvec.S256())
+	privateKey, err := bec.NewPrivateKey(bec.S256())
 	assert.NoError(t, err)
 
 	var addressUncompressed string
@@ -109,6 +109,10 @@ func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 	assert.NoError(t, err)
 
 	assert.NotEqual(t, addressCompressed, addressUncompressed)
+
+	addressCompressed, err = GetAddressFromPrivateKey(&bec.PrivateKey{}, true)
+	assert.Error(t, err)
+	assert.Equal(t, "", addressCompressed)
 }
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
@@ -131,7 +135,7 @@ func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 }
 
 // testGetPublicKeyFromPrivateKey is a helper method for tests
-func testGetPublicKeyFromPrivateKey(privateKey string) *bsvec.PublicKey {
+func testGetPublicKeyFromPrivateKey(privateKey string) *bec.PublicKey {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return nil
@@ -144,18 +148,18 @@ func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
 	var tests = []struct {
-		input           *bsvec.PublicKey
+		input           *bec.PublicKey
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{&bsvec.PublicKey{}, "", true, true},
+		{&bec.PublicKey{}, "", true, true},
 		{testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
 		{testGetPublicKeyFromPrivateKey("000000"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", false, false},
 		{testGetPublicKeyFromPrivateKey("0"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", true, true},
 	}
 
-	// todo: add more error cases of invalid *bsvec.PublicKey
+	// todo: add more error cases of invalid *bec.PublicKey
 
 	for _, test := range tests {
 		if rawKey, err := GetAddressFromPubKey(test.input, true); err != nil && !test.expectedError {
@@ -166,8 +170,8 @@ func TestGetAddressFromPubKey(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+		} else if rawKey != nil && rawKey.AddressString != test.expectedAddress {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
 		}
 	}
 }
@@ -179,7 +183,7 @@ func ExampleGetAddressFromPubKey() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("address found: %s", rawAddress.EncodeAddress())
+	fmt.Printf("address found: %s", rawAddress.AddressString)
 	// Output:address found: 1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK
 }
 
@@ -267,8 +271,8 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && rawKey.EncodeAddress() != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.EncodeAddress())
+		} else if rawKey != nil && rawKey.AddressString != test.expectedAddress {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
 		}
 	}
 }
@@ -280,7 +284,7 @@ func ExampleGetAddressFromPubKeyString() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("address found: %s", rawAddress.EncodeAddress())
+	fmt.Printf("address found: %s", rawAddress.AddressString)
 	// Output:address found: 17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ
 }
 

@@ -7,10 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
-	"github.com/bitcoinsv/bsvd/chaincfg"
-	"github.com/bitcoinsv/bsvd/txscript"
-	"github.com/bitcoinsv/bsvutil"
+	"github.com/libsv/go-bk/bec"
+	"github.com/libsv/go-bk/crypto"
+	"github.com/libsv/go-bt/v2/bscript"
 )
 
 // A25 is a type for a 25 byte (not base58 encoded) bitcoin address.
@@ -89,13 +88,13 @@ func ValidA58(a58 []byte) (bool, error) {
 	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
 }
 
-// GetAddressFromPrivateKey takes a bsvec private key and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey *bsvec.PrivateKey, compressed bool) (string, error) {
+// GetAddressFromPrivateKey takes a bec private key and returns a Bitcoin address
+func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) (string, error) {
 	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed)
 	if err != nil {
 		return "", err
 	}
-	return address.EncodeAddress(), nil
+	return address.AddressString, nil
 }
 
 // GetAddressFromPrivateKeyString takes a private key string and returns a Bitcoin address
@@ -104,32 +103,39 @@ func GetAddressFromPrivateKeyString(privateKey string, compressed bool) (string,
 	if err != nil {
 		return "", err
 	}
-	var address *bsvutil.LegacyAddressPubKeyHash
+	var address *bscript.Address
 	if address, err = GetAddressFromPubKey(rawKey.PubKey(), compressed); err != nil {
 		return "", err
 	}
-	return address.EncodeAddress(), nil
+	return address.AddressString, nil
 }
 
-// GetAddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bsvec.PublicKey
-func GetAddressFromPubKey(publicKey *bsvec.PublicKey, compressed bool) (*bsvutil.LegacyAddressPubKeyHash, error) {
+// GetAddressFromPubKey gets a bscript.Address from a bec.PublicKey
+func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool) (*bscript.Address, error) {
 	if publicKey == nil {
 		return nil, fmt.Errorf("publicKey cannot be nil")
 	} else if publicKey.X == nil {
 		return nil, fmt.Errorf("publicKey.X cannot be nil")
 	}
-	var serializedPublicKey []byte
-	if compressed {
-		serializedPublicKey = publicKey.SerializeCompressed()
-	} else {
-		serializedPublicKey = publicKey.SerializeUncompressed()
+
+	if !compressed {
+		// go-bt/v2/bscript does not have a function that exports the uncompressed address
+		// https://github.com/libsv/go-bt/blob/master/bscript/address.go#L98
+		hash := crypto.Hash160(publicKey.SerialiseUncompressed())
+		bb := make([]byte, 1)
+		// nolint: makezero // we need to set up the array with 1
+		bb = append(bb, hash...)
+		return &bscript.Address{
+			AddressString: bscript.Base58EncodeMissingChecksum(bb),
+			PublicKeyHash: hex.EncodeToString(hash),
+		}, nil
 	}
 
-	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(serializedPublicKey), &chaincfg.MainNetParams)
+	return bscript.NewAddressFromPublicKey(publicKey, true)
 }
 
 // GetAddressFromPubKeyString is a convenience function to use a hex string pubKey
-func GetAddressFromPubKeyString(pubKey string, compressed bool) (*bsvutil.LegacyAddressPubKeyHash, error) {
+func GetAddressFromPubKeyString(pubKey string, compressed bool) (*bscript.Address, error) {
 	rawPubKey, err := PubKeyFromString(pubKey)
 	if err != nil {
 		return nil, err
@@ -151,9 +157,10 @@ func GetAddressFromScript(script string) (string, error) {
 		return "", err
 	}
 
-	// Extract the components from the script
-	var addresses []bsvutil.Address
-	_, addresses, _, err = txscript.ExtractPkScriptAddrs(scriptBytes, &chaincfg.MainNetParams)
+	// Extract the addresses from the script
+	bScript := bscript.NewFromBytes(scriptBytes)
+	var addresses []string
+	addresses, err = bScript.Addresses()
 	if err != nil {
 		return "", err
 	}
@@ -165,15 +172,6 @@ func GetAddressFromScript(script string) (string, error) {
 		return "", fmt.Errorf("invalid output script, missing an address")
 	}
 
-	// Extract the address from the pubkey hash
-	var address *bsvutil.LegacyAddressPubKeyHash
-	if address, err = bsvutil.NewLegacyAddressPubKeyHash(
-		addresses[0].ScriptAddress(),
-		&chaincfg.MainNetParams,
-	); err != nil {
-		return "", err
-	}
-
 	// Use the encoded version of the address
-	return address.EncodeAddress(), nil
+	return addresses[0], nil
 }

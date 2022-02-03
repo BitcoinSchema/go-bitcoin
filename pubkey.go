@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/libsv/go-bk/bec"
 )
 
 // PubKeyFromPrivateKeyString will derive a pubKey (hex encoded) from a given private key
@@ -18,16 +18,16 @@ func PubKeyFromPrivateKeyString(privateKey string, compressed bool) (string, err
 }
 
 // PubKeyFromPrivateKey will derive a pubKey (hex encoded) from a given private key
-func PubKeyFromPrivateKey(privateKey *bsvec.PrivateKey, compressed bool) string {
+func PubKeyFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) string {
 	if compressed {
-		return hex.EncodeToString(privateKey.PubKey().SerializeCompressed())
+		return hex.EncodeToString(privateKey.PubKey().SerialiseCompressed())
 	}
-	return hex.EncodeToString(privateKey.PubKey().SerializeUncompressed())
+	return hex.EncodeToString(privateKey.PubKey().SerialiseUncompressed())
 
 }
 
-// PubKeyFromString will convert a pubKey (string) into a pubkey (*bsvec.PublicKey)
-func PubKeyFromString(pubKey string) (*bsvec.PublicKey, error) {
+// PubKeyFromString will convert a pubKey (string) into a pubkey (*bec.PublicKey)
+func PubKeyFromString(pubKey string) (*bec.PublicKey, error) {
 
 	// Invalid pubKey
 	if len(pubKey) == 0 {
@@ -41,5 +41,5 @@ func PubKeyFromString(pubKey string) (*bsvec.PublicKey, error) {
 	}
 
 	// Parse into a pubKey
-	return bsvec.ParsePubKey(decoded, bsvec.S256())
+	return bec.ParsePubKey(decoded, bec.S256())
 }

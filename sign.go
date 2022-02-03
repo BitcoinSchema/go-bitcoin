@@ -5,9 +5,9 @@ import (
 	"encoding/base64"
 	"errors"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 	"github.com/bitcoinsv/bsvd/wire"
+	"github.com/libsv/go-bk/bec"
 )
 
 // SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
@@ -31,14 +31,14 @@ func SignMessage(privateKey string, message string, sigRefCompressedKey bool) (s
 	messageHash := chainhash.DoubleHashB(buf.Bytes())
 
 	// Get the private key
-	var ecdsaPrivateKey *bsvec.PrivateKey
+	var ecdsaPrivateKey *bec.PrivateKey
 	if ecdsaPrivateKey, err = PrivateKeyFromString(privateKey); err != nil {
 		return "", err
 	}
 
 	// Sign
 	var sigBytes []byte
-	if sigBytes, err = bsvec.SignCompact(bsvec.S256(), ecdsaPrivateKey, messageHash, sigRefCompressedKey); err != nil {
+	if sigBytes, err = bec.SignCompact(bec.S256(), ecdsaPrivateKey, messageHash, sigRefCompressedKey); err != nil {
 		return "", err
 	}
 

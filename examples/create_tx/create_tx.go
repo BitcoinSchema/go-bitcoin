@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/libsv/go-bt"
+	"github.com/libsv/go-bt/v2"
 )
 
 func main() {
@@ -48,6 +48,6 @@ func main() {
 	}
 
 	// Success!
-	log.Printf("rawTx: %s", rawTx.ToString())
-	log.Printf("tx_id: %s", rawTx.GetTxID())
+	log.Printf("rawTx: %s", rawTx.String())
+	log.Printf("tx_id: %s", rawTx.TxID())
 }

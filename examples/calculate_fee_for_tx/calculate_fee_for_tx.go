@@ -19,5 +19,5 @@ func main() {
 	estimatedFee := bitcoin.CalculateFeeForTx(tx, nil, nil)
 
 	// Success!
-	log.Printf("tx id: %s estimated fee: %d satoshis", tx.GetTxID(), estimatedFee)
+	log.Printf("tx id: %s estimated fee: %d satoshis", tx.TxID(), estimatedFee)
 }

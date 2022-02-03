@@ -15,11 +15,11 @@ func main() {
 	}
 
 	// Create a wif
-	var wif string
-	if wif, err = bitcoin.PrivateKeyToWifString(privateKey); err != nil {
+	var privateWif string
+	if privateWif, err = bitcoin.PrivateKeyToWifString(privateKey); err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 
 	// Success!
-	log.Printf("private key: %s converted to wif: %s", privateKey, wif)
+	log.Printf("private key: %s converted to wif: %s", privateKey, privateWif)
 }

@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/libsv/go-bk/bec"
 )
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 
 	// User 2 can decrypt using the shared private key
 	var decryptedTestData []byte
-	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, encryptedData)
+	decryptedTestData, err = bec.Decrypt(user2SharedPrivKey, encryptedData)
 	if err != nil {
 		log.Fatalf("failed to decrypt test data %s", err)
 	}

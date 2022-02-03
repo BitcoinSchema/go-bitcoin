@@ -42,5 +42,5 @@ func main() {
 	}
 
 	// Success!
-	log.Printf("rawTx: %s", rawTx.ToString())
+	log.Printf("rawTx: %s", rawTx.String())
 }

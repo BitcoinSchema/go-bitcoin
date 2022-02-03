@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
-	log.Println("private key (used for encryption): ", hex.EncodeToString(privateKey.Serialize()))
+	log.Println("private key (used for encryption): ", hex.EncodeToString(privateKey.Serialise()))
 
 	// Encrypt
 	var data string

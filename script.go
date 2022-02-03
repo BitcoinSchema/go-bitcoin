@@ -3,7 +3,7 @@ package bitcoin
 import (
 	"errors"
 
-	"github.com/libsv/go-bt/bscript"
+	"github.com/libsv/go-bt/v2/bscript"
 )
 
 // ScriptFromAddress will create an output P2PKH script from an address string
@@ -20,5 +20,5 @@ func ScriptFromAddress(address string) (string, error) {
 	}
 
 	// Return the string version
-	return rawScript.ToString(), nil
+	return rawScript.String(), nil
 }

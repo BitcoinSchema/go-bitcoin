@@ -1,12 +1,15 @@
 package bitcoin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
-	"github.com/libsv/go-bt"
+	"github.com/libsv/go-bk/bec"
+	"github.com/libsv/go-bt/v2"
+	"github.com/libsv/go-bt/v2/bscript"
+	"github.com/libsv/go-bt/v2/unlocker"
 )
 
 const (
@@ -30,6 +33,18 @@ type PayToAddress struct {
 	Satoshis uint64 `json:"satoshis"`
 }
 
+// account is a struct/interface for implementing unlocker
+type account struct {
+	PrivateKey *bec.PrivateKey
+}
+
+// Unlocker get the correct un-locker for a given locking script
+func (a *account) Unlocker(context.Context, *bscript.Script) (bt.Unlocker, error) {
+	return &unlocker.Simple{
+		PrivateKey: a.PrivateKey,
+	}, nil
+}
+
 // OpReturnData is the op return data to include in the tx
 type OpReturnData [][]byte
 
@@ -44,7 +59,7 @@ func TxFromHex(rawHex string) (*bt.Tx, error) {
 // USE AT YOUR OWN RISK - this will modify a "pay-to" output to accomplish auto-fees
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
 	changeAddress string, standardRate, dataRate *bt.Fee,
-	privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
+	privateKey *bec.PrivateKey) (*bt.Tx, error) {
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -156,7 +171,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 // draftTx is a helper method to create a draft tx and associated fees
 func draftTx(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	privateKey *bsvec.PrivateKey, standardRate, dataRate *bt.Fee) (uint64, error) {
+	privateKey *bec.PrivateKey, standardRate, dataRate *bt.Fee) (uint64, error) {
 
 	// Create the "Draft tx"
 	tx, err := CreateTx(utxos, payToAddresses, opReturns, privateKey)
@@ -195,7 +210,7 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
-	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
+	opReturns []OpReturnData, privateKey *bec.PrivateKey) (*bt.Tx, error) {
 
 	// Start creating a new transaction
 	tx := bt.NewTx()
@@ -214,25 +229,29 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 
 	// Loop any pay addresses
 	for _, address := range addresses {
-		if err = tx.PayTo(address.Address, address.Satoshis); err != nil {
+		var a *bscript.Script
+		a, err = bscript.NewP2PKHFromAddress(address.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		if err = tx.PayTo(a, address.Satoshis); err != nil {
 			return nil, err
 		}
 	}
 
 	// Loop any op returns
-	var outPut *bt.Output
 	for _, op := range opReturns {
-		if outPut, err = bt.NewOpReturnPartsOutput(op); err != nil {
+		if err = tx.AddOpReturnPartsOutput(op); err != nil {
 			return nil, err
 		}
-		tx.AddOutput(outPut)
 	}
 
 	// If inputs are supplied, make sure they are sufficient for this transaction
-	if len(tx.GetInputs()) > 0 {
+	if len(tx.Inputs) > 0 {
 		// Sanity check - not enough satoshis in utxo(s) to cover all paid amount(s)
 		// They should never be equal, since the fee is the spread between the two amounts
-		totalOutputSatoshis := tx.GetTotalOutputSatoshis() // Does not work properly
+		totalOutputSatoshis := tx.TotalOutputSatoshis() // Does not work properly
 		if totalOutputSatoshis > totalSatoshis {
 			return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
 		}
@@ -240,9 +259,9 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 
 	// Sign the transaction
 	if privateKey != nil {
-
-		signer := bt.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
-		if _, err = tx.SignAuto(&signer); err != nil {
+		myAccount := &account{PrivateKey: privateKey}
+		// todo: support context (ctx)
+		if err = tx.FillAllInputs(context.Background(), myAccount); err != nil {
 			return nil, err
 		}
 	}
@@ -271,6 +290,22 @@ func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
 	return CreateTx(utxos, addresses, opReturns, privateKey)
 }
 
+// DefaultStandardFee returns the default standard fees offered by most miners.
+// this function is not public anymore in go-bt
+func DefaultStandardFee() *bt.Fee {
+	return &bt.Fee{
+		FeeType: bt.FeeTypeStandard,
+		MiningFee: bt.FeeUnit{
+			Satoshis: 5,
+			Bytes:    10,
+		},
+		RelayFee: bt.FeeUnit{
+			Satoshis: 5,
+			Bytes:    10,
+		},
+	}
+}
+
 // CalculateFeeForTx will estimate a fee for the given transaction
 //
 // If tx is nil this will panic
@@ -285,22 +320,22 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 
 	// Set defaults if not found
 	if standardRate == nil {
-		standardRate = bt.DefaultStandardFee()
+		standardRate = DefaultStandardFee()
 	}
 	if dataRate == nil {
-		dataRate = bt.DefaultStandardFee()
+		dataRate = DefaultStandardFee()
 		// todo: adjusted to 5/10 for now, since all miners accept that rate
 		dataRate.FeeType = bt.FeeTypeData
 	}
 
 	// Set the total bytes of the tx
-	totalBytes := len(tx.ToBytes())
+	totalBytes := len(tx.Bytes())
 
 	// Loop all outputs and accumulate size (find data related outputs)
-	for _, out := range tx.GetOutputs() {
-		outHexString := out.GetLockingScriptHexString()
+	for _, out := range tx.Outputs {
+		outHexString := out.LockingScriptHexString()
 		if strings.HasPrefix(outHexString, "006a") || strings.HasPrefix(outHexString, "6a") {
-			totalDataBytes += len(out.ToBytes())
+			totalDataBytes += len(out.Bytes())
 		}
 	}
 
@@ -320,6 +355,6 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 		totalFee = 1
 	}
 
-	// Return the total fee as a uint (easier to use with satoshi values)
+	// Return the total fee as an uint (easier to use with satoshi values)
 	return uint64(totalFee)
 }
