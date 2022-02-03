@@ -16,15 +16,17 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 	var tests = []struct {
 		inputKey       string
 		expectedPubKey string
+		compressed     bool
 		expectedError  bool
 	}{
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false},
-		{"0", "", true},
-		{"", "", true},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", true, false},
+		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "041b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f36e7ef720509250313fcf1b4c5af0dc7c5efa126efe2c3b7008e6f1487c61f31", false, false},
+		{"0", "", true, true},
+		{"", "", true, true},
 	}
 
 	for _, test := range tests {
-		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, true); err != nil && !test.expectedError {
+		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, test.compressed); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
