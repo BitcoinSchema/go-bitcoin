@@ -3,7 +3,7 @@ version: 2
 updates:
   # Maintain dependencies for the core library
   - package-ecosystem: "gomod"
-    target-branch: "master"
+    target-branch: "v1"
     directory: "/"
     schedule:
       interval: "daily"
@@ -19,7 +19,7 @@ updates:
 
   # Maintain dependencies for GitHub Actions
   - package-ecosystem: "github-actions"
-    target-branch: "master"
+    target-branch: "v1"
     directory: "/"
     schedule:
       interval: "weekly"
