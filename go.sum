@@ -1,7 +1,5 @@
 github.com/bitcoinsv/bsvd v0.0.0-20190609155523-4c29707f7173 h1:2yTIV9u7H0BhRDGXH5xrAwAz7XibWJtX2dNezMeNsUo=
 github.com/bitcoinsv/bsvd v0.0.0-20190609155523-4c29707f7173/go.mod h1:BZ1UcC9+tmcDEcdVXgpt13hMczwJxWzpAn68wNs7zRA=
-github.com/bitcoinsv/bsvlog v0.0.0-20181216181007-cb81b076bf2e h1:6f+gRvaPE/4h0g39dqTNPr9/P4mikw0aB+dhiExaWN8=
-github.com/bitcoinsv/bsvlog v0.0.0-20181216181007-cb81b076bf2e/go.mod h1:WPrWor6cSeuGQZ15qPe+jqFmblJEFrJHYfr5cD7cmyk=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

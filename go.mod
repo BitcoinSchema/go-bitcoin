@@ -10,7 +10,6 @@ require (
 )
 
 require (
-	github.com/bitcoinsv/bsvlog v0.0.0-20181216181007-cb81b076bf2e // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
