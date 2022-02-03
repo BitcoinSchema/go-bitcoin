@@ -188,16 +188,16 @@ func TestPrivateKeyToWif(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if wif, err := PrivateKeyToWif(test.input); err != nil && !test.expectedError {
+		if privateWif, err := PrivateKeyToWif(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if wif == nil && !test.expectedNil {
+		} else if privateWif == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if wif != nil && test.expectedNil {
+		} else if privateWif != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if wif != nil && wif.String() != test.expectedWif {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif.String())
+		} else if privateWif != nil && privateWif.String() != test.expectedWif {
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif.String())
 		}
 	}
 
@@ -205,12 +205,12 @@ func TestPrivateKeyToWif(t *testing.T) {
 
 // ExamplePrivateKeyToWif example using PrivateKeyToWif()
 func ExamplePrivateKeyToWif() {
-	wif, err := PrivateKeyToWif("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	privateWif, err := PrivateKeyToWif("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("converted wif: %s", wif.String())
+	fmt.Printf("converted wif: %s", privateWif.String())
 
 	// Output:converted wif: 5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei
 }
@@ -242,12 +242,12 @@ func TestPrivateKeyToWifString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if wif, err := PrivateKeyToWifString(test.input); err != nil && !test.expectedError {
+		if privateWif, err := PrivateKeyToWifString(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if wif != test.expectedWif {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, wif)
+		} else if privateWif != test.expectedWif {
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif)
 		}
 	}
 
@@ -255,12 +255,12 @@ func TestPrivateKeyToWifString(t *testing.T) {
 
 // ExamplePrivateKeyToWifString example using PrivateKeyToWifString()
 func ExamplePrivateKeyToWifString() {
-	wif, err := PrivateKeyToWifString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	privateWif, err := PrivateKeyToWifString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("converted wif: %s", wif)
+	fmt.Printf("converted wif: %s", privateWif)
 
 	// Output:converted wif: 5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei
 }

@@ -97,12 +97,12 @@ func PrivateKeyToWif(privateKey string) (*wif.WIF, error) {
 
 // PrivateKeyToWifString will convert a private key to a WIF (string)
 func PrivateKeyToWifString(privateKey string) (string, error) {
-	wif, err := PrivateKeyToWif(privateKey)
+	privateWif, err := PrivateKeyToWif(privateKey)
 	if err != nil {
 		return "", err
 	}
 
-	return wif.String(), nil
+	return privateWif.String(), nil
 }
 
 // WifToPrivateKey will convert a WIF to a private key (*bec.PrivateKey)
