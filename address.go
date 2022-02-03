@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvd/txscript"
 	"github.com/bitcoinsv/bsvutil"
+	"github.com/libsv/go-bk/bec"
 )
 
 // A25 is a type for a 25 byte (not base58 encoded) bitcoin address.
@@ -89,8 +89,8 @@ func ValidA58(a58 []byte) (bool, error) {
 	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
 }
 
-// GetAddressFromPrivateKey takes a bsvec private key and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey *bsvec.PrivateKey, compressed bool) (string, error) {
+// GetAddressFromPrivateKey takes a bec private key and returns a Bitcoin address
+func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) (string, error) {
 	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed)
 	if err != nil {
 		return "", err
@@ -111,21 +111,21 @@ func GetAddressFromPrivateKeyString(privateKey string, compressed bool) (string,
 	return address.EncodeAddress(), nil
 }
 
-// GetAddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bsvec.PublicKey
-func GetAddressFromPubKey(publicKey *bsvec.PublicKey, compressed bool) (*bsvutil.LegacyAddressPubKeyHash, error) {
+// GetAddressFromPubKey gets a bsvutil.LegacyAddressPubKeyHash from a bec.PublicKey
+func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool) (*bsvutil.LegacyAddressPubKeyHash, error) {
 	if publicKey == nil {
 		return nil, fmt.Errorf("publicKey cannot be nil")
 	} else if publicKey.X == nil {
 		return nil, fmt.Errorf("publicKey.X cannot be nil")
 	}
-	var serializedPublicKey []byte
+	var SerialisedPublicKey []byte
 	if compressed {
-		serializedPublicKey = publicKey.SerializeCompressed()
+		SerialisedPublicKey = publicKey.SerialiseCompressed()
 	} else {
-		serializedPublicKey = publicKey.SerializeUncompressed()
+		SerialisedPublicKey = publicKey.SerialiseUncompressed()
 	}
 
-	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(serializedPublicKey), &chaincfg.MainNetParams)
+	return bsvutil.NewLegacyAddressPubKeyHash(bsvutil.Hash160(SerialisedPublicKey), &chaincfg.MainNetParams)
 }
 
 // GetAddressFromPubKeyString is a convenience function to use a hex string pubKey

@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvutil"
-	"github.com/bitcoinsv/bsvutil/hdkeychain"
+	"github.com/libsv/go-bk/bec"
+	"github.com/libsv/go-bk/bip32"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -139,7 +139,7 @@ func TestGetPrivateKeyByPath(t *testing.T) {
 	}
 
 	var tests = []struct {
-		inputHDKey    *hdkeychain.ExtendedKey
+		inputHDKey    *bip32.ExtendedKey
 		inputChain    uint32
 		inputNum      uint32
 		expectedNil   bool
@@ -159,7 +159,7 @@ func TestGetPrivateKeyByPath(t *testing.T) {
 		{validKey, 1<<32 - 1, 1<<32 - 1, false, false},
 	}
 
-	var privateKey *bsvec.PrivateKey
+	var privateKey *bec.PrivateKey
 	for _, test := range tests {
 		if privateKey, err = GetPrivateKeyByPath(test.inputHDKey, test.inputChain, test.inputNum); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and error not expected but got: %s", t.Name(), test.inputHDKey, test.inputChain, test.inputNum, err.Error())
@@ -169,7 +169,7 @@ func TestGetPrivateKeyByPath(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and was nil but not expected", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
 		} else if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if privateKey != nil && len(hex.EncodeToString(privateKey.Serialize())) == 0 {
+		} else if privateKey != nil && len(hex.EncodeToString(privateKey.Serialise())) == 0 {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and should not be empty", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
 		}
 	}
@@ -195,13 +195,13 @@ func ExampleGetPrivateKeyByPath() {
 	}
 
 	// Get a private key at the path
-	var privateKey *bsvec.PrivateKey
+	var privateKey *bec.PrivateKey
 	privateKey, err = GetPrivateKeyByPath(hdKey, 0, 1)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key (%d) found at path %d/%d", len(privateKey.Serialize()), 0, 1)
+	fmt.Printf("private key (%d) found at path %d/%d", len(privateKey.Serialise()), 0, 1)
 	// Output:private key (32) found at path 0/1
 }
 
@@ -225,7 +225,7 @@ func TestGetHDKeyByPath(t *testing.T) {
 
 	// Max depth key
 	/*
-		var maxKey *hdkeychain.ExtendedKey
+		var maxKey *bip32.ExtendedKey
 		maxKey, err = GetHDKeyByPath(validKey, 1<<9, 1<<9)
 		if err != nil {
 			t.Fatalf("error occurred: %s", err.Error())
@@ -244,7 +244,7 @@ func TestGetHDKeyByPath(t *testing.T) {
 	*/
 
 	var tests = []struct {
-		inputHDKey    *hdkeychain.ExtendedKey
+		inputHDKey    *bip32.ExtendedKey
 		inputChain    uint32
 		inputNum      uint32
 		expectedNil   bool
@@ -298,7 +298,7 @@ func ExampleGetHDKeyByPath() {
 	}
 
 	// Get a child key
-	var childKey *hdkeychain.ExtendedKey
+	var childKey *bip32.ExtendedKey
 	childKey, err = GetHDKeyByPath(hdKey, 0, 1)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
@@ -328,7 +328,7 @@ func TestGetHDKeyChild(t *testing.T) {
 
 	// Max depth key
 	/*
-		var maxKey *hdkeychain.ExtendedKey
+		var maxKey *bip32.ExtendedKey
 		maxKey, err = GetHDKeyByPath(validKey, 1<<9, 1<<9)
 		if err != nil {
 			t.Fatalf("error occurred: %s", err.Error())
@@ -353,7 +353,7 @@ func TestGetHDKeyChild(t *testing.T) {
 	*/
 
 	var tests = []struct {
-		inputHDKey    *hdkeychain.ExtendedKey
+		inputHDKey    *bip32.ExtendedKey
 		inputNum      uint32
 		expectedNil   bool
 		expectedError bool
@@ -407,7 +407,7 @@ func ExampleGetHDKeyChild() {
 	}
 
 	// Get a child key
-	var childKey *hdkeychain.ExtendedKey
+	var childKey *bip32.ExtendedKey
 	childKey, err = GetHDKeyChild(hdKey, 0)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
@@ -487,12 +487,12 @@ func TestGetPrivateKeyFromHDKey(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input         *hdkeychain.ExtendedKey
+		input         *bip32.ExtendedKey
 		expectedKey   string
 		expectedNil   bool
 		expectedError bool
 	}{
-		{new(hdkeychain.ExtendedKey), "", true, true},
+		{new(bip32.ExtendedKey), "", true, true},
 		{validHdKey, "8511f5e1e35ab748e7639aa68666df71857866af13fda1d081d5917948a6cd34", false, false},
 	}
 
@@ -505,8 +505,8 @@ func TestGetPrivateKeyFromHDKey(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
+		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise()))
 		}
 	}
 }
@@ -530,13 +530,13 @@ func ExampleGetPrivateKeyFromHDKey() {
 		return
 	}
 
-	var privateKey *bsvec.PrivateKey
+	var privateKey *bec.PrivateKey
 	if privateKey, err = GetPrivateKeyFromHDKey(hdKey); err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
 
-	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialize()))
+	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise()))
 	// Output:private key: 0ccf07f2cbe10dbe6f6034b7efbf62fc83cac3d44f49d67aa22ac8893d294e7a
 }
 
@@ -557,11 +557,11 @@ func TestGetPrivateKeyStringFromHDKey(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input         *hdkeychain.ExtendedKey
+		input         *bip32.ExtendedKey
 		expectedKey   string
 		expectedError bool
 	}{
-		{new(hdkeychain.ExtendedKey), "", true},
+		{new(bip32.ExtendedKey), "", true},
 		{validHdKey, "8511f5e1e35ab748e7639aa68666df71857866af13fda1d081d5917948a6cd34", false},
 	}
 
@@ -623,16 +623,16 @@ func TestGetPublicKeyFromHDKey(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input         *hdkeychain.ExtendedKey
+		input         *bip32.ExtendedKey
 		expectedKey   string
 		expectedNil   bool
 		expectedError bool
 	}{
-		{new(hdkeychain.ExtendedKey), "", true, true},
+		{new(bip32.ExtendedKey), "", true, true},
 		{validHdKey, "02f2a2942b9d1dba033d36ab0c193e680415f5c8c1ff5d854f805c8c42ed9dd1fd", false, false},
 	}
 
-	var publicKey *bsvec.PublicKey
+	var publicKey *bec.PublicKey
 	for _, test := range tests {
 		if publicKey, err = GetPublicKeyFromHDKey(test.input); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
@@ -642,8 +642,8 @@ func TestGetPublicKeyFromHDKey(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
 		} else if publicKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if publicKey != nil && hex.EncodeToString(publicKey.SerializeCompressed()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(publicKey.SerializeCompressed()))
+		} else if publicKey != nil && hex.EncodeToString(publicKey.SerialiseCompressed()) != test.expectedKey {
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(publicKey.SerialiseCompressed()))
 		}
 	}
 }
@@ -667,13 +667,13 @@ func ExampleGetPublicKeyFromHDKey() {
 		return
 	}
 
-	var publicKey *bsvec.PublicKey
+	var publicKey *bec.PublicKey
 	if publicKey, err = GetPublicKeyFromHDKey(hdKey); err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
 
-	fmt.Printf("public key: %s", hex.EncodeToString(publicKey.SerializeCompressed()))
+	fmt.Printf("public key: %s", hex.EncodeToString(publicKey.SerialiseCompressed()))
 	// Output:public key: 03a25f6c10eedcd41eebac22c6bbc5278690fa1aab3afc2bbe8f2277c85e5c5def
 }
 
@@ -694,12 +694,12 @@ func TestGetAddressFromHDKey(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input           *hdkeychain.ExtendedKey
+		input           *bip32.ExtendedKey
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{new(hdkeychain.ExtendedKey), "", true, true},
+		{new(bip32.ExtendedKey), "", true, true},
 		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false, false},
 	}
 
@@ -765,11 +765,11 @@ func TestGetAddressStringFromHDKey(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input           *hdkeychain.ExtendedKey
+		input           *bip32.ExtendedKey
 		expectedAddress string
 		expectedError   bool
 	}{
-		{new(hdkeychain.ExtendedKey), "", true},
+		{new(bip32.ExtendedKey), "", true},
 		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false},
 	}
 
@@ -831,21 +831,21 @@ func TestGetPublicKeysForPath(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input           *hdkeychain.ExtendedKey
+		input           *bip32.ExtendedKey
 		inputNum        uint32
 		expectedPubKey1 string
 		expectedPubKey2 string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{new(hdkeychain.ExtendedKey), 1, "", "", true, true},
+		{new(bip32.ExtendedKey), 1, "", "", true, true},
 		{validHdKey, 1, "03cc3334f0a6f0fae0420d1442ca0ce64fad0da76d652f2cc3b333e7ed95b97259", "02ceb23902f8dcf6fbff656597ee0343e05c907c6dfcdd8aaf6d033e14e85fd955", false, false},
 		{validHdKey, 2, "020cb908e3b9f3de7c9b40e7bcce63708c5617536d85cf4ab5635e3d3819c02c37", "030007ae60fc6eef98ea17b4f80f9b791e61ea94936e8a9e6ec343eeaa50a875e0", false, false},
 		{validHdKey, 3, "0342593453c476ac6c78eb1b1e586df00b20352e61c42536fe1b33c9fdf3bfbb6f", "03786a41dbf0b099256da26cb0019e10063628f6ce31b96801703f1bb2e1b17724", false, false},
 		{validHdKey, 4, "0366dcdebfc8abfd34bffc181ccb54f1706839a80ad4f0842ae5a43f39fdd35c1e", "03a095db29ae9ee0b22c775118b4444b59db40acdea137fd9ecd9c68dacf50a644", false, false},
 	}
 
-	var pubKeys []*bsvec.PublicKey
+	var pubKeys []*bec.PublicKey
 	for _, test := range tests {
 		if pubKeys, err = GetPublicKeysForPath(test.input, test.inputNum); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.input, test.inputNum, err.Error())
@@ -855,10 +855,10 @@ func TestGetPublicKeysForPath(t *testing.T) {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was nil but not expected", t.Name(), test.input, test.inputNum)
 		} else if pubKeys != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.input, test.inputNum)
-		} else if pubKeys != nil && hex.EncodeToString(pubKeys[0].SerializeCompressed()) != test.expectedPubKey1 {
-			t.Fatalf("%s Failed: [%v] [%d] inputted key 1 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedPubKey1, hex.EncodeToString(pubKeys[0].SerializeCompressed()))
-		} else if pubKeys != nil && hex.EncodeToString(pubKeys[1].SerializeCompressed()) != test.expectedPubKey2 {
-			t.Fatalf("%s Failed: [%v] [%d] inputted key 2 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedPubKey2, hex.EncodeToString(pubKeys[1].SerializeCompressed()))
+		} else if pubKeys != nil && hex.EncodeToString(pubKeys[0].SerialiseCompressed()) != test.expectedPubKey1 {
+			t.Fatalf("%s Failed: [%v] [%d] inputted key 1 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedPubKey1, hex.EncodeToString(pubKeys[0].SerialiseCompressed()))
+		} else if pubKeys != nil && hex.EncodeToString(pubKeys[1].SerialiseCompressed()) != test.expectedPubKey2 {
+			t.Fatalf("%s Failed: [%v] [%d] inputted key 2 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedPubKey2, hex.EncodeToString(pubKeys[1].SerialiseCompressed()))
 		}
 	}
 }
@@ -882,14 +882,14 @@ func ExampleGetPublicKeysForPath() {
 		return
 	}
 
-	var publicKeys []*bsvec.PublicKey
+	var publicKeys []*bec.PublicKey
 	publicKeys, err = GetPublicKeysForPath(hdKey, 5)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
 
-	fmt.Printf("found [%d] keys! Key 1: %s Key 2: %s", len(publicKeys), hex.EncodeToString(publicKeys[0].SerializeCompressed()), hex.EncodeToString(publicKeys[1].SerializeCompressed()))
+	fmt.Printf("found [%d] keys! Key 1: %s Key 2: %s", len(publicKeys), hex.EncodeToString(publicKeys[0].SerialiseCompressed()), hex.EncodeToString(publicKeys[1].SerialiseCompressed()))
 	// Output:found [2] keys! Key 1: 03f87ac38fb0cfca12988b51a2f1cd3e85bb4aeb1b05f549682190ac8205a67d30 Key 2: 02e78303aeef1acce1347c6493fadc1914e6d85ef3189a8856afb3accd53fbd9c5
 }
 
@@ -910,14 +910,14 @@ func TestGetAddressesForPath(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input            *hdkeychain.ExtendedKey
+		input            *bip32.ExtendedKey
 		inputNum         uint32
 		expectedAddress1 string
 		expectedAddress2 string
 		expectedNil      bool
 		expectedError    bool
 	}{
-		{new(hdkeychain.ExtendedKey), 1, "", "", true, true},
+		{new(bip32.ExtendedKey), 1, "", "", true, true},
 		{validHdKey, 1, "1KMxfSfRCkC1jrBAuYaLde4XBzdsWApbdH", "174DL9ZbBWx568ssAg8w2YwW6FTTBwXGEu", false, false},
 		{validHdKey, 2, "18s3peTU7fMSwgui54avpnqm1126pRVccw", "1KgZZ3NsJDw3v1GPHBj8ASnxutA1kFxo2i", false, false},
 	}
@@ -985,12 +985,12 @@ func TestGetExtendedPublicKey(t *testing.T) {
 	assert.NotNil(t, validHdKey)
 
 	var tests = []struct {
-		input         *hdkeychain.ExtendedKey
+		input         *bip32.ExtendedKey
 		expectedKey   string
 		expectedError bool
 	}{
 		{validHdKey, "xpub661MyMwAqRbcGjhmJnvR198z2x9XnnDhz2yBtLuTdXQ2VBQj8eJ9RnxmXxKnRPhYy6nLsmabmUfVkbajvP7aZASrrnoZkzmwgyjiNskiefG", false},
-		{new(hdkeychain.ExtendedKey), "zeroed extended key", false},
+		{new(bip32.ExtendedKey), "zeroed extended key", false},
 	}
 
 	var xPub string

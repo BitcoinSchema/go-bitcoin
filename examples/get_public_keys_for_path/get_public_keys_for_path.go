@@ -5,7 +5,7 @@ import (
 	"log"
 
 	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/libsv/go-bk/bec"
 )
 
 func main() {
@@ -16,13 +16,13 @@ func main() {
 	}
 
 	// Get keys by path (example showing 5 sets of keys)
-	var pubKeys []*bsvec.PublicKey
+	var pubKeys []*bec.PublicKey
 	for i := 1; i <= 5; i++ {
 		if pubKeys, err = bitcoin.GetPublicKeysForPath(hdKey, uint32(i)); err != nil {
 			log.Fatalf("error occurred: %s", err.Error())
 		}
 		for index, key := range pubKeys {
-			log.Printf("#%d found at m/%d/%d key: %s", i, index, i, hex.EncodeToString(key.SerializeCompressed()))
+			log.Printf("#%d found at m/%d/%d key: %s", i, index, i, hex.EncodeToString(key.SerialiseCompressed()))
 		}
 	}
 }

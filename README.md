@@ -52,7 +52,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 ### Features
 
 - **Addresses**
-  - [Address from PrivateKey (bsvec.PrivateKey)](address.go)
+  - [Address from PrivateKey (bec.PrivateKey)](address.go)
   - [Address from Script](address.go)
 - **Encryption**
   - [Encrypt With Private Key](encryption.go)

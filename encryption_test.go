@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/libsv/go-bk/bec"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 	assert.NotNil(t, privateKey)
 
 	var tests = []struct {
-		inputKey      *bsvec.PrivateKey
+		inputKey      *bec.PrivateKey
 		inputData     string
 		expectedError bool
 	}{
@@ -170,7 +170,7 @@ func TestDecryptWithPrivateKey(t *testing.T) {
 	assert.NotNil(t, privateKey)
 
 	var tests = []struct {
-		inputKey       *bsvec.PrivateKey
+		inputKey       *bec.PrivateKey
 		inputEncrypted string
 		expectedData   string
 		expectedError  bool
@@ -408,7 +408,7 @@ func TestEncryptShared(t *testing.T) {
 	assert.NotNil(t, privKey1)
 
 	// User 2's private key
-	var privKey2 *bsvec.PrivateKey
+	var privKey2 *bec.PrivateKey
 	privKey2, err = CreatePrivateKey()
 	assert.NoError(t, err)
 	assert.NotNil(t, privKey1)
@@ -424,7 +424,7 @@ func TestEncryptShared(t *testing.T) {
 
 	// User 2 can decrypt using the shared private key
 	var decryptedTestData []byte
-	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, encryptedData)
+	decryptedTestData, err = bec.Decrypt(user2SharedPrivKey, encryptedData)
 	assert.NoError(t, err)
 
 	// Test the result
@@ -456,7 +456,7 @@ func TestEncryptSharedString(t *testing.T) {
 	assert.NotNil(t, privKey1)
 
 	// User 2's private key
-	var privKey2 *bsvec.PrivateKey
+	var privKey2 *bec.PrivateKey
 	privKey2, err = CreatePrivateKey()
 	assert.NoError(t, err)
 	assert.NotNil(t, privKey1)
@@ -475,7 +475,7 @@ func TestEncryptSharedString(t *testing.T) {
 	decoded, err = hex.DecodeString(encryptedData)
 	assert.NoError(t, err)
 
-	decryptedTestData, err = bsvec.Decrypt(user2SharedPrivKey, decoded)
+	decryptedTestData, err = bec.Decrypt(user2SharedPrivKey, decoded)
 	assert.NoError(t, err)
 
 	// Test the result
