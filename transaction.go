@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/bitcoinschema/go-bitcoin/stas"
 	"github.com/bitcoinsv/bsvd/bsvec"
-	"github.com/libsv/go-bt"
+	"github.com/libsv/go-bt/v2"
 )
 
 const (
@@ -193,7 +194,7 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 // Note: this will NOT handle fee calculation (it's assumed you have already calculated the fee)
 //
 // Get the raw hex version: tx.ToString()
-// Get the tx id: tx.GetTxID()
+// Get the tx id: tx.TxID()
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
 
@@ -214,25 +215,25 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 
 	// Loop any pay addresses
 	for _, address := range addresses {
-		if err = tx.PayTo(address.Address, address.Satoshis); err != nil {
+		if err = tx.AddP2PKHOutputFromAddress(address.Address, address.Satoshis); err != nil {
 			return nil, err
 		}
 	}
 
 	// Loop any op returns
-	var outPut *bt.Output
 	for _, op := range opReturns {
-		if outPut, err = bt.NewOpReturnPartsOutput(op); err != nil {
+
+		if err = tx.AddOpReturnPartsOutput(op); err != nil {
 			return nil, err
 		}
-		tx.AddOutput(outPut)
+
 	}
 
 	// If inputs are supplied, make sure they are sufficient for this transaction
-	if len(tx.GetInputs()) > 0 {
+	if len(tx.Inputs) > 0 {
 		// Sanity check - not enough satoshis in utxo(s) to cover all paid amount(s)
 		// They should never be equal, since the fee is the spread between the two amounts
-		totalOutputSatoshis := tx.GetTotalOutputSatoshis() // Does not work properly
+		totalOutputSatoshis := tx.TotalOutputSatoshis() // Does not work properly
 		if totalOutputSatoshis > totalSatoshis {
 			return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
 		}
@@ -257,7 +258,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 // Note: this will NOT handle "fee" calculation (it's assumed you have already calculated the fee)
 //
 // Get the raw hex version: tx.ToString()
-// Get the tx id: tx.GetTxID()
+// Get the tx id: tx.TxID()
 func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
 	opReturns []OpReturnData, wif string) (*bt.Tx, error) {
 
@@ -294,13 +295,13 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 	}
 
 	// Set the total bytes of the tx
-	totalBytes := len(tx.ToBytes())
+	totalBytes := len(tx.Bytes())
 
 	// Loop all outputs and accumulate size (find data related outputs)
-	for _, out := range tx.GetOutputs() {
-		outHexString := out.GetLockingScriptHexString()
+	for _, out := range tx.Outputs {
+		outHexString := out.LockingScriptHexString()
 		if strings.HasPrefix(outHexString, "006a") || strings.HasPrefix(outHexString, "6a") {
-			totalDataBytes += len(out.ToBytes())
+			totalDataBytes += len(out.Bytes())
 		}
 	}
 
@@ -323,3 +324,16 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 	// Return the total fee as a uint (easier to use with satoshi values)
 	return uint64(totalFee)
 }
+
+func IsToken(tx *bt.Tx) (isToken bool) {
+	for _, output := range tx.Outputs {
+		if stas.GetVersion(output) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// func getStasData() {
+
+// }

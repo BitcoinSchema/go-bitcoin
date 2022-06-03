@@ -17,5 +17,5 @@ func main() {
 		return
 	}
 
-	log.Printf("tx id: %s", rawTx.GetTxID())
+	log.Printf("tx id: %s", rawTx.TxID())
 }
