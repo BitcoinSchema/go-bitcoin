@@ -9,6 +9,8 @@ import (
 	"github.com/bitcoinsv/bsvd/bsvec"
 	"github.com/bitcoinsv/bsvd/chaincfg"
 	"github.com/bitcoinsv/bsvutil"
+	"github.com/libsv/go-bk/bec"
+	"github.com/libsv/go-bk/wif"
 )
 
 // GenerateSharedKeyPair creates shared keys that can be used to encrypt/decrypt data
@@ -106,15 +108,17 @@ func PrivateKeyToWifString(privateKey string) (string, error) {
 }
 
 // WifToPrivateKey will convert a WIF to a private key (*bsvec.PrivateKey)
-func WifToPrivateKey(wif string) (*bsvec.PrivateKey, error) {
+func WifToPrivateKey(wifStr string) (*bec.PrivateKey, error) {
 
 	// Missing wif?
-	if len(wif) == 0 {
+	if len(wifStr) == 0 {
 		return nil, errors.New("missing wif")
 	}
 
 	// Decode the wif
-	decodedWif, err := bsvutil.DecodeWIF(wif)
+	// var wif *WIF
+	decodedWif, err := wif.DecodeWIF(wifStr)
+	// decodedWif, err := bt.DecodeWIF(wif)
 	if err != nil {
 		return nil, err
 	}
@@ -133,5 +137,5 @@ func WifToPrivateKeyString(wif string) (string, error) {
 	}
 
 	// Return the hex (string) version of the private key
-	return hex.EncodeToString(privateKey.Serialize()), nil
+	return hex.EncodeToString(privateKey.Serialise()), nil
 }

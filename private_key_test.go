@@ -300,8 +300,8 @@ func TestWifToPrivateKey(t *testing.T) {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
 		} else if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
+		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey {
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise()))
 		}
 	}
 }
@@ -313,7 +313,7 @@ func ExampleWifToPrivateKey() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialize()))
+	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise()))
 
 	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
 }

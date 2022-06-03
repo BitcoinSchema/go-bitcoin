@@ -1,13 +1,15 @@
 package bitcoin
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/bitcoinschema/go-bitcoin/stas"
-	"github.com/bitcoinsv/bsvd/bsvec"
+	"github.com/libsv/go-bk/bec"
 	"github.com/libsv/go-bt/v2"
+	"github.com/libsv/go-bt/v2/unlocker"
 )
 
 const (
@@ -45,7 +47,7 @@ func TxFromHex(rawHex string) (*bt.Tx, error) {
 // USE AT YOUR OWN RISK - this will modify a "pay-to" output to accomplish auto-fees
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
 	changeAddress string, standardRate, dataRate *bt.Fee,
-	privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
+	privateKey *bec.PrivateKey) (*bt.Tx, error) {
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -157,7 +159,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 // draftTx is a helper method to create a draft tx and associated fees
 func draftTx(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	privateKey *bsvec.PrivateKey, standardRate, dataRate *bt.Fee) (uint64, error) {
+	privateKey *bec.PrivateKey, standardRate, dataRate *bt.Fee) (uint64, error) {
 
 	// Create the "Draft tx"
 	tx, err := CreateTx(utxos, payToAddresses, opReturns, privateKey)
@@ -166,8 +168,12 @@ func draftTx(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturn
 	}
 
 	// Calculate the fees for the "Draft tx"
+	fee, err := CalculateFeeForTx(tx, standardRate, dataRate)
+	if err != nil {
+		return 0, err
+	}
 	// todo: hack to add 1 extra sat - ensuring that fee is over the minimum with rounding issues in WOC and other systems
-	fee := CalculateFeeForTx(tx, standardRate, dataRate) + 1
+	fee += 1
 	return fee, nil
 }
 
@@ -196,7 +202,7 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.TxID()
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
-	opReturns []OpReturnData, privateKey *bsvec.PrivateKey) (*bt.Tx, error) {
+	opReturns []OpReturnData, privateKey *bec.PrivateKey) (*bt.Tx, error) {
 
 	// Start creating a new transaction
 	tx := bt.NewTx()
@@ -242,10 +248,12 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 	// Sign the transaction
 	if privateKey != nil {
 
-		signer := bt.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
-		if _, err = tx.SignAuto(&signer); err != nil {
-			return nil, err
-		}
+		err = tx.FillAllInputs(context.Background(), &unlocker.Getter{PrivateKey: privateKey})
+
+		// signer := bt.InternalSigner{PrivateKey: privateKey, SigHashFlag: 0}
+		// if _, err = tx.SignAuto(&signer); err != nil {
+		// 	return nil, err
+		// }
 	}
 
 	// Return the transaction as a raw string
@@ -278,7 +286,7 @@ func CreateTxUsingWif(utxos []*Utxo, addresses []*PayToAddress,
 // Rate(s) can be derived from MinerAPI (default is DefaultDataRate and DefaultStandardRate)
 // If rate is nil it will use default rates (0.5 sat per byte)
 // Reference: https://tncpw.co/c215a75c
-func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
+func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) (fee uint64, err error) {
 
 	// Set the totals
 	var totalFee int
@@ -286,12 +294,16 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 
 	// Set defaults if not found
 	if standardRate == nil {
-		standardRate = bt.DefaultStandardFee()
+		standardRate, err = bt.NewFeeQuote().Fee(bt.FeeTypeStandard)
+		if err != nil {
+			return 0, err
+		}
 	}
 	if dataRate == nil {
-		dataRate = bt.DefaultStandardFee()
-		// todo: adjusted to 5/10 for now, since all miners accept that rate
-		dataRate.FeeType = bt.FeeTypeData
+		dataRate, err = bt.NewFeeQuote().Fee(bt.FeeTypeData)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	// Set the total bytes of the tx
@@ -322,7 +334,7 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 	}
 
 	// Return the total fee as a uint (easier to use with satoshi values)
-	return uint64(totalFee)
+	return uint64(totalFee), nil
 }
 
 func IsToken(tx *bt.Tx) (isToken bool) {
