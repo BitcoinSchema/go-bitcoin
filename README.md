@@ -2,13 +2,13 @@
 > A library for working with Bitcoin (BSV) transactions, addresses, keys, encryption, and more.
 
 [![Release](https://img.shields.io/github/release-pre/BitcoinSchema/go-bitcoin.svg?logo=github&style=flat&v=2)](https://github.com/BitcoinSchema/go-bitcoin/releases)
-[![Build Status](https://img.shields.io/github/workflow/status/BitcoinSchema/go-bitcoin/run-go-tests?logo=github&v=2)](https://github.com/BitcoinSchema/go-bitcoin/actions)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/BitcoinSchema/go-bitcoin/run-tests.yml?branch=master&logo=github&v=2)](https://github.com/BitcoinSchema/go-bitcoin/actions)
 [![Report](https://goreportcard.com/badge/github.com/BitcoinSchema/go-bitcoin?style=flat&v=2)](https://goreportcard.com/report/github.com/BitcoinSchema/go-bitcoin)
 [![codecov](https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?v=2)](https://codecov.io/gh/BitcoinSchema/go-bitcoin)
 [![Go](https://img.shields.io/github/go-mod/go-version/BitcoinSchema/go-bitcoin?v=2)](https://golang.org/)
 <br>
 [![Gitpod Ready-to-Code](https://img.shields.io/badge/Gitpod-ready--to--code-blue?logo=gitpod&v=2)](https://gitpod.io/#https://github.com/BitcoinSchema/go-bitcoin)
-[![Mergify Status](https://img.shields.io/endpoint.svg?url=https://gh.mergify.io/badges/BitcoinSchema/go-bitcoin&style=flat&v=2)](https://mergify.io)
+[![Mergify Status](https://img.shields.io/endpoint.svg?url=https://api.mergify.com/v1/badges/BitcoinSchema/go-bitcoin&style=flat&v=2)](https://mergify.io)
 [![Sponsor](https://img.shields.io/badge/sponsor-BitcoinSchema-181717.svg?logo=github&style=flat&v=2)](https://github.com/sponsors/BitcoinSchema)
 [![Donate](https://img.shields.io/badge/donate-bitcoin-ff9900.svg?logo=bitcoin&style=flat&v=2)](https://gobitcoinsv.com/#sponsor?utm_source=github&utm_medium=sponsor-link&utm_campaign=go-bitcoin&utm_term=go-bitcoin&utm_content=go-bitcoin)
 
