@@ -74,6 +74,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
   - [PubKey from String](pubkey.go)
 - **Private Keys**
   - [Create PrivateKey](private_key.go)
+  - [Create WIF](private_key.go)
   - [PrivateKey (string) to Address (string)](address.go)
   - [PrivateKey from string](private_key.go)
   - [Generate Shared Keypair](private_key.go)

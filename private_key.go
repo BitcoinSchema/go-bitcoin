@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"crypto/ecdsa"
 	"encoding/hex"
-	"errors"
 	"math/big"
 
 	"github.com/libsv/go-bk/bec"
@@ -24,7 +23,7 @@ func GenerateSharedKeyPair(privateKey *bec.PrivateKey,
 // PrivateKeyFromString turns a private key (hex encoded string) into an bec.PrivateKey
 func PrivateKeyFromString(privateKey string) (*bec.PrivateKey, error) {
 	if len(privateKey) == 0 {
-		return nil, errors.New("privateKey is missing")
+		return nil, ErrPrivateKeyMissing
 	}
 	privateKeyBytes, err := hex.DecodeString(privateKey)
 	if err != nil {
@@ -54,13 +53,33 @@ func CreatePrivateKeyString() (string, error) {
 	return hex.EncodeToString(privateKey.Serialise()), nil
 }
 
+// CreateWif will create a new WIF (*wif.WIF)
+func CreateWif() (*wif.WIF, error) {
+	privateKey, err := CreatePrivateKey()
+	if err != nil {
+		return nil, err
+	}
+
+	return wif.NewWIF(privateKey, &chaincfg.MainNet, false)
+}
+
+// CreateWifString will create a new WIF (string)
+func CreateWifString() (string, error) {
+	wifKey, err := CreateWif()
+	if err != nil {
+		return "", err
+	}
+
+	return wifKey.String(), nil
+}
+
 // PrivateAndPublicKeys will return both the private and public key in one method
 // Expects a hex encoded privateKey
 func PrivateAndPublicKeys(privateKey string) (*bec.PrivateKey, *bec.PublicKey, error) {
 
 	// No key?
 	if len(privateKey) == 0 {
-		return nil, nil, errors.New("missing privateKey")
+		return nil, nil, ErrPrivateKeyMissing
 	}
 
 	// Decode the private key into bytes
@@ -79,7 +98,7 @@ func PrivateKeyToWif(privateKey string) (*wif.WIF, error) {
 
 	// Missing private key
 	if len(privateKey) == 0 {
-		return nil, errors.New("missing privateKey")
+		return nil, ErrPrivateKeyMissing
 	}
 
 	// Decode the private key
@@ -110,7 +129,7 @@ func WifToPrivateKey(wifKey string) (*bec.PrivateKey, error) {
 
 	// Missing wif?
 	if len(wifKey) == 0 {
-		return nil, errors.New("missing wif")
+		return nil, ErrWifMissing
 	}
 
 	// Decode the wif
@@ -134,4 +153,21 @@ func WifToPrivateKeyString(wif string) (string, error) {
 
 	// Return the hex (string) version of the private key
 	return hex.EncodeToString(privateKey.Serialise()), nil
+}
+
+// WifFromString will convert a WIF (string) to a WIF (*wif.WIF)
+func WifFromString(wifKey string) (*wif.WIF, error) {
+
+	// Missing wif?
+	if len(wifKey) == 0 {
+		return nil, ErrWifMissing
+	}
+
+	// Decode the WIF
+	decodedWif, err := wif.DecodeWIF(wifKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return decodedWif, nil
 }

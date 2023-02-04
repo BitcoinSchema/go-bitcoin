@@ -5,7 +5,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/libsv/go-bk/bec"
+	"github.com/libsv/go-bk/wif"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestCreatePrivateKey will test the method CreatePrivateKey()
@@ -369,5 +372,205 @@ func ExampleWifToPrivateKeyString() {
 func BenchmarkWifToPrivateKeyString(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_, _ = WifToPrivateKeyString("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	}
+}
+
+// TestCreateWif will test the method CreateWif()
+func TestCreateWif(t *testing.T) {
+	t.Run("TestCreateWif", func(t *testing.T) {
+		t.Parallel()
+
+		// Create a WIF
+		wifKey, err := CreateWif()
+		require.NoError(t, err)
+		require.NotNil(t, wifKey)
+		// t.Log("WIF:", wifKey.String())
+		require.Equalf(t, 51, len(wifKey.String()), "WIF should be 51 characters long, got: %d", len(wifKey.String()))
+	})
+
+	t.Run("TestWifToPrivateKey", func(t *testing.T) {
+		t.Parallel()
+
+		// Create a WIF
+		wifKey, err := CreateWif()
+		require.NoError(t, err)
+		require.NotNil(t, wifKey)
+		// t.Log("WIF:", wifKey.String())
+		require.Equalf(t, 51, len(wifKey.String()), "WIF should be 51 characters long, got: %d", len(wifKey.String()))
+
+		// Convert WIF to Private Key
+		var privateKey *bec.PrivateKey
+		privateKey, err = WifToPrivateKey(wifKey.String())
+		require.NoError(t, err)
+		require.NotNil(t, privateKey)
+		privateKeyString := hex.EncodeToString(privateKey.Serialise())
+		// t.Log("Private Key:", privateKeyString)
+		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
+	})
+}
+
+// ExampleCreateWif example using CreateWif()
+func ExampleCreateWif() {
+	wifKey, err := CreateWif()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("WIF Key Generated Length:", len(wifKey.String()))
+	// Output: WIF Key Generated Length: 51
+}
+
+// BenchmarkCreateWif benchmarks the method CreateWif()
+func BenchmarkCreateWif(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = CreateWif()
+	}
+}
+
+// TestCreateWifString will test the method CreateWifString()
+func TestCreateWifString(t *testing.T) {
+	t.Run("TestCreateWifString", func(t *testing.T) {
+		t.Parallel()
+
+		// Create a WIF
+		wifKey, err := CreateWifString()
+		require.NoError(t, err)
+		require.NotNil(t, wifKey)
+		// t.Log("WIF:", wifKey)
+		require.Equalf(t, 51, len(wifKey), "WIF should be 51 characters long, got: %d", len(wifKey))
+	})
+
+	t.Run("TestWifToPrivateKeyString", func(t *testing.T) {
+		t.Parallel()
+
+		// Create a WIF
+		wifKey, err := CreateWifString()
+		require.NoError(t, err)
+		require.NotNil(t, wifKey)
+		// t.Log("WIF:", wifKey)
+		require.Equalf(t, 51, len(wifKey), "WIF should be 51 characters long, got: %d", len(wifKey))
+
+		// Convert WIF to Private Key
+		var privateKeyString string
+		privateKeyString, err = WifToPrivateKeyString(wifKey)
+		require.NoError(t, err)
+		require.NotNil(t, privateKeyString)
+		// t.Log("Private Key:", privateKeyString)
+		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
+
+	})
+}
+
+// ExampleCreateWifString example using CreateWifString()
+func ExampleCreateWifString() {
+	wifKey, err := CreateWifString()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("WIF Key Generated Length:", len(wifKey))
+	// Output: WIF Key Generated Length: 51
+}
+
+// BenchmarkCreateWifString benchmarks the method CreateWifString()
+func BenchmarkCreateWifString(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = CreateWifString()
+	}
+}
+
+// TestWifFromString will test the method WifFromString()
+func TestWifFromString(t *testing.T) {
+	t.Run("TestCreateWifFromPrivateKey", func(t *testing.T) {
+		t.Parallel()
+
+		// Create a Private Key
+		privateKey, err := CreatePrivateKeyString()
+		require.NoError(t, err)
+		require.NotNil(t, privateKey)
+
+		// Create a WIF
+		var wifKey *wif.WIF
+		wifKey, err = PrivateKeyToWif(privateKey)
+		require.NoError(t, err)
+		require.NotNil(t, wifKey)
+		wifKeyString := wifKey.String()
+		t.Log("WIF:", wifKeyString)
+		require.Equalf(t, 51, len(wifKeyString), "WIF should be 51 characters long, got: %d", len(wifKeyString))
+
+		// Convert WIF to Private Key
+		var privateKeyString string
+		privateKeyString, err = WifToPrivateKeyString(wifKeyString)
+		require.NoError(t, err)
+		require.NotNil(t, privateKeyString)
+		t.Log("Private Key:", privateKeyString)
+		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
+
+		// Compare Private Keys
+		require.Equalf(t, privateKey, privateKeyString, "Private Key should be equal, got: %s", privateKeyString)
+
+		// Decode WIF
+		var decodedWif *wif.WIF
+		decodedWif, err = WifFromString(wifKeyString)
+		require.NoError(t, err)
+		require.NotNil(t, decodedWif)
+		require.Equalf(t, wifKeyString, decodedWif.String(), "WIF should be equal, got: %s", decodedWif.String())
+	})
+
+	t.Run("TestWifFromStringMissingWIF", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := WifFromString("")
+		require.Error(t, err)
+		require.Equal(t, ErrWifMissing, err)
+	})
+
+	t.Run("TestWifFromStringInvalidWIF", func(t *testing.T) {
+		t.Parallel()
+
+		_, err := WifFromString("invalid")
+		require.Error(t, err)
+		require.Equal(t, "malformed private key", err.Error())
+	})
+}
+
+// ExampleWifFromString example using WifFromString()
+func ExampleWifFromString() {
+	// Create a Private Key
+	privateKey, err := CreatePrivateKeyString()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("Private Key Generated Length:", len(privateKey))
+
+	// Create a WIF
+	var wifKey *wif.WIF
+	wifKey, err = PrivateKeyToWif(privateKey)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("WIF Key Generated Length:", len(wifKey.String()))
+
+	// Decode WIF
+	var decodedWif *wif.WIF
+	decodedWif, err = WifFromString(wifKey.String())
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("WIF Key Decoded Length:", len(decodedWif.String()))
+	// Output: Private Key Generated Length: 64
+	// WIF Key Generated Length: 51
+	// WIF Key Decoded Length: 51
+}
+
+// BenchmarkWifFromString benchmarks the method WifFromString()
+func BenchmarkWifFromString(b *testing.B) {
+	wifKey, _ := CreateWif()
+	wifString := wifKey.String()
+	for i := 0; i < b.N; i++ {
+		_, _ = WifFromString(wifString)
 	}
 }
