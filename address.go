@@ -123,7 +123,7 @@ func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool) (*bscript.A
 		// https://github.com/libsv/go-bt/blob/master/bscript/address.go#L98
 		hash := crypto.Hash160(publicKey.SerialiseUncompressed())
 		bb := make([]byte, 1)
-		// nolint: makezero // we need to set up the array with 1
+		//nolint: makezero // we need to set up the array with 1
 		bb = append(bb, hash...)
 		return &bscript.Address{
 			AddressString: bscript.Base58EncodeMissingChecksum(bb),
