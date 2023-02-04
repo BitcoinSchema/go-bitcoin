@@ -1,8 +1,6 @@
 package bitcoin
 
 import (
-	"errors"
-
 	"github.com/libsv/go-bt/v2/bscript"
 )
 
@@ -10,7 +8,7 @@ import (
 func ScriptFromAddress(address string) (string, error) {
 	// Missing address?
 	if len(address) == 0 {
-		return "", errors.New("missing address")
+		return "", ErrMissingAddress
 	}
 
 	// Generate a script from address

@@ -2,7 +2,6 @@ package bitcoin
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -63,9 +62,9 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
-		return nil, errors.New("utxo(s) are required to create a tx")
+		return nil, ErrUtxosRequired
 	} else if len(changeAddress) == 0 {
-		return nil, errors.New("change address is required")
+		return nil, ErrChangeAddressRequired
 	}
 
 	// Accumulate the total satoshis from all utxo(s)

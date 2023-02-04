@@ -2,7 +2,6 @@ package bitcoin
 
 import (
 	"encoding/hex"
-	"errors"
 
 	"github.com/libsv/go-bk/bec"
 )
@@ -31,7 +30,7 @@ func PubKeyFromString(pubKey string) (*bec.PublicKey, error) {
 
 	// Invalid pubKey
 	if len(pubKey) == 0 {
-		return nil, errors.New("missing pubkey")
+		return nil, ErrMissingPubKey
 	}
 
 	// Decode from hex string

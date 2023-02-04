@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"errors"
 	"fmt"
 
 	"github.com/libsv/go-bk/bec"
@@ -28,12 +27,12 @@ func (a *A25) doubleSHA256() []byte {
 	return h.Sum(d[:0])
 }
 
-// Version returns the version byte of a A25 address
+// Version returns the version byte of an A25 address
 func (a *A25) Version() byte {
 	return a[0]
 }
 
-// EmbeddedChecksum returns the 4 checksum bytes of a A25 address
+// EmbeddedChecksum returns the 4 checksum bytes of an A25 address
 func (a *A25) EmbeddedChecksum() (c [4]byte) {
 	copy(c[:], a[21:])
 	return
@@ -51,7 +50,7 @@ func (a *A25) Set58(s []byte) error {
 	for _, s1 := range s {
 		c := bytes.IndexByte(tmpl, s1)
 		if c < 0 {
-			return errors.New("bad char")
+			return ErrBadCharacter
 		}
 		for j := 24; j >= 0; j-- {
 			c += 58 * int(a[j])
@@ -59,7 +58,7 @@ func (a *A25) Set58(s []byte) error {
 			c /= 256
 		}
 		if c > 0 {
-			return errors.New("too long")
+			return ErrTooLong
 		}
 	}
 	return nil
@@ -83,7 +82,7 @@ func ValidA58(a58 []byte) (bool, error) {
 		return false, err
 	}
 	if a.Version() != 0 {
-		return false, errors.New("not version 0")
+		return false, ErrNotVersion0
 	}
 	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
 }
@@ -148,7 +147,7 @@ func GetAddressFromScript(script string) (string, error) {
 
 	// No script?
 	if len(script) == 0 {
-		return "", errors.New("missing script")
+		return "", ErrMissingScript
 	}
 
 	// Decode the hex string into bytes

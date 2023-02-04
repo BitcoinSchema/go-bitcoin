@@ -3,7 +3,6 @@ package bitcoin
 import (
 	"bytes"
 	"encoding/base64"
-	"errors"
 
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
 	"github.com/bitcoinsv/bsvd/wire"
@@ -15,7 +14,7 @@ import (
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func SignMessage(privateKey string, message string, sigRefCompressedKey bool) (string, error) {
 	if len(privateKey) == 0 {
-		return "", errors.New("privateKey is empty")
+		return "", ErrPrivateKeyMissing
 	}
 
 	var buf bytes.Buffer
