@@ -6,7 +6,7 @@ updates:
     target-branch: "v1"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
       time: "10:00"
       timezone: "UTC"
     reviewers:
@@ -22,7 +22,7 @@ updates:
     target-branch: "v1"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
     reviewers:
       - "mrz1836"
