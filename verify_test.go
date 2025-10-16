@@ -56,6 +56,13 @@ func TestVerifyMessage(t *testing.T) {
 			false,
 		},
 		{
+			"mrH55sFASmaDJZ46RnKjMi11nA99b4d8GH",
+			"IL3hIysOVTZu9NJp5YWkPh7PSrnX+kFuFArVB+ETNObqUeYtboWjfV2H7CVmOJGJkjo4REHJx26zCGrH71ySNRo=",
+			"Testing!",
+			true,
+			true,
+		},
+		{
 			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"Testing!",
