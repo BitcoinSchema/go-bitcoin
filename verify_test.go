@@ -23,12 +23,14 @@ func TestVerifyMessage(t *testing.T) {
 		inputSignature string
 		inputData      string
 		expectedError  bool
+		mainnet        bool
 	}{
 		{
 			"12SsqqYk43kggMBpSvWHwJwR31NsgMePKS",
 			"HFxPx8JHsCiivB+DW/RgNpCLT6yG3j436cUNWKekV3ORBrHNChIjeVReyAco7PVmmDtVD3POs9FhDlm/nk5I6O8=",
 			"test message",
 			false,
+			true,
 		},
 		{
 			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
@@ -44,23 +46,34 @@ func TestVerifyMessage(t *testing.T) {
 				"long af. This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
 				"new message that is obnoxiously long af.",
 			false,
+			true,
+		},
+		{
+			"mrH55sFASmaDJZ46RnKjMi11nA99b4d8GH",
+			"IL3hIysOVTZu9NJp5YWkPh7PSrnX+kFuFArVB+ETNObqUeYtboWjfV2H7CVmOJGJkjo4REHJx26zCGrH71ySNRo=",
+			"Testing!",
+			false,
+			false,
 		},
 		{
 			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"Testing!",
 			true,
+			true,
 		},
 		{
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"",
 			"Testing!",
 			true,
+			true,
 		},
 		{
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"",
+			true,
 			true,
 		},
 		{
@@ -68,11 +81,13 @@ func TestVerifyMessage(t *testing.T) {
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"Testing!",
 			true,
+			true,
 		},
 		{
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"GBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4naZ=",
 			"Testing!",
+			true,
 			true,
 		},
 		{
@@ -80,17 +95,19 @@ func TestVerifyMessage(t *testing.T) {
 			"GBD=",
 			"Testing!",
 			true,
+			true,
 		},
 		{
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"GBse5w0f839t8wej8f2D=",
 			"Testing!",
 			true,
+			true,
 		},
 	}
 
 	for _, test := range tests {
-		if err := VerifyMessage(test.inputAddress, test.inputSignature, test.inputData); err != nil && !test.expectedError {
+		if err := VerifyMessage(test.inputAddress, test.inputSignature, test.inputData, test.mainnet); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputAddress, test.inputSignature, test.inputData, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error was expected", t.Name(), test.inputAddress, test.inputSignature, test.inputData)
@@ -105,6 +122,7 @@ func ExampleVerifyMessage() {
 		"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 		"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 		"Testing!",
+		true,
 	); err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -120,6 +138,7 @@ func BenchmarkVerifyMessage(b *testing.B) {
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"Testing!",
+			true,
 		)
 	}
 }

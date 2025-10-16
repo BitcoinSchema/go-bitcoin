@@ -21,13 +21,13 @@ func main() {
 	// Get an address from private key
 	// the compressed flag must match the flag provided during signing
 	var address string
-	address, err = bitcoin.GetAddressFromPrivateKey(rawKey, true)
+	address, err = bitcoin.GetAddressFromPrivateKey(rawKey, true, true)
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 
 	// Verify the signature
-	if err = bitcoin.VerifyMessage(address, signature, message); err != nil {
+	if err = bitcoin.VerifyMessage(address, signature, message, true); err != nil {
 		log.Fatalf("verify failed: %s", err.Error())
 	} else {
 		log.Println("verification passed")

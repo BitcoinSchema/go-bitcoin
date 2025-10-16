@@ -139,7 +139,7 @@ func GetAddressFromHDKey(hdKey *bip32.ExtendedKey) (*bscript.Address, error) {
 	if err != nil {
 		return nil, err
 	}
-	return GetAddressFromPubKey(pubKey, true)
+	return GetAddressFromPubKey(pubKey, true, true)
 }
 
 // GetAddressStringFromHDKey is a helper function to get the Address (string) associated with a given hdKey
@@ -202,7 +202,7 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32) (addresses []stri
 	// Loop, get address and append to results
 	var address *bscript.Address
 	for _, key := range pubKeys {
-		if address, err = GetAddressFromPubKey(key, true); err != nil {
+		if address, err = GetAddressFromPubKey(key, true, true); err != nil {
 			// Should never error if the pubKeys are valid keys
 			return
 		}

@@ -48,7 +48,7 @@ func PubKeyFromSignature(sig, data string) (pubKey *bec.PublicKey, wasCompressed
 //
 // Error will occur if verify fails or verification is not successful (no bool)
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
-func VerifyMessage(address, sig, data string) error {
+func VerifyMessage(address, sig, data string, mainnet bool) error {
 
 	// Reconstruct the pubkey
 	publicKey, wasCompressed, err := PubKeyFromSignature(sig, data)
@@ -58,7 +58,7 @@ func VerifyMessage(address, sig, data string) error {
 
 	// Get the address
 	var bscriptAddress *bscript.Address
-	if bscriptAddress, err = GetAddressFromPubKey(publicKey, wasCompressed); err != nil {
+	if bscriptAddress, err = GetAddressFromPubKey(publicKey, wasCompressed, mainnet); err != nil {
 		return err
 	}
 

@@ -10,7 +10,7 @@ func TestSigningCompression(t *testing.T) {
 	testData := "test message"
 
 	// Test sign uncompressed
-	address, err := GetAddressFromPrivateKeyString(testKey, false)
+	address, err := GetAddressFromPrivateKeyString(testKey, false, true)
 	if err != nil {
 		t.Errorf("Get address err %s", err)
 	}
@@ -19,14 +19,14 @@ func TestSigningCompression(t *testing.T) {
 		t.Errorf("Failed to sign uncompressed %s", err)
 	}
 
-	err = VerifyMessage(address, sig, testData)
+	err = VerifyMessage(address, sig, testData, true)
 
 	if err != nil {
 		t.Errorf("Failed to validate uncompressed %s", err)
 	}
 
 	// Test sign compressed
-	address, err = GetAddressFromPrivateKeyString(testKey, true)
+	address, err = GetAddressFromPrivateKeyString(testKey, true, true)
 	if err != nil {
 		t.Errorf("Get address err %s", err)
 	}
@@ -35,7 +35,7 @@ func TestSigningCompression(t *testing.T) {
 		t.Errorf("Failed to sign compressed %s", err)
 	}
 
-	err = VerifyMessage(address, sig, testData)
+	err = VerifyMessage(address, sig, testData, true)
 
 	if err != nil {
 		t.Errorf("Failed to validate compressed %s", err)
