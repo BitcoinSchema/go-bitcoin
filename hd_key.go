@@ -134,19 +134,19 @@ func GetPublicKeyFromHDKey(hdKey *bip32.ExtendedKey) (*bec.PublicKey, error) {
 // GetAddressFromHDKey is a helper function to get the Address associated with a given hdKey
 //
 // Expects hdKey to not be nil (otherwise will panic)
-func GetAddressFromHDKey(hdKey *bip32.ExtendedKey) (*bscript.Address, error) {
+func GetAddressFromHDKey(hdKey *bip32.ExtendedKey, mainnet bool) (*bscript.Address, error) {
 	pubKey, err := GetPublicKeyFromHDKey(hdKey)
 	if err != nil {
 		return nil, err
 	}
-	return GetAddressFromPubKey(pubKey, true, true)
+	return GetAddressFromPubKey(pubKey, true, mainnet)
 }
 
 // GetAddressStringFromHDKey is a helper function to get the Address (string) associated with a given hdKey
 //
 // Expects hdKey to not be nil (otherwise will panic)
-func GetAddressStringFromHDKey(hdKey *bip32.ExtendedKey) (string, error) {
-	address, err := GetAddressFromHDKey(hdKey)
+func GetAddressStringFromHDKey(hdKey *bip32.ExtendedKey, mainnet bool) (string, error) {
+	address, err := GetAddressFromHDKey(hdKey, mainnet)
 	if err != nil {
 		return "", err
 	}
@@ -191,7 +191,7 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 
 // GetAddressesForPath will get the corresponding addresses for the PublicKeys at the given path m/0/x
 // Returns 2 keys, first is internal and second is external
-func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32) (addresses []string, err error) {
+func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (addresses []string, err error) {
 
 	// Get the public keys for the corresponding chain/num (using default chain)
 	var pubKeys []*bec.PublicKey
@@ -202,7 +202,7 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32) (addresses []stri
 	// Loop, get address and append to results
 	var address *bscript.Address
 	for _, key := range pubKeys {
-		if address, err = GetAddressFromPubKey(key, true, true); err != nil {
+		if address, err = GetAddressFromPubKey(key, true, mainnet); err != nil {
 			// Should never error if the pubKeys are valid keys
 			return
 		}
