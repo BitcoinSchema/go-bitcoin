@@ -15,7 +15,7 @@ func main() {
 
 	// Get the addresses for the given path
 	var addresses []string
-	addresses, err = bitcoin.GetAddressesForPath(hdKey, 2)
+	addresses, err = bitcoin.GetAddressesForPath(hdKey, 2, true)
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
