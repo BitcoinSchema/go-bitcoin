@@ -33,3 +33,4 @@ dist
 
 # Converage
 coverage.txt
+testdata

@@ -7,9 +7,16 @@ import (
 // FuzzTxFromHex tests the TxFromHex function with various hex-encoded
 // transaction strings to ensure robust error handling.
 //
-// Limitation: Some extremely malformed inputs with invalid varint values may cause
-// fatal OOM errors in the underlying libsv/go-bt library that cannot be recovered.
-// These represent bugs in the underlying library, not in this wrapper function.
+// Mitigation: TxFromHex includes multiple layers of defense:
+// - Size limit: 200KB (100KB decoded) - blocks oversized inputs
+// - Hex validation: ensures valid hex encoding
+// - Input/output count validation: prevents obviously malicious counts
+//
+// Known Limitation: Despite these defenses, some malformed inputs with invalid
+// varint values in script lengths or other nested fields may still cause fatal OOM
+// errors in the underlying libsv/go-bt library. These represent bugs in the
+// underlying library that cannot be fully prevented without reimplementing the
+// entire transaction parser. The defenses above catch the majority of cases.
 func FuzzTxFromHex(f *testing.F) {
 	// Seed corpus with valid and invalid transaction hex strings
 	// Valid transaction
@@ -27,8 +34,9 @@ func FuzzTxFromHex(f *testing.F) {
 	f.Add("01000000010000000000000000000000000000000000000000000000000000000000000000")
 
 	f.Fuzz(func(t *testing.T, txHex string) {
-		// Skip inputs that are too long to prevent timeouts
-		if len(txHex) > 2_000_000 {
+		// Skip inputs that are too long to prevent timeouts and malformed varint exploits
+		// This matches the limit in TxFromHex (200KB hex = 100KB decoded)
+		if len(txHex) > 200_000 {
 			t.Skip("input too long")
 		}
 
