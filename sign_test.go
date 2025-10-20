@@ -20,7 +20,6 @@ func TestSigningCompression(t *testing.T) {
 	}
 
 	err = VerifyMessage(address, sig, testData, true)
-
 	if err != nil {
 		t.Errorf("Failed to validate uncompressed %s", err)
 	}
@@ -36,7 +35,6 @@ func TestSigningCompression(t *testing.T) {
 	}
 
 	err = VerifyMessage(address, sig, testData, true)
-
 	if err != nil {
 		t.Errorf("Failed to validate compressed %s", err)
 	}
@@ -44,10 +42,9 @@ func TestSigningCompression(t *testing.T) {
 
 // TestSignMessage will test the method SignMessage()
 func TestSignMessage(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputKey          string
 		inputMessage      string
 		expectedSignature string

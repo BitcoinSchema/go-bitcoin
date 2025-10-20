@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	// Convert the wif into a private key
 	privateKey, err := bitcoin.WifToPrivateKey("5KgHn2qiftW5LQgCYFtkbrLYB1FuvisDtacax8NCvumw3UTKdcP")
 	if err != nil {

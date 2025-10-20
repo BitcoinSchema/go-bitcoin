@@ -19,7 +19,6 @@ const (
 
 // PubKeyFromSignature gets a publickey for a signature and tells you whether is was compressed
 func PubKeyFromSignature(sig, data string) (pubKey *bec.PublicKey, wasCompressed bool, err error) {
-
 	var decodedSig []byte
 	if decodedSig, err = base64.StdEncoding.DecodeString(sig); err != nil {
 		return nil, false, err
@@ -49,7 +48,6 @@ func PubKeyFromSignature(sig, data string) (pubKey *bec.PublicKey, wasCompressed
 // Error will occur if verify fails or verification is not successful (no bool)
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func VerifyMessage(address, sig, data string, mainnet bool) error {
-
 	// Reconstruct the pubkey
 	publicKey, wasCompressed, err := PubKeyFromSignature(sig, data)
 	if err != nil {
@@ -81,8 +79,7 @@ func VerifyMessage(address, sig, data string, mainnet bool) error {
 // License: https://github.com/bitcoin-sv/merchantapi-reference/blob/master/LICENSE
 //
 // Source: https://github.com/bitcoin-sv/merchantapi-reference/blob/master/handler/global.go
-func VerifyMessageDER(hash [32]byte, pubKey string, signature string) (verified bool, err error) {
-
+func VerifyMessageDER(hash [32]byte, pubKey, signature string) (verified bool, err error) {
 	// Decode the signature string
 	var sigBytes []byte
 	if sigBytes, err = hex.DecodeString(signature); err != nil {

@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	// Start with an existing xPub
 	xPub := "xpub661MyMwAqRbcH3WGvLjupmr43L1GVH3MP2WQWvdreDraBeFJy64Xxv4LLX9ZVWWz3ZjZkMuZtSsc9qH9JZR74bR4PWkmtEvP423r6DJR8kA"
 

@@ -13,7 +13,7 @@ import (
 func TestPubKeyFromPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputKey       string
 		expectedPubKey string
 		compressed     bool
@@ -63,7 +63,7 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, priv)
 
-	var tests = []struct {
+	tests := []struct {
 		inputKey       *bec.PrivateKey
 		expectedPubKey string
 		expectedError  bool
@@ -111,10 +111,9 @@ func BenchmarkPubKeyFromPrivateKey(b *testing.B) {
 
 // TestPubKeyFromString will test the method PubKeyFromString()
 func TestPubKeyFromString(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputKey       string
 		expectedPubKey string
 		expectedNil    bool

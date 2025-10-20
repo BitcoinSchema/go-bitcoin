@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	// Start with a private key (keep this a secret)
 	privateKey, err := bitcoin.PrivateKeyFromString("b7a1f94ac7be8ed369421c3afe4eae548f10b96435e9c94e35590b85404a5ae4")
 	if err != nil {
@@ -26,5 +25,4 @@ func main() {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 	log.Println("decrypted: ", decrypted)
-
 }

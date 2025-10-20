@@ -88,7 +88,7 @@ func ValidA58(a58 []byte) (bool, error) {
 }
 
 // GetAddressFromPrivateKey takes a bec private key and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool, mainnet bool) (string, error) {
+func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed, mainnet bool) (string, error) {
 	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed, mainnet)
 	if err != nil {
 		return "", err
@@ -97,7 +97,7 @@ func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool, mainn
 }
 
 // GetAddressFromPrivateKeyString takes a private key string and returns a Bitcoin address
-func GetAddressFromPrivateKeyString(privateKey string, compressed bool, mainnet bool) (string, error) {
+func GetAddressFromPrivateKeyString(privateKey string, compressed, mainnet bool) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
@@ -110,7 +110,7 @@ func GetAddressFromPrivateKeyString(privateKey string, compressed bool, mainnet 
 }
 
 // GetAddressFromPubKey gets a bscript.Address from a bec.PublicKey
-func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool, mainnet bool) (*bscript.Address, error) {
+func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed, mainnet bool) (*bscript.Address, error) {
 	if publicKey == nil {
 		return nil, fmt.Errorf("publicKey cannot be nil")
 	} else if publicKey.X == nil {
@@ -134,7 +134,7 @@ func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool, mainnet boo
 }
 
 // GetAddressFromPubKeyString is a convenience function to use a hex string pubKey
-func GetAddressFromPubKeyString(pubKey string, compressed bool, mainnet bool) (*bscript.Address, error) {
+func GetAddressFromPubKeyString(pubKey string, compressed, mainnet bool) (*bscript.Address, error) {
 	rawPubKey, err := PubKeyFromString(pubKey)
 	if err != nil {
 		return nil, err
@@ -144,7 +144,6 @@ func GetAddressFromPubKeyString(pubKey string, compressed bool, mainnet bool) (*
 
 // GetAddressFromScript will take an output script and extract a standard bitcoin address
 func GetAddressFromScript(script string) (string, error) {
-
 	// No script?
 	if len(script) == 0 {
 		return "", ErrMissingScript

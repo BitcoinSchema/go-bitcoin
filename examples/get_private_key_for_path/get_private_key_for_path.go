@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	// Start with an HD key (we will make one for this example)
 	hdKey, err := bitcoin.GenerateHDKey(bitcoin.SecureSeedLength)
 	if err != nil {

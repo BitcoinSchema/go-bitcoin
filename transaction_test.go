@@ -12,7 +12,7 @@ import (
 func TestTxFromHex(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputHex      string
 		expectedTxID  string
 		expectedNil   bool
@@ -112,7 +112,6 @@ func TestCreateTx(t *testing.T) {
 
 // ExampleCreateTx example using CreateTx()
 func ExampleCreateTx() {
-
 	// Use a new UTXO
 	utxo := &Utxo{
 		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
@@ -181,10 +180,9 @@ func BenchmarkCreateTx(b *testing.B) {
 
 // TestCreateTxErrors will test the method CreateTx()
 func TestCreateTxErrors(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputUtxos     []*Utxo
 		inputAddresses []*PayToAddress
 		inputOpReturns []OpReturnData
@@ -193,12 +191,13 @@ func TestCreateTxErrors(t *testing.T) {
 		expectedNil    bool
 		expectedError  bool
 	}{
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
+		{
+			[]*Utxo{{
+				TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+				Vout:         0,
+				ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+				Satoshis:     1000,
+			}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
 				Satoshis: 500,
@@ -209,12 +208,13 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 			false,
 		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
+		{
+			[]*Utxo{{
+				TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+				Vout:         0,
+				ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+				Satoshis:     1000,
+			}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
 				Satoshis: 1500,
@@ -225,7 +225,8 @@ func TestCreateTxErrors(t *testing.T) {
 			true,
 			true,
 		},
-		{nil,
+		{
+			nil,
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
 				Satoshis: 500,
@@ -236,36 +237,41 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 			false,
 		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}}, nil,
+		{
+			[]*Utxo{{
+				TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+				Vout:         0,
+				ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+				Satoshis:     1000,
+			}},
+			nil,
 			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a47304402205ba1a246371bf8db3fb6dfa75e1edaa18b6b86dc1775dc3f2aa3c38f22803ccc022057850f794ebf78e542228d301420d4ec896c30a2bc009b7e55c66120f6c5a57a412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0100000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			false,
 			false,
 		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}}, nil,
+		{
+			[]*Utxo{{
+				TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+				Vout:         0,
+				ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+				Satoshis:     1000,
+			}},
+			nil,
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a47304402200083bb297d53210cf9379b3f47de2eff38e6906e5982fbfeef9bf59778750f3e022046da020811e9a2d1e6db8da103d17598abc194125612be6b108d49cb60cbca95412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0000000000",
 			false,
 			false,
 		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "invalid-script",
-			Satoshis:     1000,
-		}},
+		{
+			[]*Utxo{{
+				TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+				Vout:         0,
+				ScriptPubKey: "invalid-script",
+				Satoshis:     1000,
+			}},
 			[]*PayToAddress{{
 				Address:  "1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL",
 				Satoshis: 500,
@@ -276,12 +282,13 @@ func TestCreateTxErrors(t *testing.T) {
 			true,
 			true,
 		},
-		{[]*Utxo{{
-			TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
-			Vout:         0,
-			ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
-			Satoshis:     1000,
-		}},
+		{
+			[]*Utxo{{
+				TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
+				Vout:         0,
+				ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
+				Satoshis:     1000,
+			}},
 			[]*PayToAddress{{
 				Address:  "invalid-address",
 				Satoshis: 500,
@@ -376,7 +383,6 @@ func TestCreateTxUsingWif(t *testing.T) {
 
 // ExampleCreateTxUsingWif example using CreateTxUsingWif()
 func ExampleCreateTxUsingWif() {
-
 	// Use a new UTXO
 	utxo := &Utxo{
 		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
@@ -474,10 +480,9 @@ func TestCalculateFeeForTx(t *testing.T) {
 
 // TestCalculateFeeForTxVariousTxs will test the method CalculateFeeForTx()
 func TestCalculateFeeForTxVariousTxs(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		name              string
 		inputHex          string
 		inputStandardRate *bt.Fee
@@ -635,7 +640,6 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 
 // ExampleCalculateFeeForTx example using CalculateFeeForTx()
 func ExampleCalculateFeeForTx() {
-
 	// Get the tx from hex string
 	rawTx := "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100e07b7661af4e4b521c012a146b25da2c7b9d606e9ceaae28fa73eb347ef6da6f0220527f0638a89ff11cbe53d5f8c4c2962484a370dcd9463a6330f45d31247c2512412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0364030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000"
 	tx, err := TxFromHex(rawTx)
@@ -653,7 +657,6 @@ func ExampleCalculateFeeForTx() {
 
 // BenchmarkCalculateFeeForTx benchmarks the method CalculateFeeForTx()
 func BenchmarkCalculateFeeForTx(b *testing.B) {
-
 	// Get the tx from hex string
 	rawTx := "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100e07b7661af4e4b521c012a146b25da2c7b9d606e9ceaae28fa73eb347ef6da6f0220527f0638a89ff11cbe53d5f8c4c2962484a370dcd9463a6330f45d31247c2512412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0364030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000"
 	tx, err := TxFromHex(rawTx)
@@ -715,7 +718,7 @@ func TestCreateTxWithChange(t *testing.T) {
 	})
 
 	t.Run("valid txs", func(t *testing.T) {
-		var tests = []struct {
+		tests := []struct {
 			name               string
 			inputUtxos         []*Utxo
 			inputAddresses     []*PayToAddress
@@ -752,7 +755,8 @@ func TestCreateTxWithChange(t *testing.T) {
 					Vout:         0,
 					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
 					Satoshis:     1000,
-				}}, nil,
+				}},
+				nil,
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
@@ -767,7 +771,8 @@ func TestCreateTxWithChange(t *testing.T) {
 					Vout:         0,
 					ScriptPubKey: "76a9149cbe9f5e72fa286ac8a38052d1d5337aa363ea7f88ac",
 					Satoshis:     1000,
-				}}, nil,
+				}},
+				nil,
 				nil,
 				"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
@@ -815,7 +820,7 @@ func TestCreateTxWithChange(t *testing.T) {
 	})
 
 	t.Run("invalid txs", func(t *testing.T) {
-		var tests = []struct {
+		tests := []struct {
 			name               string
 			inputUtxos         []*Utxo
 			inputAddresses     []*PayToAddress
@@ -957,7 +962,6 @@ func TestCreateTxWithChange(t *testing.T) {
 
 // ExampleCreateTxWithChange example using CreateTxWithChange()
 func ExampleCreateTxWithChange() {
-
 	// Use a new UTXO
 	utxo := &Utxo{
 		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",
@@ -1075,7 +1079,6 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("valid tx - multiple inputs - send all", func(t *testing.T) {
-
 		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
 		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
@@ -1567,7 +1570,6 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 
 // ExampleCreateTxWithChangeUsingWif example using CreateTxWithChangeUsingWif()
 func ExampleCreateTxWithChangeUsingWif() {
-
 	// Use a new UTXO
 	utxo := &Utxo{
 		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",

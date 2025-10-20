@@ -12,7 +12,7 @@ import (
 // SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
 // sigRefCompressedKey bool determines whether the signature will reference a compressed or uncompresed key
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
-func SignMessage(privateKey string, message string, sigRefCompressedKey bool) (string, error) {
+func SignMessage(privateKey, message string, sigRefCompressedKey bool) (string, error) {
 	if len(privateKey) == 0 {
 		return "", ErrPrivateKeyMissing
 	}

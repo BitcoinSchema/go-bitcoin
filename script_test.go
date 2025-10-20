@@ -9,7 +9,7 @@ import (
 func TestScriptFromAddress(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputAddress   string
 		expectedScript string
 		expectedError  bool

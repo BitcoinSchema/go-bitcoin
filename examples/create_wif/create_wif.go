@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	// Create a wif
 	wifString, err := bitcoin.CreateWifString()
 	if err != nil {

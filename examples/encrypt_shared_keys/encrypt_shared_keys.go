@@ -9,7 +9,6 @@ import (
 )
 
 func main() {
-
 	// This data will be encrypted / shared
 	testString := "testing 1, 2, 3..."
 

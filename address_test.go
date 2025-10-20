@@ -10,10 +10,9 @@ import (
 
 // TestValidA58 will test the method ValidA58()
 func TestValidA58(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input         string
 		expectedValid bool
 		expectedError bool
@@ -69,7 +68,7 @@ func BenchmarkValidA58(b *testing.B) {
 func TestGetAddressFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input           string
 		expectedAddress string
 		compressed      bool
@@ -96,7 +95,6 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 
 // TestGetAddressFromPrivateKeyCompression will test the method GetAddressFromPrivateKey()
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
-
 	privateKey, err := bec.NewPrivateKey(bec.S256())
 	assert.NoError(t, err)
 
@@ -147,7 +145,7 @@ func testGetPublicKeyFromPrivateKey(privateKey string) *bec.PublicKey {
 func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input           *bec.PublicKey
 		expectedAddress string
 		expectedNil     bool
@@ -199,7 +197,7 @@ func BenchmarkGetAddressFromPubKey(b *testing.B) {
 func TestGetAddressFromScript(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputScript     string
 		expectedAddress string
 		expectedError   bool
@@ -250,7 +248,7 @@ func BenchmarkGetAddressFromScript(b *testing.B) {
 func TestGetAddressFromPubKeyString(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input           string
 		expectedAddress string
 		expectedNil     bool

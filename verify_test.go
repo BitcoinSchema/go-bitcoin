@@ -15,10 +15,9 @@ const (
 
 // TestVerifyMessage will test the method VerifyMessage()
 func TestVerifyMessage(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		inputAddress   string
 		inputSignature string
 		inputData      string
@@ -120,7 +119,6 @@ func TestVerifyMessage(t *testing.T) {
 			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error was expected", t.Name(), test.inputAddress, test.inputSignature, test.inputData)
 		}
 	}
-
 }
 
 // ExampleVerifyMessage example using VerifyMessage()
@@ -152,7 +150,6 @@ func BenchmarkVerifyMessage(b *testing.B) {
 
 // TestVerifyMessageDER will test the method VerifyMessageDER()
 func TestVerifyMessageDER(t *testing.T) {
-
 	// Example message (payload from Merchant API)
 	message := []byte(`{"apiVersion":"0.1.0","timestamp":"2020-10-08T14:25:31.539Z","expiryTime":"2020-10-08T14:35:31.539Z","minerId":"` + testDERPubKey + `","currentHighestBlockHash":"0000000000000000021af4ee1f179a64e530bf818ef67acd09cae24a89124519","currentHighestBlockHeight":656007,"minerReputation":null,"fees":[{"id":1,"feeType":"standard","miningFee":{"satoshis":500,"bytes":1000},"relayFee":{"satoshis":250,"bytes":1000}},{"id":2,"feeType":"data","miningFee":{"satoshis":500,"bytes":1000},"relayFee":{"satoshis":250,"bytes":1000}}]}`)
 	invalidMessage := []byte("invalid-message")

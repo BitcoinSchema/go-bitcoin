@@ -8,7 +8,6 @@ import (
 )
 
 func main() {
-
 	// Use a new UTXO
 	utxo := &bitcoin.Utxo{
 		TxID:         "b7b0650a7c3a1bd4716369783876348b59f5404784970192cec1996e86950576",

@@ -13,7 +13,8 @@ import (
 // GenerateSharedKeyPair creates shared keys that can be used to encrypt/decrypt data
 // that can be decrypted by yourself (privateKey) and also the owner of the given public key
 func GenerateSharedKeyPair(privateKey *bec.PrivateKey,
-	pubKey *bec.PublicKey) (*bec.PrivateKey, *bec.PublicKey) {
+	pubKey *bec.PublicKey,
+) (*bec.PrivateKey, *bec.PublicKey) {
 	return bec.PrivKeyFromBytes(
 		bec.S256(),
 		bec.GenerateSharedSecret(privateKey, pubKey),
@@ -76,7 +77,6 @@ func CreateWifString() (string, error) {
 // PrivateAndPublicKeys will return both the private and public key in one method
 // Expects a hex encoded privateKey
 func PrivateAndPublicKeys(privateKey string) (*bec.PrivateKey, *bec.PublicKey, error) {
-
 	// No key?
 	if len(privateKey) == 0 {
 		return nil, nil, ErrPrivateKeyMissing
@@ -95,7 +95,6 @@ func PrivateAndPublicKeys(privateKey string) (*bec.PrivateKey, *bec.PublicKey, e
 
 // PrivateKeyToWif will convert a private key to a WIF (*wif.WIF)
 func PrivateKeyToWif(privateKey string) (*wif.WIF, error) {
-
 	// Missing private key
 	if len(privateKey) == 0 {
 		return nil, ErrPrivateKeyMissing
@@ -126,7 +125,6 @@ func PrivateKeyToWifString(privateKey string) (string, error) {
 
 // WifToPrivateKey will convert a WIF to a private key (*bec.PrivateKey)
 func WifToPrivateKey(wifKey string) (*bec.PrivateKey, error) {
-
 	// Missing wif?
 	if len(wifKey) == 0 {
 		return nil, ErrWifMissing
@@ -144,7 +142,6 @@ func WifToPrivateKey(wifKey string) (*bec.PrivateKey, error) {
 
 // WifToPrivateKeyString will convert a WIF to private key (string)
 func WifToPrivateKeyString(wif string) (string, error) {
-
 	// Convert the wif to private key
 	privateKey, err := WifToPrivateKey(wif)
 	if err != nil {
@@ -157,7 +154,6 @@ func WifToPrivateKeyString(wif string) (string, error) {
 
 // WifFromString will convert a WIF (string) to a WIF (*wif.WIF)
 func WifFromString(wifKey string) (*wif.WIF, error) {
-
 	// Missing wif?
 	if len(wifKey) == 0 {
 		return nil, ErrWifMissing

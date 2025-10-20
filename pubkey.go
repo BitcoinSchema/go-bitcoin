@@ -22,12 +22,10 @@ func PubKeyFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) string {
 		return hex.EncodeToString(privateKey.PubKey().SerialiseCompressed())
 	}
 	return hex.EncodeToString(privateKey.PubKey().SerialiseUncompressed())
-
 }
 
 // PubKeyFromString will convert a pubKey (string) into a pubkey (*bec.PublicKey)
 func PubKeyFromString(pubKey string) (*bec.PublicKey, error) {
-
 	// Invalid pubKey
 	if len(pubKey) == 0 {
 		return nil, ErrMissingPubKey

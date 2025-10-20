@@ -68,7 +68,7 @@ func BenchmarkCreatePrivateKeyString(b *testing.B) {
 func TestPrivateKeyFromString(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input         string
 		expectedKey   string
 		expectedNil   bool
@@ -119,10 +119,9 @@ func BenchmarkPrivateKeyFromString(b *testing.B) {
 
 // TestPrivateAndPublicKeys will test the method PrivateAndPublicKeys()
 func TestPrivateAndPublicKeys(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input              string
 		expectedPrivateKey string
 		expectedNil        bool
@@ -173,10 +172,9 @@ func BenchmarkPrivateAndPublicKeys(b *testing.B) {
 
 // TestPrivateKeyToWif will test the method PrivateKeyToWif()
 func TestPrivateKeyToWif(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input         string
 		expectedWif   string
 		expectedNil   bool
@@ -203,7 +201,6 @@ func TestPrivateKeyToWif(t *testing.T) {
 			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif.String())
 		}
 	}
-
 }
 
 // ExamplePrivateKeyToWif example using PrivateKeyToWif()
@@ -228,10 +225,9 @@ func BenchmarkPrivateKeyToWif(b *testing.B) {
 
 // TestPrivateKeyToWifString will test the method PrivateKeyToWifString()
 func TestPrivateKeyToWifString(t *testing.T) {
-
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input         string
 		expectedWif   string
 		expectedError bool
@@ -253,7 +249,6 @@ func TestPrivateKeyToWifString(t *testing.T) {
 			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif)
 		}
 	}
-
 }
 
 // ExamplePrivateKeyToWifString example using PrivateKeyToWifString()
@@ -280,7 +275,7 @@ func BenchmarkPrivateKeyToWifString(b *testing.B) {
 func TestWifToPrivateKey(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input         string
 		expectedKey   string
 		expectedNil   bool
@@ -332,7 +327,7 @@ func BenchmarkWifToPrivateKey(b *testing.B) {
 func TestWifToPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
-	var tests = []struct {
+	tests := []struct {
 		input         string
 		expectedKey   string
 		expectedError bool
@@ -457,7 +452,6 @@ func TestCreateWifString(t *testing.T) {
 		require.NotNil(t, privateKeyString)
 		// t.Log("Private Key:", privateKeyString)
 		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
-
 	})
 }
 

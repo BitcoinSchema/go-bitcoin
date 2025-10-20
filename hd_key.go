@@ -27,7 +27,6 @@ const (
 
 // GenerateHDKey will create a new master node for use in creating a hierarchical deterministic keychain
 func GenerateHDKey(seedLength uint8) (hdKey *bip32.ExtendedKey, err error) {
-
 	// Missing or invalid seed length
 	if seedLength == 0 {
 		seedLength = RecommendedSeedLength
@@ -51,7 +50,6 @@ func GenerateHDKeyFromString(xPriv string) (hdKey *bip32.ExtendedKey, err error)
 
 // GenerateHDKeyPair will generate a new xPub HD master node (xPrivateKey & xPublicKey)
 func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err error) {
-
 	// Generate an HD master key
 	var masterKey *bip32.ExtendedKey
 	if masterKey, err = GenerateHDKey(seedLength); err != nil {
@@ -70,7 +68,6 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 // GetHDKeyByPath gets the corresponding HD key from a chain/num path
 // Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
 func GetHDKeyByPath(hdKey *bip32.ExtendedKey, chain, num uint32) (*bip32.ExtendedKey, error) {
-
 	// Derive the child key from the chain path
 	childKeyChain, err := GetHDKeyChild(hdKey, chain)
 	if err != nil {
@@ -93,7 +90,6 @@ func GetHDKeyChild(hdKey *bip32.ExtendedKey, num uint32) (*bip32.ExtendedKey, er
 //
 // Expects hdKey to not be nil (otherwise will panic)
 func GetPrivateKeyByPath(hdKey *bip32.ExtendedKey, chain, num uint32) (*bec.PrivateKey, error) {
-
 	// Get the child key from the num & chain
 	childKeyNum, err := GetHDKeyByPath(hdKey, chain, num)
 	if err != nil {
@@ -157,7 +153,6 @@ func GetAddressStringFromHDKey(hdKey *bip32.ExtendedKey, mainnet bool) (string, 
 // Uses the standard m/0/0 (external) and m/0/1 (internal) paths
 // Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
 func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.PublicKey, err error) {
-
 	//  m/0/x
 	var childM0x *bip32.ExtendedKey
 	if childM0x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
@@ -192,7 +187,6 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 // GetAddressesForPath will get the corresponding addresses for the PublicKeys at the given path m/0/x
 // Returns 2 keys, first is internal and second is external
 func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (addresses []string, err error) {
-
 	// Get the public keys for the corresponding chain/num (using default chain)
 	var pubKeys []*bec.PublicKey
 	if pubKeys, err = GetPublicKeysForPath(hdKey, num); err != nil {
@@ -214,7 +208,6 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (ad
 
 // GetExtendedPublicKey will get the extended public key (xPub)
 func GetExtendedPublicKey(hdKey *bip32.ExtendedKey) (string, error) {
-
 	// Neuter the extended public key from hd key
 	pub, err := hdKey.Neuter()
 	if err != nil {
