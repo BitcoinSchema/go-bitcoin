@@ -26,16 +26,16 @@ const (
 )
 
 // GenerateHDKey will create a new master node for use in creating a hierarchical deterministic keychain
-func GenerateHDKey(seedLength uint8) (hdKey *bip32.ExtendedKey, err error) {
+func GenerateHDKey(seedLength uint8) (*bip32.ExtendedKey, error) {
 	// Missing or invalid seed length
 	if seedLength == 0 {
 		seedLength = RecommendedSeedLength
 	}
 
 	// Generate a new seed (added extra security from 256 to 512 bits for seed length)
-	var seed []byte
-	if seed, err = bip32.GenerateSeed(seedLength); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+	seed, err := bip32.GenerateSeed(seedLength)
+	if err != nil {
+		return nil, err
 	}
 
 	// Generate a new master key

@@ -29,9 +29,10 @@ func (a *A25) Version() byte {
 }
 
 // EmbeddedChecksum returns the 4 checksum bytes of an A25 address
-func (a *A25) EmbeddedChecksum() (c [4]byte) {
+func (a *A25) EmbeddedChecksum() [4]byte {
+	var c [4]byte
 	copy(c[:], a[21:])
-	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+	return c
 }
 
 // Tmpl and Set58 are adapted from the C solution.
@@ -64,9 +65,10 @@ func (a *A25) Set58(s []byte) error {
 
 // ComputeChecksum returns a four byte checksum computed from the first 21
 // bytes of the address.  The embedded checksum is not updated.
-func (a *A25) ComputeChecksum() (c [4]byte) {
+func (a *A25) ComputeChecksum() [4]byte {
+	var c [4]byte
 	copy(c[:], a.doubleSHA256())
-	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+	return c
 }
 
 // doubleSHA256 computes a double sha256 hash of the first 21 bytes of the
