@@ -17,6 +17,14 @@ var (
 	ErrInsufficientFunds = errors.New("insufficient funds in UTXOs to cover outputs and fees")
 	// ErrAutoFeeNotApplicable is returned when auto-fee calculation cannot be applied
 	ErrAutoFeeNotApplicable = errors.New("auto-fee could not be applied without removing an output")
+	// ErrEmptyTxHex is returned when an empty hex string is provided
+	ErrEmptyTxHex = errors.New("transaction hex string is empty")
+	// ErrTxHexTooLarge is returned when the hex string exceeds maximum size
+	ErrTxHexTooLarge = errors.New("transaction hex string too large")
+	// ErrTxHexOddLength is returned when the hex string has an odd number of characters
+	ErrTxHexOddLength = errors.New("transaction hex string has odd length")
+	// ErrTxParsePanic is returned when the underlying library panics during transaction parsing
+	ErrTxParsePanic = errors.New("transaction parsing panic")
 )
 
 const (
@@ -56,7 +64,34 @@ func (a *account) Unlocker(context.Context, *bscript.Script) (bt.Unlocker, error
 type OpReturnData [][]byte
 
 // TxFromHex will return a libsv.tx from a raw hex string
-func TxFromHex(rawHex string) (*bt.Tx, error) {
+func TxFromHex(rawHex string) (tx *bt.Tx, err error) {
+	// Validate input is not empty
+	if len(rawHex) == 0 {
+		return nil, ErrEmptyTxHex
+	}
+
+	// Validate input size to prevent out-of-memory errors
+	// Bitcoin transactions are typically a few KB; 1MB hex string (500KB decoded) is a generous upper bound
+	const maxTxHexSize = 2_000_000
+	if len(rawHex) > maxTxHexSize {
+		return nil, fmt.Errorf("%w: %d characters (max %d)", ErrTxHexTooLarge, len(rawHex), maxTxHexSize)
+	}
+
+	// Validate hex contains only valid characters and has even length
+	if len(rawHex)%2 != 0 {
+		return nil, ErrTxHexOddLength
+	}
+
+	// Recover from panics in the underlying library when parsing malformed transactions
+	// This catches "makeslice: len out of range" panics from malformed varint values
+	// Limitation: Fatal OOM errors that call runtime.throw() cannot be recovered and will terminate the process
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("%w: %v", ErrTxParsePanic, r)
+			tx = nil
+		}
+	}()
+
 	return bt.NewTxFromString(rawHex)
 }
 
