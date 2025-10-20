@@ -2,7 +2,6 @@ package bitcoin
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"strings"
@@ -18,22 +17,6 @@ var (
 	ErrInsufficientFunds = errors.New("insufficient funds in UTXOs to cover outputs and fees")
 	// ErrAutoFeeNotApplicable is returned when auto-fee calculation cannot be applied
 	ErrAutoFeeNotApplicable = errors.New("auto-fee could not be applied without removing an output")
-	// ErrEmptyTxHex is returned when an empty hex string is provided
-	ErrEmptyTxHex = errors.New("transaction hex string is empty")
-	// ErrTxHexTooLarge is returned when the hex string exceeds maximum size
-	ErrTxHexTooLarge = errors.New("transaction hex string too large")
-	// ErrTxHexOddLength is returned when the hex string has an odd number of characters
-	ErrTxHexOddLength = errors.New("transaction hex string has odd length")
-	// ErrTxParsePanic is returned when the underlying library panics during transaction parsing
-	ErrTxParsePanic = errors.New("transaction parsing panic")
-	// ErrVarintOffsetOutOfBounds is returned when varint offset is out of bounds
-	ErrVarintOffsetOutOfBounds = errors.New("varint offset out of bounds")
-	// ErrVarintTruncated is returned when varint is truncated
-	ErrVarintTruncated = errors.New("varint truncated")
-	// ErrVarintExceedsMax is returned when varint value exceeds maximum allowed value
-	ErrVarintExceedsMax = errors.New("varint value exceeds maximum")
-	// ErrVarintUnexpectedPrefix is returned when varint has an unexpected prefix
-	ErrVarintUnexpectedPrefix = errors.New("unexpected varint prefix")
 )
 
 const (
@@ -72,156 +55,8 @@ func (a *account) Unlocker(context.Context, *bscript.Script) (bt.Unlocker, error
 // OpReturnData is the op return data to include in the tx
 type OpReturnData [][]byte
 
-// validateTransactionVarints checks that varints in the transaction are within reasonable bounds.
-// This prevents OOM attacks from malformed transactions that claim billions of inputs/outputs or script lengths.
-// We check specific known varint positions (input count, output count) rather than scanning all bytes.
-func validateTransactionVarints(data []byte) error {
-	// Maximum reasonable count for inputs/outputs
-	// Bitcoin transactions realistically have at most thousands of inputs/outputs
-	const maxReasonableCount = 100_000
-
-	// Need at least version (4 bytes) + input count varint (1 byte minimum)
-	if len(data) < 5 {
-		return nil // Too short, will fail in library anyway
-	}
-
-	// Check input count varint at position 4 (after 4-byte version)
-	inputCount, inputCountBytes, err := readAndValidateVarint(data, 4, maxReasonableCount)
-	if err != nil {
-		return fmt.Errorf("invalid input count: %w", err)
-	}
-
-	// If input count is 0, we can also validate the output count
-	// (which would be immediately after the input count varint)
-	if inputCount == 0 {
-		outputCountPos := 4 + inputCountBytes
-		if outputCountPos < len(data) {
-			_, _, err := readAndValidateVarint(data, outputCountPos, maxReasonableCount)
-			if err != nil {
-				return fmt.Errorf("invalid output count: %w", err)
-			}
-		}
-	}
-
-	// Validation coverage: We only validate input and output count varints in simple cases.
-	// The underlying library may still encounter OOM errors with malformed varints in
-	// other positions (script lengths, witness data, etc.). This is a limitation of
-	// the underlying libsv/go-bt library that we cannot fully work around without
-	// reimplementing the entire transaction parser.
-
-	return nil
-}
-
-// readAndValidateVarint reads a Bitcoin varint and validates it's within bounds.
-func readAndValidateVarint(data []byte, offset int, maxValue uint64) (uint64, int, error) {
-	if offset >= len(data) {
-		return 0, 0, ErrVarintOffsetOutOfBounds
-	}
-
-	first := data[offset]
-
-	// Single byte varint (0x00-0xFC)
-	if first < 0xFD {
-		val := uint64(first)
-		if val > maxValue {
-			return 0, 0, fmt.Errorf("%w: %d exceeds maximum %d", ErrVarintExceedsMax, val, maxValue)
-		}
-		return val, 1, nil
-	}
-
-	// Multi-byte varint
-	switch first {
-	case 0xFD: // Next 2 bytes (little-endian uint16)
-		if offset+3 > len(data) {
-			return 0, 0, ErrVarintTruncated
-		}
-		val := uint64(data[offset+1]) | uint64(data[offset+2])<<8
-		if val > maxValue {
-			return 0, 0, fmt.Errorf("%w: %d exceeds maximum %d", ErrVarintExceedsMax, val, maxValue)
-		}
-		return val, 3, nil
-
-	case 0xFE: // Next 4 bytes (little-endian uint32)
-		if offset+5 > len(data) {
-			return 0, 0, ErrVarintTruncated
-		}
-		val := uint64(data[offset+1]) |
-			uint64(data[offset+2])<<8 |
-			uint64(data[offset+3])<<16 |
-			uint64(data[offset+4])<<24
-		if val > maxValue {
-			return 0, 0, fmt.Errorf("%w: %d exceeds maximum %d", ErrVarintExceedsMax, val, maxValue)
-		}
-		return val, 5, nil
-
-	case 0xFF: // Next 8 bytes (little-endian uint64)
-		if offset+9 > len(data) {
-			return 0, 0, ErrVarintTruncated
-		}
-		val := uint64(data[offset+1]) |
-			uint64(data[offset+2])<<8 |
-			uint64(data[offset+3])<<16 |
-			uint64(data[offset+4])<<24 |
-			uint64(data[offset+5])<<32 |
-			uint64(data[offset+6])<<40 |
-			uint64(data[offset+7])<<48 |
-			uint64(data[offset+8])<<56
-		if val > maxValue {
-			return 0, 0, fmt.Errorf("%w: %d exceeds maximum %d", ErrVarintExceedsMax, val, maxValue)
-		}
-		return val, 9, nil
-
-	default:
-		return 0, 0, fmt.Errorf("%w: 0x%02x", ErrVarintUnexpectedPrefix, first)
-	}
-}
-
 // TxFromHex will return a libsv.tx from a raw hex string
-func TxFromHex(rawHex string) (tx *bt.Tx, err error) {
-	// Validate input is not empty
-	if len(rawHex) == 0 {
-		return nil, ErrEmptyTxHex
-	}
-
-	// Validate input size to prevent out-of-memory errors
-	// Bitcoin transactions are typically a few KB; 200KB hex (100KB decoded) is a conservative upper bound
-	// This also prevents malformed varint exploits in the underlying library
-	const maxTxHexSize = 200_000
-	if len(rawHex) > maxTxHexSize {
-		return nil, fmt.Errorf("%w: %d characters (max %d)", ErrTxHexTooLarge, len(rawHex), maxTxHexSize)
-	}
-
-	// Validate hex contains only valid characters and has even length
-	if len(rawHex)%2 != 0 {
-		return nil, ErrTxHexOddLength
-	}
-
-	// Validate hex string can be decoded (early validation before passing to underlying library)
-	// This catches invalid hex characters and prevents certain malformed inputs
-	decoded, err := hex.DecodeString(rawHex)
-	if err != nil {
-		return nil, fmt.Errorf("invalid hex string: %w", err)
-	}
-
-	// Validate varints are within reasonable bounds to prevent OOM attacks
-	// Check for varint prefixes that indicate extremely large values
-	// 0xff prefix indicates an 8-byte varint follows
-	if err = validateTransactionVarints(decoded); err != nil {
-		return nil, err
-	}
-
-	// Recover from panics in the underlying library when parsing malformed transactions
-	// This catches some "makeslice: len out of range" panics from malformed varint values
-	// Limitation: Fatal OOM errors that call runtime.throw() cannot be recovered and may still
-	// occur with certain malformed inputs. The validations above (size limits, hex validation,
-	// input/output count checks) catch most problematic cases.
-	defer func() {
-		if r := recover(); r != nil {
-			err = fmt.Errorf("%w: %v", ErrTxParsePanic, r)
-			tx = nil
-		}
-	}()
-
+func TxFromHex(rawHex string) (*bt.Tx, error) {
 	return bt.NewTxFromString(rawHex)
 }
 
