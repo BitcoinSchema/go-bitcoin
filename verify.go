@@ -88,28 +88,28 @@ func VerifyMessageDER(hash [32]byte, pubKey, signature string) (verified bool, e
 	// Decode the signature string
 	var sigBytes []byte
 	if sigBytes, err = hex.DecodeString(signature); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return false, err
 	}
 
 	// Parse the signature
 	var sig *bec.Signature
 	if sig, err = bec.ParseDERSignature(sigBytes, bec.S256()); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return false, err
 	}
 
 	// Decode the pubKey
 	var pubKeyBytes []byte
 	if pubKeyBytes, err = hex.DecodeString(pubKey); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return false, err
 	}
 
 	// Parse the pubKey
 	var rawPubKey *bec.PublicKey
 	if rawPubKey, err = bec.ParsePubKey(pubKeyBytes, bec.S256()); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return false, err
 	}
 
 	// Verify the signature against the pubKey
 	verified = sig.Verify(hash[:], rawPubKey)
-	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+	return verified, nil
 }

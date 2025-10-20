@@ -53,7 +53,7 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 	// Generate an HD master key
 	var masterKey *bip32.ExtendedKey
 	if masterKey, err = GenerateHDKey(seedLength); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return "", "", err
 	}
 
 	// Set the xPriv (string)
@@ -62,7 +62,7 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 	// Set the xPub (string)
 	xPublicKey, err = GetExtendedPublicKey(masterKey)
 
-	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+	return xPrivateKey, xPublicKey, err
 }
 
 // GetHDKeyByPath gets the corresponding HD key from a chain/num path
@@ -156,14 +156,14 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 	//  m/0/x
 	var childM0x *bip32.ExtendedKey
 	if childM0x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return nil, err
 	}
 
 	// Get the external pubKey from m/0/x
 	var pubKey *bec.PublicKey
 	if pubKey, err = childM0x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return nil, err
 	}
 	pubKeys = append(pubKeys, pubKey)
 
@@ -171,17 +171,17 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 	var childM1x *bip32.ExtendedKey
 	if childM1x, err = GetHDKeyByPath(hdKey, DefaultInternalChain, num); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return nil, err
 	}
 
 	// Get the internal pubKey from m/1/x
 	if pubKey, err = childM1x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return nil, err
 	}
 	pubKeys = append(pubKeys, pubKey)
 
-	return
+	return pubKeys, nil
 }
 
 // GetAddressesForPath will get the corresponding addresses for the PublicKeys at the given path m/0/x
@@ -190,7 +190,7 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (ad
 	// Get the public keys for the corresponding chain/num (using default chain)
 	var pubKeys []*bec.PublicKey
 	if pubKeys, err = GetPublicKeysForPath(hdKey, num); err != nil {
-		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+		return nil, err
 	}
 
 	// Loop, get address and append to results
@@ -198,12 +198,12 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (ad
 	for _, key := range pubKeys {
 		if address, err = GetAddressFromPubKey(key, true, mainnet); err != nil {
 			// Should never error if the pubKeys are valid keys
-			return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+			return nil, err
 		}
 		addresses = append(addresses, address.AddressString)
 	}
 
-	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+	return addresses, nil
 }
 
 // GetExtendedPublicKey will get the extended public key (xPub)
