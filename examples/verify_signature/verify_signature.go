@@ -1,3 +1,4 @@
+// Package main demonstrates how to verify a Bitcoin message signature.
 package main
 
 import (
@@ -28,7 +29,6 @@ func main() {
 	// Verify the signature
 	if err = bitcoin.VerifyMessage(address, signature, message, true); err != nil {
 		log.Fatalf("verify failed: %s", err.Error())
-	} else {
-		log.Println("verification passed")
 	}
+	log.Println("verification passed")
 }

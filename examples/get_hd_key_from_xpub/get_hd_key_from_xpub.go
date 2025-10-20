@@ -1,3 +1,4 @@
+// Package main demonstrates how to get an HD key from an extended public key (xPub).
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package main demonstrates encryption and decryption using shared ECDH keys.
 package main
 
 import (

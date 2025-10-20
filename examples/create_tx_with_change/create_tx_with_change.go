@@ -1,3 +1,4 @@
+// Package main demonstrates how to create a Bitcoin transaction with change output.
 package main
 
 import (

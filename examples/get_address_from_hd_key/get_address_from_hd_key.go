@@ -1,3 +1,4 @@
+// Package main demonstrates getting an address from an HD key.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package main demonstrates how to decrypt data using a private key.
 package main
 
 import (

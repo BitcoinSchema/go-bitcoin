@@ -1,3 +1,4 @@
+// Package main demonstrates how to parse a Bitcoin transaction from a hex string.
 package main
 
 import (

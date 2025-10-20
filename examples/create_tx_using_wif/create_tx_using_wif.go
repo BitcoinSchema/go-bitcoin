@@ -1,3 +1,4 @@
+// Package main demonstrates creating a transaction using a WIF key.
 package main
 
 import (

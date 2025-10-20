@@ -1,3 +1,4 @@
+// Package main demonstrates how to derive a private key from an HD key using a derivation path.
 package main
 
 import (
@@ -23,5 +24,5 @@ func main() {
 	}
 
 	// Success!
-	log.Printf("private key: %s for chain/path: %d/%d", hex.EncodeToString(privateKey.Serialise()), 10, 2)
+	log.Printf("private key: %s for chain/path: %d/%d", hex.EncodeToString(privateKey.Serialise()), 10, 2) //nolint:misspell // external library method name
 }

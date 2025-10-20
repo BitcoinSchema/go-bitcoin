@@ -1,3 +1,4 @@
+// Package main demonstrates how to create a public key from a private key.
 package main
 
 import (

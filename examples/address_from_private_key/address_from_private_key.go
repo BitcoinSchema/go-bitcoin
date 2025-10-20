@@ -1,3 +1,4 @@
+// Package main demonstrates how to derive a Bitcoin address from a private key.
 package main
 
 import (

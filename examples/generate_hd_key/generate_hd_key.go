@@ -1,3 +1,4 @@
+// Package main demonstrates how to generate an HD key pair.
 package main
 
 import (

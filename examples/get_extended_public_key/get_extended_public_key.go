@@ -1,3 +1,4 @@
+// Package main demonstrates how to get an extended public key from an HD key.
 package main
 
 import (

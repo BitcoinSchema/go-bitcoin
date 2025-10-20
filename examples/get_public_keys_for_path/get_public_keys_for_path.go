@@ -1,3 +1,4 @@
+// Package main demonstrates getting public keys for a derivation path.
 package main
 
 import (
@@ -17,8 +18,8 @@ func main() {
 
 	// Get keys by path (example showing 5 sets of keys)
 	var pubKeys []*bec.PublicKey
-	for i := 1; i <= 5; i++ {
-		if pubKeys, err = bitcoin.GetPublicKeysForPath(hdKey, uint32(i)); err != nil {
+	for i := uint32(1); i <= 5; i++ {
+		if pubKeys, err = bitcoin.GetPublicKeysForPath(hdKey, i); err != nil {
 			log.Fatalf("error occurred: %s", err.Error())
 		}
 		for index, key := range pubKeys {

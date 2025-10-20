@@ -1,3 +1,4 @@
+// Package main demonstrates how to encrypt data using a private key.
 package main
 
 import (
@@ -13,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
-	log.Println("private key (used for encryption): ", hex.EncodeToString(privateKey.Serialise()))
+	log.Println("private key (used for encryption): ", hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // external library method name
 
 	// Encrypt
 	var data string

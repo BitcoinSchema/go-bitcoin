@@ -1,3 +1,4 @@
+// Package main demonstrates how to verify a DER-encoded signature.
 package main
 
 import (

@@ -1,3 +1,4 @@
+// Package main demonstrates how to convert a WIF (Wallet Import Format) string to a private key.
 package main
 
 import (

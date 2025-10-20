@@ -1,3 +1,4 @@
+// Package main demonstrates how to create a script from a Bitcoin address.
 package main
 
 import (

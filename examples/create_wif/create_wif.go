@@ -1,3 +1,4 @@
+// Package main demonstrates how to create a WIF (Wallet Import Format) string.
 package main
 
 import (

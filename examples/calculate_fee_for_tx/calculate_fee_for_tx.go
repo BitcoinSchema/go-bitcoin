@@ -1,3 +1,4 @@
+// Package main demonstrates how to calculate the fee for a Bitcoin transaction.
 package main
 
 import (

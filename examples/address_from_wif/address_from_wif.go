@@ -1,3 +1,4 @@
+// Package main demonstrates how to get an address from a WIF (Wallet Import Format) string.
 package main
 
 import (

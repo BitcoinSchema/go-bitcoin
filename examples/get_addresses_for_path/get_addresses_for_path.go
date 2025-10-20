@@ -1,3 +1,4 @@
+// Package main demonstrates how to get addresses for a derivation path from an HD key.
 package main
 
 import (
