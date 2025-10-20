@@ -18,7 +18,7 @@ func main() {
 
 	// Get an address
 	var rawAddress *bscript.Address
-	if rawAddress, err = bitcoin.GetAddressFromHDKey(hdKey); err != nil {
+	if rawAddress, err = bitcoin.GetAddressFromHDKey(hdKey, true); err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 

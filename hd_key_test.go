@@ -698,14 +698,16 @@ func TestGetAddressFromHDKey(t *testing.T) {
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
+		mainnet         bool
 	}{
-		{new(bip32.ExtendedKey), "", true, true},
-		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false, false},
+		{new(bip32.ExtendedKey), "", true, true, true},
+		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false, false, true},
+		{validHdKey, "miUF9QiYis1HTwRG1E1Vm3vDxtGczs2oph", false, false, false},
 	}
 
 	var address *bscript.Address
 	for _, test := range tests {
-		if address, err = GetAddressFromHDKey(test.input); err != nil && !test.expectedError {
+		if address, err = GetAddressFromHDKey(test.input, test.mainnet); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
@@ -724,7 +726,7 @@ func TestGetAddressFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
 	assert.Panics(t, func() {
-		_, err := GetAddressFromHDKey(nil)
+		_, err := GetAddressFromHDKey(nil, true)
 		assert.Error(t, err)
 	})
 }
@@ -739,7 +741,7 @@ func ExampleGetAddressFromHDKey() {
 	}
 
 	var address *bscript.Address
-	if address, err = GetAddressFromHDKey(hdKey); err != nil {
+	if address, err = GetAddressFromHDKey(hdKey, true); err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
@@ -752,7 +754,7 @@ func ExampleGetAddressFromHDKey() {
 func BenchmarkGetAddressFromHDKey(b *testing.B) {
 	hdKey, _ := GenerateHDKey(SecureSeedLength)
 	for i := 0; i < b.N; i++ {
-		_, _ = GetAddressFromHDKey(hdKey)
+		_, _ = GetAddressFromHDKey(hdKey, true)
 	}
 }
 
@@ -768,14 +770,16 @@ func TestGetAddressStringFromHDKey(t *testing.T) {
 		input           *bip32.ExtendedKey
 		expectedAddress string
 		expectedError   bool
+		mainnet         bool
 	}{
-		{new(bip32.ExtendedKey), "", true},
-		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false},
+		{new(bip32.ExtendedKey), "", true, true},
+		{validHdKey, "13xHrMdZuqa2gpweHf37w8hu6tfv3JrnaW", false, true},
+		{validHdKey, "miUF9QiYis1HTwRG1E1Vm3vDxtGczs2oph", false, false},
 	}
 
 	var address string
 	for _, test := range tests {
-		if address, err = GetAddressStringFromHDKey(test.input); err != nil && !test.expectedError {
+		if address, err = GetAddressStringFromHDKey(test.input, test.mainnet); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
@@ -790,7 +794,7 @@ func TestGetAddressStringFromHDKeyPanic(t *testing.T) {
 	t.Parallel()
 
 	assert.Panics(t, func() {
-		_, err := GetAddressStringFromHDKey(nil)
+		_, err := GetAddressStringFromHDKey(nil, true)
 		assert.Error(t, err)
 	})
 }
@@ -805,7 +809,7 @@ func ExampleGetAddressStringFromHDKey() {
 	}
 
 	var address string
-	if address, err = GetAddressStringFromHDKey(hdKey); err != nil {
+	if address, err = GetAddressStringFromHDKey(hdKey, true); err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
@@ -818,7 +822,7 @@ func ExampleGetAddressStringFromHDKey() {
 func BenchmarkGetAddressStringFromHDKey(b *testing.B) {
 	hdKey, _ := GenerateHDKey(SecureSeedLength)
 	for i := 0; i < b.N; i++ {
-		_, _ = GetAddressStringFromHDKey(hdKey)
+		_, _ = GetAddressStringFromHDKey(hdKey, true)
 	}
 }
 
@@ -916,15 +920,18 @@ func TestGetAddressesForPath(t *testing.T) {
 		expectedAddress2 string
 		expectedNil      bool
 		expectedError    bool
+		mainnet          bool
 	}{
-		{new(bip32.ExtendedKey), 1, "", "", true, true},
-		{validHdKey, 1, "1KMxfSfRCkC1jrBAuYaLde4XBzdsWApbdH", "174DL9ZbBWx568ssAg8w2YwW6FTTBwXGEu", false, false},
-		{validHdKey, 2, "18s3peTU7fMSwgui54avpnqm1126pRVccw", "1KgZZ3NsJDw3v1GPHBj8ASnxutA1kFxo2i", false, false},
+		{new(bip32.ExtendedKey), 1, "", "", true, true, true},
+		{validHdKey, 1, "1KMxfSfRCkC1jrBAuYaLde4XBzdsWApbdH", "174DL9ZbBWx568ssAg8w2YwW6FTTBwXGEu", false, false, true},
+		{validHdKey, 2, "18s3peTU7fMSwgui54avpnqm1126pRVccw", "1KgZZ3NsJDw3v1GPHBj8ASnxutA1kFxo2i", false, false, true},
+		{validHdKey, 1, "mysuxVkQ1mdGWxend7YiTZGr3zEaTcMjrz", "mmaAdCeZzYPKsFMUtF7JrU9pxF4AAgMHK5", false, false, false},
+		{new(bip32.ExtendedKey), 1, "", "", true, true, false},
 	}
 
 	var addresses []string
 	for _, test := range tests {
-		if addresses, err = GetAddressesForPath(test.input, test.inputNum); err != nil && !test.expectedError {
+		if addresses, err = GetAddressesForPath(test.input, test.inputNum, test.mainnet); err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.input, test.inputNum, err.Error())
 		} else if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.input, test.inputNum)
@@ -945,7 +952,7 @@ func TestGetAddressesForPathPanic(t *testing.T) {
 	t.Parallel()
 
 	assert.Panics(t, func() {
-		_, err := GetAddressesForPath(nil, 1)
+		_, err := GetAddressesForPath(nil, 1, true)
 		assert.Error(t, err)
 	})
 }
@@ -959,7 +966,7 @@ func ExampleGetAddressesForPath() {
 	}
 
 	var addresses []string
-	addresses, err = GetAddressesForPath(hdKey, 5)
+	addresses, err = GetAddressesForPath(hdKey, 5, true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -972,7 +979,7 @@ func ExampleGetAddressesForPath() {
 func BenchmarkGetAddressesForPath(b *testing.B) {
 	hdKey, _ := GenerateHDKey(SecureSeedLength)
 	for i := 0; i < b.N; i++ {
-		_, _ = GetAddressesForPath(hdKey, 5)
+		_, _ = GetAddressesForPath(hdKey, 5, true)
 	}
 }
 

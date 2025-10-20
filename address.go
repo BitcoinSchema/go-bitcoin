@@ -88,8 +88,8 @@ func ValidA58(a58 []byte) (bool, error) {
 }
 
 // GetAddressFromPrivateKey takes a bec private key and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) (string, error) {
-	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed)
+func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool, mainnet bool) (string, error) {
+	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed, mainnet)
 	if err != nil {
 		return "", err
 	}
@@ -97,20 +97,20 @@ func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) (stri
 }
 
 // GetAddressFromPrivateKeyString takes a private key string and returns a Bitcoin address
-func GetAddressFromPrivateKeyString(privateKey string, compressed bool) (string, error) {
+func GetAddressFromPrivateKeyString(privateKey string, compressed bool, mainnet bool) (string, error) {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}
 	var address *bscript.Address
-	if address, err = GetAddressFromPubKey(rawKey.PubKey(), compressed); err != nil {
+	if address, err = GetAddressFromPubKey(rawKey.PubKey(), compressed, mainnet); err != nil {
 		return "", err
 	}
 	return address.AddressString, nil
 }
 
 // GetAddressFromPubKey gets a bscript.Address from a bec.PublicKey
-func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool) (*bscript.Address, error) {
+func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool, mainnet bool) (*bscript.Address, error) {
 	if publicKey == nil {
 		return nil, fmt.Errorf("publicKey cannot be nil")
 	} else if publicKey.X == nil {
@@ -130,16 +130,16 @@ func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed bool) (*bscript.A
 		}, nil
 	}
 
-	return bscript.NewAddressFromPublicKey(publicKey, true)
+	return bscript.NewAddressFromPublicKey(publicKey, mainnet)
 }
 
 // GetAddressFromPubKeyString is a convenience function to use a hex string pubKey
-func GetAddressFromPubKeyString(pubKey string, compressed bool) (*bscript.Address, error) {
+func GetAddressFromPubKeyString(pubKey string, compressed bool, mainnet bool) (*bscript.Address, error) {
 	rawPubKey, err := PubKeyFromString(pubKey)
 	if err != nil {
 		return nil, err
 	}
-	return GetAddressFromPubKey(rawPubKey, compressed)
+	return GetAddressFromPubKey(rawPubKey, compressed, mainnet)
 }
 
 // GetAddressFromScript will take an output script and extract a standard bitcoin address
