@@ -311,4 +311,4 @@ or by making a [**bitcoin donation**](https://gobitcoinsv.com/#sponsor?utm_sourc
 
 ## 📝 License
 
-[![License](https://img.shields.io/github/license/BitcoinSchema/go-bitcoin.svg?style=flat&v=2)](LICENSE)
+[![License](https://img.shields.io/github/license/BitcoinSchema/go-bitcoin.svg?style=flat)](LICENSE)
