@@ -1,0 +1,11 @@
+# Gitleaks Ignore File
+#
+# This file contains fingerprints of known false positives for gitleaks secret scanning.
+# Each entry represents a finding that has been reviewed and determined to be safe.
+#
+# Format: <commit>:<file>:<rule>:<line>
+# Reference: https://github.com/gitleaks/gitleaks#gitleaksignore
+
+# Example file with hardcoded test private key for signature verification demonstration
+# This is a throwaway key used solely for reproducible examples
+fdc1d8ab860f0841f6bae62008fcc142c28253d3:examples/verify_signature/verify_signature.go:generic-api-key:12
