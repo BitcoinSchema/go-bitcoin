@@ -14,9 +14,9 @@ import (
 // TestCreatePrivateKey will test the method CreatePrivateKey()
 func TestCreatePrivateKey(t *testing.T) {
 	rawKey, err := CreatePrivateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, rawKey)
-	assert.Equal(t, 32, len(rawKey.Serialise()))
+	assert.Len(t, rawKey.Serialise(), 32) //nolint:misspell // external library method name
 }
 
 // ExampleCreatePrivateKey example using CreatePrivateKey()
@@ -25,7 +25,7 @@ func ExampleCreatePrivateKey() {
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
-	} else if len(rawKey.Serialise()) > 0 {
+	} else if len(rawKey.Serialise()) > 0 { //nolint:misspell // external library method name
 		fmt.Printf("key created successfully!")
 	}
 	// Output:key created successfully!
@@ -41,8 +41,8 @@ func BenchmarkCreatePrivateKey(b *testing.B) {
 // TestCreatePrivateKeyString will test the method CreatePrivateKeyString()
 func TestCreatePrivateKeyString(t *testing.T) {
 	key, err := CreatePrivateKeyString()
-	assert.NoError(t, err)
-	assert.Equal(t, 64, len(key))
+	require.NoError(t, err)
+	assert.Len(t, key, 64)
 }
 
 // ExampleCreatePrivateKeyString example using CreatePrivateKeyString()
@@ -84,16 +84,21 @@ func TestPrivateKeyFromString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if rawKey, err := PrivateKeyFromString(test.input); err != nil && !test.expectedError {
+		rawKey, err := PrivateKeyFromString(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if rawKey == nil && !test.expectedNil {
+		}
+		if rawKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if rawKey != nil && test.expectedNil {
+		}
+		if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && hex.EncodeToString(rawKey.Serialise()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialise()))
+		}
+		if rawKey != nil && hex.EncodeToString(rawKey.Serialise()) != test.expectedKey { //nolint:misspell // external library method name
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialise())) //nolint:misspell // external library method name
 		}
 	}
 }
@@ -105,7 +110,7 @@ func ExamplePrivateKeyFromString() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("key converted: %s", hex.EncodeToString(key.Serialise()))
+	fmt.Printf("key converted: %s", hex.EncodeToString(key.Serialise())) //nolint:misspell // external library method name
 	// Output:key converted: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
 }
 
@@ -136,16 +141,21 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if privateKey, publicKey, err := PrivateAndPublicKeys(test.input); err != nil && !test.expectedError {
+		privateKey, publicKey, err := PrivateAndPublicKeys(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if (privateKey == nil || publicKey == nil) && !test.expectedNil {
+		}
+		if (privateKey == nil || publicKey == nil) && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if (privateKey != nil || publicKey != nil) && test.expectedNil {
+		}
+		if (privateKey != nil || publicKey != nil) && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedPrivateKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialise()))
+		}
+		if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedPrivateKey { //nolint:misspell // external library method name
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // external library method name
 		}
 	}
 }
@@ -157,7 +167,7 @@ func ExamplePrivateAndPublicKeys() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key: %s public key: %s", hex.EncodeToString(privateKey.Serialise()), hex.EncodeToString(publicKey.SerialiseCompressed()))
+	fmt.Printf("private key: %s public key: %s", hex.EncodeToString(privateKey.Serialise()), hex.EncodeToString(publicKey.SerialiseCompressed())) //nolint:misspell // Serialise is the actual method name
 
 	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd public key: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
 }
@@ -189,15 +199,20 @@ func TestPrivateKeyToWif(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if privateWif, err := PrivateKeyToWif(test.input); err != nil && !test.expectedError {
+		privateWif, err := PrivateKeyToWif(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if privateWif == nil && !test.expectedNil {
+		}
+		if privateWif == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if privateWif != nil && test.expectedNil {
+		}
+		if privateWif != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if privateWif != nil && privateWif.String() != test.expectedWif {
+		}
+		if privateWif != nil && privateWif.String() != test.expectedWif {
 			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif.String())
 		}
 	}
@@ -290,16 +305,21 @@ func TestWifToPrivateKey(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if privateKey, err := WifToPrivateKey(test.input); err != nil && !test.expectedError {
+		privateKey, err := WifToPrivateKey(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if privateKey == nil && !test.expectedNil {
+		}
+		if privateKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if privateKey != nil && test.expectedNil {
+		}
+		if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise()))
+		}
+		if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey { //nolint:misspell // Serialise is the actual method name
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // Serialise is the actual method name
 		}
 	}
 }
@@ -311,7 +331,7 @@ func ExampleWifToPrivateKey() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise()))
+	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // Serialise is the actual method name
 
 	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
 }
@@ -380,7 +400,7 @@ func TestCreateWif(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, wifKey)
 		// t.Log("WIF:", wifKey.String())
-		require.Equalf(t, 51, len(wifKey.String()), "WIF should be 51 characters long, got: %d", len(wifKey.String()))
+		require.Lenf(t, wifKey.String(), 51, "WIF should be 51 characters long, got: %d", len(wifKey.String()))
 	})
 
 	t.Run("TestWifToPrivateKey", func(t *testing.T) {
@@ -391,16 +411,16 @@ func TestCreateWif(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, wifKey)
 		// t.Log("WIF:", wifKey.String())
-		require.Equalf(t, 51, len(wifKey.String()), "WIF should be 51 characters long, got: %d", len(wifKey.String()))
+		require.Lenf(t, wifKey.String(), 51, "WIF should be 51 characters long, got: %d", len(wifKey.String()))
 
 		// Convert WIF to Private Key
 		var privateKey *bec.PrivateKey
 		privateKey, err = WifToPrivateKey(wifKey.String())
 		require.NoError(t, err)
 		require.NotNil(t, privateKey)
-		privateKeyString := hex.EncodeToString(privateKey.Serialise())
+		privateKeyString := hex.EncodeToString(privateKey.Serialise()) //nolint:misspell // external library method name
 		// t.Log("Private Key:", privateKeyString)
-		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
+		require.Lenf(t, privateKeyString, 64, "Private Key should be 64 characters long, got: %d", len(privateKeyString))
 	})
 }
 
@@ -432,7 +452,7 @@ func TestCreateWifString(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, wifKey)
 		// t.Log("WIF:", wifKey)
-		require.Equalf(t, 51, len(wifKey), "WIF should be 51 characters long, got: %d", len(wifKey))
+		require.Lenf(t, wifKey, 51, "WIF should be 51 characters long, got: %d", len(wifKey))
 	})
 
 	t.Run("TestWifToPrivateKeyString", func(t *testing.T) {
@@ -443,7 +463,7 @@ func TestCreateWifString(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, wifKey)
 		// t.Log("WIF:", wifKey)
-		require.Equalf(t, 51, len(wifKey), "WIF should be 51 characters long, got: %d", len(wifKey))
+		require.Lenf(t, wifKey, 51, "WIF should be 51 characters long, got: %d", len(wifKey))
 
 		// Convert WIF to Private Key
 		var privateKeyString string
@@ -451,7 +471,7 @@ func TestCreateWifString(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, privateKeyString)
 		// t.Log("Private Key:", privateKeyString)
-		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
+		require.Lenf(t, privateKeyString, 64, "Private Key should be 64 characters long, got: %d", len(privateKeyString))
 	})
 }
 
@@ -490,7 +510,7 @@ func TestWifFromString(t *testing.T) {
 		require.NotNil(t, wifKey)
 		wifKeyString := wifKey.String()
 		t.Log("WIF:", wifKeyString)
-		require.Equalf(t, 51, len(wifKeyString), "WIF should be 51 characters long, got: %d", len(wifKeyString))
+		require.Lenf(t, wifKeyString, 51, "WIF should be 51 characters long, got: %d", len(wifKeyString))
 
 		// Convert WIF to Private Key
 		var privateKeyString string
@@ -498,7 +518,7 @@ func TestWifFromString(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, privateKeyString)
 		t.Log("Private Key:", privateKeyString)
-		require.Equalf(t, 64, len(privateKeyString), "Private Key should be 64 characters long, got: %d", len(privateKeyString))
+		require.Lenf(t, privateKeyString, 64, "Private Key should be 64 characters long, got: %d", len(privateKeyString))
 
 		// Compare Private Keys
 		require.Equalf(t, privateKey, privateKeyString, "Private Key should be equal, got: %s", privateKeyString)

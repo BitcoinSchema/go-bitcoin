@@ -6,6 +6,7 @@ import (
 
 	"github.com/libsv/go-bt/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestTxFromHex will test the method TxFromHex()
@@ -26,15 +27,20 @@ func TestTxFromHex(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if rawTx, err := TxFromHex(test.inputHex); err != nil && !test.expectedError {
+		rawTx, err := TxFromHex(test.inputHex)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputHex, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputHex)
-		} else if rawTx == nil && !test.expectedNil {
+		}
+		if rawTx == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.inputHex)
-		} else if rawTx != nil && test.expectedNil {
+		}
+		if rawTx != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHex)
-		} else if rawTx != nil && rawTx.TxID() != test.expectedTxID {
+		}
+		if rawTx != nil && rawTx.TxID() != test.expectedTxID {
 			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of txIDs, got: %s", t.Name(), test.inputHex, test.expectedTxID, rawTx.TxID())
 		}
 	}
@@ -79,7 +85,7 @@ func TestCreateTx(t *testing.T) {
 		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 		privateKey, err := WifToPrivateKey("L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, privateKey)
 
 		var tx *bt.Tx
@@ -89,7 +95,7 @@ func TestCreateTx(t *testing.T) {
 			[]OpReturnData{opReturn1, opReturn2},
 			privateKey,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, tx)
 		assert.Equal(t,
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100eea3d606bd1627be6459a9de4860919225db74843d2fc7f4e7caa5e01f42c2d0022017978d9c6a0e934955a70e7dda71d68cb614f7dd89eb7b9d560aea761834ddd4412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000",
@@ -104,7 +110,7 @@ func TestCreateTx(t *testing.T) {
 			nil,
 			nil,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, tx)
 		assert.Equal(t, "01000000000000000000", tx.String())
 	})
@@ -310,15 +316,20 @@ func TestCreateTxErrors(t *testing.T) {
 			t.Fatalf("error occurred: %s", err.Error())
 		}
 
-		if rawTx, err = CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey); err != nil && !test.expectedError {
+		rawTx, err = CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		} else if rawTx == nil && !test.expectedNil {
+		}
+		if rawTx == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		} else if rawTx != nil && test.expectedNil {
+		}
+		if rawTx != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		} else if rawTx != nil && rawTx.String() != test.expectedRawTx {
+		}
+		if rawTx != nil && rawTx.String() != test.expectedRawTx {
 			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.String())
 		}
 	}
@@ -350,7 +361,7 @@ func TestCreateTxUsingWif(t *testing.T) {
 			[]OpReturnData{opReturn1, opReturn2},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, tx)
 	})
 
@@ -376,7 +387,7 @@ func TestCreateTxUsingWif(t *testing.T) {
 			[]OpReturnData{opReturn1, opReturn2},
 			"",
 		)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, tx)
 	})
 }
@@ -465,7 +476,7 @@ func TestCalculateFeeForTx(t *testing.T) {
 			[]OpReturnData{opReturn1, opReturn2},
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Calculate fee
 		assert.Equal(t, uint64(132), CalculateFeeForTx(rawTx, nil, nil))
@@ -628,7 +639,7 @@ func TestCalculateFeeForTxVariousTxs(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
 			tx, err := TxFromHex(test.inputHex)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			assert.NotNil(t, tx)
 
 			satoshis = CalculateFeeForTx(tx, test.inputStandardRate, test.inputDataRate)
@@ -661,8 +672,7 @@ func BenchmarkCalculateFeeForTx(b *testing.B) {
 	rawTx := "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100e07b7661af4e4b521c012a146b25da2c7b9d606e9ceaae28fa73eb347ef6da6f0220527f0638a89ff11cbe53d5f8c4c2962484a370dcd9463a6330f45d31247c2512412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0364030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000000000001c006a0770726566697832116d6f7265206578616d706c65206461746100000000"
 	tx, err := TxFromHex(rawTx)
 	if err != nil {
-		fmt.Printf("error occurred: %s", err.Error())
-		return
+		b.Fatalf("error occurred: %s", err.Error())
 	}
 
 	for i := 0; i < b.N; i++ {
@@ -691,7 +701,7 @@ func TestCreateTxWithChange(t *testing.T) {
 		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 		privateKey, err := WifToPrivateKey("L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, privateKey)
 
 		var rawTx *bt.Tx
@@ -704,7 +714,7 @@ func TestCreateTxWithChange(t *testing.T) {
 			nil,
 			privateKey,
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Test the right fee
 		assert.Equal(t, uint64(149), CalculateFeeForTx(rawTx, nil, nil))
@@ -805,14 +815,14 @@ func TestCreateTxWithChange(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				privateKey, err := WifToPrivateKey(test.inputWif)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, privateKey)
 
 				rawTx, err = CreateTxWithChange(
 					test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputChangeAddress,
 					test.inputStandardRate, test.inputDataRate, privateKey,
 				)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, rawTx)
 				assert.Equal(t, test.expectedRawTx, rawTx.String())
 			})
@@ -946,14 +956,14 @@ func TestCreateTxWithChange(t *testing.T) {
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
 				privateKey, err := WifToPrivateKey(test.inputWif)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, privateKey)
 
 				rawTx, err = CreateTxWithChange(
 					test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputChangeAddress,
 					test.inputStandardRate, test.inputDataRate, privateKey,
 				)
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Nil(t, rawTx)
 			})
 		}
@@ -1036,6 +1046,8 @@ func BenchmarkCreateTxWithChange(b *testing.B) {
 }
 
 // TestCreateTxWithChangeUsingWif tests for nil case in CreateTxWithChangeUsingWif()
+//
+//nolint:gocognit // test function with many independent subtests
 func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	t.Parallel()
 
@@ -1064,7 +1076,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1104,7 +1116,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"5JXAjNX7cbiWvmkdnj1EnTKPChauttKAJibXLm8tqWtDhXrRbKz",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1135,7 +1147,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1182,7 +1194,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1220,7 +1232,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1258,7 +1270,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1294,7 +1306,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, rawTx)
 	})
 
@@ -1323,7 +1335,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		assert.Equal(t, uint64(132), CalculateFeeForTx(rawTx, nil, nil))
@@ -1356,7 +1368,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 
 		// Test the right fee
@@ -1471,7 +1483,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, rawTx)
 	})
 
@@ -1502,7 +1514,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, rawTx)
 		assert.Equal(t, "0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100f1ab55c2f9fe4afb436ce18d097176eaca8a3d37a38966f606903fa1711f2bbe02202cedc7d854318c15e91fbdd779d427ef78e643e2dd9efa81ba5e245fad385ae9412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0201000000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac0000000000000000fd0107006a4dfc0630343363653730653536663866333763653565303066393932313134353934663234623435613439383234333231663963396665333039636333626334313132643534366538386364663935363934323738616161623932313737623065383161326434626334613166386531386432633238646165333662316635613332626538366631633737313931656635333464363661396533373634373265613132643932653762346530663432383734333130643438313839616439643163383462623966336437613834343032353635373434643537323166363736383662616135356133633262613238363565666661306339313165313536356661383964316466646661313766663432313830343335626431366235353037363734336432336461666335616639666565323061336364646562323862306464383666303538623863343966613032343961353032353333333165653731633434353532393232323265633366333334353062393563306465343265363862616565633762353039303836326334316131396539303363326363313964663833636133353034623131663365373134326230363365643439383232366130363434643630353234373936666662643136636664353061376365336463383161616634313739303335633436643062653030643230306231653930656134366239383630343566323437383461393932626233323364376662643964363934353636626135363630323966363561376564616236356164373162626666633439353330323139613562616139343562613539643365633133613038646162383836363336393466373333626639366536636130376335656663356536353362633062313232373738313262613664346631633831383338343134396237383962313535383339313661323137633162366264393731663632386337306536363036383065646338353330323936623633373366386462316433626632666436316339303937373535343566636331643132376433653034376436373430303735333938666637393161346562613334333031656661393238623661336163653836616633396563346138613762383834303463373634613830333864663831323330626536653032636562383830383136356230613036653530396665393462386136343461313462356537656536333966373335633031323562626336346135323430356466666232336637366534323131656132666238366539656164623564313330656533363339393863376531383537303937636462653866396337623031343339373034303238393266666533333364653664613833313930663665366161626332316261616366623039323465333639306462336438616332383232333264356265376335316632353430396365616466366135663166323731383434616266316665353935326166303661373039656632653361373232613534616363643032393162393236653263323964373939376332653535393839666133643661633261373263343762663230623064376430643537663063653335386564366464366465643634306430343831303862393264366261633736313733346139386466396165363639663064653130666364336634333162613064373838306537373364343863346564613935356236366137613766366666643065376431353161343535393964653131373338383537353465386161326337316161393435316134636465323935366635393864306462383031336162633364343162356163633161393963366665393032313861353635643535633831636136353561633165313936393739663662336165643761366236343335343563656664636664353766303361323464336565396538396132616363326564393233346236323862616566303366376335306439643265346464633230376133333737613931316664346231373034383362643831623632393538373031666466656231646263346234303564313434333762363065323530323533353034353235333162393064663935613231653963626463353039333933363339326238306436386662666530303636373036383537613963666536656561363934346332613534386234613062623335363066633866663033323864363836633864656461363836656463653631306562386161646430366662623463386135346438653933353963303530376637643233393062353133393837343139386636643636323531313233656661653636363036613939666164316338363736333035633666333539306265386639323433393432373636373134623539653636653462386163626364306339336539383862383838633832343361663530356535326530313339373239306237646236623737336336353934396266653030386231356535383200000000", rawTx.String())
 	})
@@ -1534,7 +1546,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu",
 		)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, rawTx)
 	})
 
@@ -1563,7 +1575,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			nil,
 			"",
 		)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, rawTx)
 	})
 }

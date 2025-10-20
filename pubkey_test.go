@@ -7,6 +7,7 @@ import (
 
 	"github.com/libsv/go-bk/bec"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestPubKeyFromPrivateKeyString will test the method PubKeyFromPrivateKeyString()
@@ -60,7 +61,7 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
 	priv, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, priv)
 
 	tests := []struct {
@@ -84,7 +85,7 @@ func TestPubKeyFromPrivateKeyPanic(t *testing.T) {
 
 	assert.Panics(t, func() {
 		pubKey := PubKeyFromPrivateKey(nil, true)
-		assert.NotEqual(t, 0, len(pubKey))
+		assert.NotEmpty(t, pubKey)
 	})
 }
 
@@ -126,15 +127,20 @@ func TestPubKeyFromString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if pubKey, err := PubKeyFromString(test.inputKey); err != nil && !test.expectedError {
+		pubKey, err := PubKeyFromString(test.inputKey)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
-		} else if pubKey != nil && test.expectedNil {
+		}
+		if pubKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and nil was expected", t.Name(), test.inputKey)
-		} else if pubKey == nil && !test.expectedNil {
+		}
+		if pubKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and nil was NOT expected", t.Name(), test.inputKey)
-		} else if pubKey != nil && hex.EncodeToString(pubKey.SerialiseCompressed()) != test.expectedPubKey {
+		}
+		if pubKey != nil && hex.EncodeToString(pubKey.SerialiseCompressed()) != test.expectedPubKey {
 			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.SerialiseCompressed()))
 		}
 	}

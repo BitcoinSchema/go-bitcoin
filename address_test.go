@@ -6,6 +6,7 @@ import (
 
 	"github.com/libsv/go-bk/bec"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestValidA58 will test the method ValidA58()
@@ -48,12 +49,12 @@ func ExampleValidA58() {
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
-	} else if !valid {
+	}
+	if !valid {
 		fmt.Printf("address is not valid: %s", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi2")
 		return
-	} else {
-		fmt.Printf("address is valid!")
 	}
+	fmt.Printf("address is valid!")
 	// Output:address is valid!
 }
 
@@ -96,21 +97,21 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 // TestGetAddressFromPrivateKeyCompression will test the method GetAddressFromPrivateKey()
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 	privateKey, err := bec.NewPrivateKey(bec.S256())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var addressUncompressed string
 	addressUncompressed, err = GetAddressFromPrivateKey(privateKey, false, true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	var addressCompressed string
 	addressCompressed, err = GetAddressFromPrivateKey(privateKey, true, true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.NotEqual(t, addressCompressed, addressUncompressed)
 
 	addressCompressed, err = GetAddressFromPrivateKey(&bec.PrivateKey{}, true, true)
-	assert.Error(t, err)
-	assert.Equal(t, "", addressCompressed)
+	require.Error(t, err)
+	assert.Empty(t, addressCompressed)
 }
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
@@ -160,15 +161,20 @@ func TestGetAddressFromPubKey(t *testing.T) {
 	// todo: add more error cases of invalid *bec.PublicKey
 
 	for _, test := range tests {
-		if rawKey, err := GetAddressFromPubKey(test.input, true, true); err != nil && !test.expectedError {
+		rawKey, err := GetAddressFromPubKey(test.input, true, true)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		} else if rawKey == nil && !test.expectedNil {
+		}
+		if rawKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		} else if rawKey != nil && test.expectedNil {
+		}
+		if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && rawKey.AddressString != test.expectedAddress {
+		}
+		if rawKey != nil && rawKey.AddressString != test.expectedAddress {
 			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
 		}
 	}
@@ -261,15 +267,20 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if rawKey, err := GetAddressFromPubKeyString(test.input, true, true); err != nil && !test.expectedError {
+		rawKey, err := GetAddressFromPubKeyString(test.input, true, true)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		} else if rawKey == nil && !test.expectedNil {
+		}
+		if rawKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		} else if rawKey != nil && test.expectedNil {
+		}
+		if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if rawKey != nil && rawKey.AddressString != test.expectedAddress {
+		}
+		if rawKey != nil && rawKey.AddressString != test.expectedAddress {
 			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
 		}
 	}

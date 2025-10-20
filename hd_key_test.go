@@ -9,6 +9,7 @@ import (
 	"github.com/libsv/go-bk/bip32"
 	"github.com/libsv/go-bt/v2/bscript"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 // TestGenerateHDKey will test the method GenerateHDKey()
@@ -158,15 +159,20 @@ func TestGetPrivateKeyByPath(t *testing.T) {
 
 	var privateKey *bec.PrivateKey
 	for _, test := range tests {
-		if privateKey, err = GetPrivateKeyByPath(test.inputHDKey, test.inputChain, test.inputNum); err != nil && !test.expectedError {
+		privateKey, err = GetPrivateKeyByPath(test.inputHDKey, test.inputChain, test.inputNum)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and error not expected but got: %s", t.Name(), test.inputHDKey, test.inputChain, test.inputNum, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and error was expected", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if privateKey == nil && !test.expectedNil {
+		}
+		if privateKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and was nil but not expected", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if privateKey != nil && test.expectedNil {
+		}
+		if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if privateKey != nil && len(hex.EncodeToString(privateKey.Serialise())) == 0 {
+		}
+		if privateKey != nil && len(hex.EncodeToString(privateKey.Serialise())) == 0 { //nolint:misspell // external library method name
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and should not be empty", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
 		}
 	}
@@ -197,7 +203,7 @@ func ExampleGetPrivateKeyByPath() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key (%d) found at path %d/%d", len(privateKey.Serialise()), 0, 1)
+	fmt.Printf("private key (%d) found at path %d/%d", len(privateKey.Serialise()), 0, 1) //nolint:misspell // external library method name
 	// Output:private key (32) found at path 0/1
 }
 
@@ -215,7 +221,7 @@ func TestGetHDKeyByPath(t *testing.T) {
 
 	// Generate a valid key
 	validKey, err := GenerateHDKey(RecommendedSeedLength)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validKey)
 
 	// Max depth key
@@ -259,15 +265,20 @@ func TestGetHDKeyByPath(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if hdKey, err := GetHDKeyByPath(test.inputHDKey, test.inputChain, test.inputNum); err != nil && !test.expectedError {
+		hdKey, err := GetHDKeyByPath(test.inputHDKey, test.inputChain, test.inputNum)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and error not expected but got: %s", t.Name(), test.inputHDKey, test.inputChain, test.inputNum, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and error was expected", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if hdKey == nil && !test.expectedNil {
+		}
+		if hdKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and was nil but not expected", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if hdKey != nil && test.expectedNil {
+		}
+		if hdKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
-		} else if hdKey != nil && len(hdKey.String()) == 0 {
+		}
+		if hdKey != nil && len(hdKey.String()) == 0 {
 			t.Fatalf("%s Failed: [%v] [%d] [%d] inputted and should not be empty", t.Name(), test.inputHDKey, test.inputChain, test.inputNum)
 		}
 	}
@@ -316,7 +327,7 @@ func TestGetHDKeyChild(t *testing.T) {
 
 	// Generate a valid key
 	validKey, err := GenerateHDKey(RecommendedSeedLength)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validKey)
 
 	// Max depth key
@@ -366,15 +377,20 @@ func TestGetHDKeyChild(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if hdKey, err := GetHDKeyChild(test.inputHDKey, test.inputNum); err != nil && !test.expectedError {
+		hdKey, err := GetHDKeyChild(test.inputHDKey, test.inputNum)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.inputHDKey, test.inputNum, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.inputHDKey, test.inputNum)
-		} else if hdKey == nil && !test.expectedNil {
+		}
+		if hdKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was nil but not expected", t.Name(), test.inputHDKey, test.inputNum)
-		} else if hdKey != nil && test.expectedNil {
+		}
+		if hdKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHDKey, test.inputNum)
-		} else if hdKey != nil && len(hdKey.String()) == 0 {
+		}
+		if hdKey != nil && len(hdKey.String()) == 0 {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and should not be empty", t.Name(), test.inputHDKey, test.inputNum)
 		}
 	}
@@ -435,15 +451,20 @@ func TestGenerateHDKeyFromString(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if hdKey, err := GenerateHDKeyFromString(test.input); err != nil && !test.expectedError {
+		hdKey, err := GenerateHDKeyFromString(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if hdKey == nil && !test.expectedNil {
+		}
+		if hdKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if hdKey != nil && test.expectedNil {
+		}
+		if hdKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if hdKey != nil && hdKey.String() != test.input {
+		}
+		if hdKey != nil && hdKey.String() != test.input {
 			t.Fatalf("%s Failed: [%s] inputted [%s] expected but got: %s", t.Name(), test.input, test.input, hdKey.String())
 		}
 	}
@@ -474,7 +495,7 @@ func TestGetPrivateKeyFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -488,16 +509,21 @@ func TestGetPrivateKeyFromHDKey(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if privateKey, err := GetPrivateKeyFromHDKey(test.input); err != nil && !test.expectedError {
+		privateKey, err := GetPrivateKeyFromHDKey(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		} else if privateKey == nil && !test.expectedNil {
+		}
+		if privateKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		} else if privateKey != nil && test.expectedNil {
+		}
+		if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise()))
+		}
+		if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey { //nolint:misspell // external library method name
+			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // external library method name
 		}
 	}
 }
@@ -526,7 +552,7 @@ func ExampleGetPrivateKeyFromHDKey() {
 		return
 	}
 
-	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise()))
+	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // external library method name
 	// Output:private key: 0ccf07f2cbe10dbe6f6034b7efbf62fc83cac3d44f49d67aa22ac8893d294e7a
 }
 
@@ -543,7 +569,7 @@ func TestGetPrivateKeyStringFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -608,7 +634,7 @@ func TestGetPublicKeyFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -623,15 +649,20 @@ func TestGetPublicKeyFromHDKey(t *testing.T) {
 
 	var publicKey *bec.PublicKey
 	for _, test := range tests {
-		if publicKey, err = GetPublicKeyFromHDKey(test.input); err != nil && !test.expectedError {
+		publicKey, err = GetPublicKeyFromHDKey(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		} else if publicKey == nil && !test.expectedNil {
+		}
+		if publicKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		} else if publicKey != nil && test.expectedNil {
+		}
+		if publicKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if publicKey != nil && hex.EncodeToString(publicKey.SerialiseCompressed()) != test.expectedKey {
+		}
+		if publicKey != nil && hex.EncodeToString(publicKey.SerialiseCompressed()) != test.expectedKey {
 			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(publicKey.SerialiseCompressed()))
 		}
 	}
@@ -678,7 +709,7 @@ func TestGetAddressFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -695,15 +726,20 @@ func TestGetAddressFromHDKey(t *testing.T) {
 
 	var address *bscript.Address
 	for _, test := range tests {
-		if address, err = GetAddressFromHDKey(test.input, test.mainnet); err != nil && !test.expectedError {
+		address, err = GetAddressFromHDKey(test.input, test.mainnet)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		} else if address == nil && !test.expectedNil {
+		}
+		if address == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		} else if address != nil && test.expectedNil {
+		}
+		if address != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if address != nil && address.AddressString != test.expectedAddress {
+		}
+		if address != nil && address.AddressString != test.expectedAddress {
 			t.Fatalf("%s Failed: [%v] inputted [%s] expected but got: %s", t.Name(), test.input, test.expectedAddress, address.AddressString)
 		}
 	}
@@ -750,7 +786,7 @@ func TestGetAddressStringFromHDKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -817,7 +853,7 @@ func TestGetPublicKeysForPath(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -837,17 +873,23 @@ func TestGetPublicKeysForPath(t *testing.T) {
 
 	var pubKeys []*bec.PublicKey
 	for _, test := range tests {
-		if pubKeys, err = GetPublicKeysForPath(test.input, test.inputNum); err != nil && !test.expectedError {
+		pubKeys, err = GetPublicKeysForPath(test.input, test.inputNum)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.input, test.inputNum, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.input, test.inputNum)
-		} else if pubKeys == nil && !test.expectedNil {
+		}
+		if pubKeys == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was nil but not expected", t.Name(), test.input, test.inputNum)
-		} else if pubKeys != nil && test.expectedNil {
+		}
+		if pubKeys != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.input, test.inputNum)
-		} else if pubKeys != nil && hex.EncodeToString(pubKeys[0].SerialiseCompressed()) != test.expectedPubKey1 {
+		}
+		if pubKeys != nil && hex.EncodeToString(pubKeys[0].SerialiseCompressed()) != test.expectedPubKey1 {
 			t.Fatalf("%s Failed: [%v] [%d] inputted key 1 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedPubKey1, hex.EncodeToString(pubKeys[0].SerialiseCompressed()))
-		} else if pubKeys != nil && hex.EncodeToString(pubKeys[1].SerialiseCompressed()) != test.expectedPubKey2 {
+		}
+		if pubKeys != nil && hex.EncodeToString(pubKeys[1].SerialiseCompressed()) != test.expectedPubKey2 {
 			t.Fatalf("%s Failed: [%v] [%d] inputted key 2 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedPubKey2, hex.EncodeToString(pubKeys[1].SerialiseCompressed()))
 		}
 	}
@@ -895,7 +937,7 @@ func TestGetAddressesForPath(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -916,17 +958,23 @@ func TestGetAddressesForPath(t *testing.T) {
 
 	var addresses []string
 	for _, test := range tests {
-		if addresses, err = GetAddressesForPath(test.input, test.inputNum, test.mainnet); err != nil && !test.expectedError {
+		addresses, err = GetAddressesForPath(test.input, test.inputNum, test.mainnet)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error not expected but got: %s", t.Name(), test.input, test.inputNum, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and error was expected", t.Name(), test.input, test.inputNum)
-		} else if addresses == nil && !test.expectedNil {
+		}
+		if addresses == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was nil but not expected", t.Name(), test.input, test.inputNum)
-		} else if addresses != nil && test.expectedNil {
+		}
+		if addresses != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%v] [%d] inputted and was NOT nil but expected to be nil", t.Name(), test.input, test.inputNum)
-		} else if addresses != nil && addresses[0] != test.expectedAddress1 {
+		}
+		if addresses != nil && addresses[0] != test.expectedAddress1 {
 			t.Fatalf("%s Failed: [%v] [%d] inputted address 1 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedAddress1, addresses[0])
-		} else if addresses != nil && addresses[1] != test.expectedAddress2 {
+		}
+		if addresses != nil && addresses[1] != test.expectedAddress2 {
 			t.Fatalf("%s Failed: [%v] [%d] inputted address 2 [%s] expected but got: %s", t.Name(), test.input, test.inputNum, test.expectedAddress2, addresses[1])
 		}
 	}
@@ -973,7 +1021,7 @@ func TestGetExtendedPublicKey(t *testing.T) {
 	t.Parallel()
 
 	validHdKey, err := GenerateHDKeyFromString("xprv9s21ZrQH143K4FdJCmPQe1CFUvK3PKVrcp3b5xVr5Bs3cP5ab6ytszeHggTmHoqTXpaa8CgYPxZZzigSGCDjtyWdUDJqPogb1JGWAPkBLdF")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, validHdKey)
 
 	tests := []struct {
@@ -1070,15 +1118,20 @@ func TestGetHDKeyFromExtendedPublicKey(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if xPub, err := GetHDKeyFromExtendedPublicKey(test.input); err != nil && !test.expectedError {
+		xPub, err := GetHDKeyFromExtendedPublicKey(test.input)
+		if err != nil && !test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
+		}
+		if err == nil && test.expectedError {
 			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if xPub == nil && !test.expectedNil {
+		}
+		if xPub == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		} else if xPub != nil && test.expectedNil {
+		}
+		if xPub != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		} else if xPub != nil && xPub.String() != test.expectedKey {
+		}
+		if xPub != nil && xPub.String() != test.expectedKey {
 			t.Fatalf("%s Failed: [%s] inputted and [%s] expected but got: %s", t.Name(), test.input, test.expectedKey, xPub)
 		}
 	}

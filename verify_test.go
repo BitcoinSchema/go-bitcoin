@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -157,44 +158,44 @@ func TestVerifyMessageDER(t *testing.T) {
 
 	t.Run("valid signature", func(t *testing.T) {
 		verified, err := VerifyMessageDER(validHash, testDERPubKey, testDERSignature)
-		assert.NoError(t, err)
-		assert.Equal(t, true, verified)
+		require.NoError(t, err)
+		assert.True(t, verified)
 	})
 
 	t.Run("invalid pubkey", func(t *testing.T) {
 		verified, err := VerifyMessageDER(validHash, testDERPubKey+"00", testDERSignature)
-		assert.Error(t, err)
-		assert.Equal(t, false, verified)
+		require.Error(t, err)
+		assert.False(t, verified)
 	})
 
 	t.Run("invalid pubkey 2", func(t *testing.T) {
 		verified, err := VerifyMessageDER(validHash, "0", testDERSignature)
-		assert.Error(t, err)
-		assert.Equal(t, false, verified)
+		require.Error(t, err)
+		assert.False(t, verified)
 	})
 
 	t.Run("invalid signature (prefix)", func(t *testing.T) {
 		verified, err := VerifyMessageDER(validHash, testDERPubKey, "0"+testDERSignature)
-		assert.Error(t, err)
-		assert.Equal(t, false, verified)
+		require.Error(t, err)
+		assert.False(t, verified)
 	})
 
 	t.Run("invalid signature (suffix)", func(t *testing.T) {
 		verified, err := VerifyMessageDER(validHash, testDERPubKey, testDERSignature+"-1")
-		assert.Error(t, err)
-		assert.Equal(t, false, verified)
+		require.Error(t, err)
+		assert.False(t, verified)
 	})
 
 	t.Run("invalid signature (length)", func(t *testing.T) {
 		verified, err := VerifyMessageDER(validHash, testDERPubKey, "1234567")
-		assert.Error(t, err)
-		assert.Equal(t, false, verified)
+		require.Error(t, err)
+		assert.False(t, verified)
 	})
 
 	t.Run("invalid message", func(t *testing.T) {
 		verified, err := VerifyMessageDER(sha256.Sum256(invalidMessage), testDERPubKey, testDERSignature)
-		assert.NoError(t, err)
-		assert.Equal(t, false, verified)
+		require.NoError(t, err)
+		assert.False(t, verified)
 	})
 }
 

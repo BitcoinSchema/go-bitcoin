@@ -7,6 +7,7 @@ import (
 
 	"github.com/libsv/go-bk/bec"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const testEncryptionMessage = "testing 1, 2, 3..."
@@ -17,7 +18,7 @@ func TestEncryptWithPrivateKey(t *testing.T) {
 
 	// Create a valid private key
 	privateKey, err := CreatePrivateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privateKey)
 
 	tests := []struct {
@@ -96,7 +97,7 @@ func TestEncryptWithPrivateKeyString(t *testing.T) {
 
 	// Create a valid private key
 	privateKey, err := CreatePrivateKeyString()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privateKey)
 
 	tests := []struct {
@@ -166,7 +167,7 @@ func TestDecryptWithPrivateKey(t *testing.T) {
 
 	// Create a valid private key
 	privateKey, err := PrivateKeyFromString("bb66a48a9f6dd7b8fb469a6f08a75c25770591dc509c72129b2aaeca77a5269e")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privateKey)
 
 	tests := []struct {
@@ -428,19 +429,19 @@ func TestEncryptShared(t *testing.T) {
 
 	// User 1's private key
 	privKey1, err := CreatePrivateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privKey1)
 
 	// User 2's private key
 	var privKey2 *bec.PrivateKey
 	privKey2, err = CreatePrivateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privKey1)
 
 	// User 1 encrypts using their private key and user 2's pubkey
 	var encryptedData []byte
 	_, _, encryptedData, err = EncryptShared(privKey1, privKey2.PubKey(), []byte(testEncryptionMessage))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Generate the shared key
 	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
@@ -449,7 +450,7 @@ func TestEncryptShared(t *testing.T) {
 	// User 2 can decrypt using the shared private key
 	var decryptedTestData []byte
 	decryptedTestData, err = bec.Decrypt(user2SharedPrivKey, encryptedData)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Test the result
 	assert.Equal(t, testEncryptionMessage, string(decryptedTestData))
@@ -476,19 +477,19 @@ func TestEncryptSharedString(t *testing.T) {
 
 	// User 1's private key
 	privKey1, err := CreatePrivateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privKey1)
 
 	// User 2's private key
 	var privKey2 *bec.PrivateKey
 	privKey2, err = CreatePrivateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, privKey1)
 
 	// User 1 encrypts using their private key and user 2's pubkey
 	var encryptedData string
 	_, _, encryptedData, err = EncryptSharedString(privKey1, privKey2.PubKey(), testEncryptionMessage)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Generate the shared key
 	user2SharedPrivKey, _ := GenerateSharedKeyPair(privKey2, privKey1.PubKey())
@@ -497,10 +498,10 @@ func TestEncryptSharedString(t *testing.T) {
 	// User 2 can decrypt using the shared private key
 	var decryptedTestData, decoded []byte
 	decoded, err = hex.DecodeString(encryptedData)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	decryptedTestData, err = bec.Decrypt(user2SharedPrivKey, decoded)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Test the result
 	assert.Equal(t, testEncryptionMessage, string(decryptedTestData))
