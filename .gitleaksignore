@@ -9,3 +9,7 @@
 # Example file with hardcoded test private key for signature verification demonstration
 # This is a throwaway key used solely for reproducible examples
 fdc1d8ab860f0841f6bae62008fcc142c28253d3:examples/verify_signature/verify_signature.go:generic-api-key:12
+
+# Fuzz test file with hardcoded test private key for encryption testing
+# This is test data used for fuzz testing the encryption functions
+f5f3335544611ad5de2ee35041e0ffb44ce28293:encryption_fuzz_test.go:generic-api-key:11
