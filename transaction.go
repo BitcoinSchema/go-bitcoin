@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -11,10 +12,17 @@ import (
 	"github.com/libsv/go-bt/v2/unlocker"
 )
 
+var (
+	// ErrInsufficientFunds is returned when UTXOs don't cover the output amount plus fees
+	ErrInsufficientFunds = errors.New("insufficient funds in UTXOs to cover outputs and fees")
+	// ErrAutoFeeNotApplicable is returned when auto-fee calculation cannot be applied
+	ErrAutoFeeNotApplicable = errors.New("auto-fee could not be applied without removing an output")
+)
+
 const (
 
 	// DustLimit is the minimum value for a tx that can be spent
-	// Note: this is being deprecated in the new node software (TBD)
+	// This is being deprecated in the new node software (TBD)
 	DustLimit uint64 = 546
 )
 
@@ -86,7 +94,8 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	// Sanity check - already not enough satoshis?
 	if totalPayToSatoshis > totalSatoshis {
 		return nil, fmt.Errorf(
-			"not enough in utxo(s) to cover: %d + (fee), total found: %d",
+			"%w: need %d + (fee), found %d",
+			ErrInsufficientFunds,
 			totalPayToSatoshis,
 			totalSatoshis,
 		)
@@ -109,48 +118,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	}
 
 	// Check that we have enough to cover the fee
-	if (totalPayToSatoshis + fee) > totalSatoshis {
-
-		// Remove temporary change address first
-		if hasChange {
-			payToAddresses = payToAddresses[:len(payToAddresses)-1]
-		}
-
-		// Re-run draft tx with no change address
-		if fee, err = draftTx(
-			utxos, payToAddresses, opReturns, privateKey, standardRate, dataRate,
-		); err != nil {
-			return nil, err
-		}
-
-		// Get the remainder missing (handle negative overflow safer)
-		totalToPay := totalPayToSatoshis + fee
-		if totalToPay >= totalSatoshis {
-			remainder = totalToPay - totalSatoshis
-		} else {
-			remainder = totalSatoshis - totalToPay
-		}
-
-		// Remove remainder from last used payToAddress (or continue until found)
-		feeAdjusted := false
-		for i := len(payToAddresses) - 1; i >= 0; i-- { // Working backwards
-			if payToAddresses[i].Satoshis > remainder {
-				payToAddresses[i].Satoshis = payToAddresses[i].Satoshis - remainder
-				feeAdjusted = true
-				break
-			}
-		}
-
-		// Fee was not adjusted (all inputs do not cover the fee)
-		if !feeAdjusted {
-			return nil, fmt.Errorf(
-				"auto-fee could not be applied without removing an output (payTo %d) "+
-					"(amount %d) (remainder %d) (fee %d) (total %d)",
-				len(payToAddresses), totalPayToSatoshis, remainder, fee, totalSatoshis,
-			)
-		}
-
-	} else {
+	if (totalPayToSatoshis + fee) <= totalSatoshis {
 		// Remove the change address (old version with original satoshis)
 		// Add the change address as the difference (now with adjusted fee)
 		if hasChange {
@@ -161,6 +129,48 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 				Satoshis: totalSatoshis - (totalPayToSatoshis + fee),
 			})
 		}
+		// Create the "Final tx" (or error)
+		return CreateTx(utxos, payToAddresses, opReturns, privateKey)
+	}
+
+	// Not enough to cover the fee - need to adjust
+	// Remove temporary change address first
+	if hasChange {
+		payToAddresses = payToAddresses[:len(payToAddresses)-1]
+	}
+
+	// Re-run draft tx with no change address
+	if fee, err = draftTx(
+		utxos, payToAddresses, opReturns, privateKey, standardRate, dataRate,
+	); err != nil {
+		return nil, err
+	}
+
+	// Get the remainder missing (handle negative overflow safer)
+	totalToPay := totalPayToSatoshis + fee
+	if totalToPay >= totalSatoshis {
+		remainder = totalToPay - totalSatoshis
+	} else {
+		remainder = totalSatoshis - totalToPay
+	}
+
+	// Remove remainder from last used payToAddress (or continue until found)
+	feeAdjusted := false
+	for i := len(payToAddresses) - 1; i >= 0; i-- { // Working backwards
+		if payToAddresses[i].Satoshis > remainder {
+			payToAddresses[i].Satoshis = payToAddresses[i].Satoshis - remainder
+			feeAdjusted = true
+			break
+		}
+	}
+
+	// Fee was not adjusted (all inputs do not cover the fee)
+	if !feeAdjusted {
+		return nil, fmt.Errorf(
+			"%w: (payTo %d) (amount %d) (remainder %d) (fee %d) (total %d)",
+			ErrAutoFeeNotApplicable,
+			len(payToAddresses), totalPayToSatoshis, remainder, fee, totalSatoshis,
+		)
 	}
 
 	// Create the "Final tx" (or error)
@@ -202,8 +212,8 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 
 // CreateTx will create a basic transaction and return the raw transaction (*transaction.Transaction)
 //
-// Note: this will NOT create a change output (funds are sent to "addresses")
-// Note: this will NOT handle fee calculation (it's assumed you have already calculated the fee)
+// This will NOT create a change output (funds are sent to "addresses")
+// This will NOT handle fee calculation (it's assumed you have already calculated the fee)
 //
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
@@ -251,7 +261,7 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 		// They should never be equal, since the fee is the spread between the two amounts
 		totalOutputSatoshis := tx.TotalOutputSatoshis() // Does not work properly
 		if totalOutputSatoshis > totalSatoshis {
-			return nil, fmt.Errorf("not enough in utxo(s) to cover: %d + (fee) found: %d", totalOutputSatoshis, totalSatoshis)
+			return nil, fmt.Errorf("%w: need %d + (fee), found %d", ErrInsufficientFunds, totalOutputSatoshis, totalSatoshis)
 		}
 	}
 
@@ -270,8 +280,8 @@ func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
 
 // CreateTxUsingWif will create a basic transaction and return the raw transaction (*transaction.Transaction)
 //
-// Note: this will NOT create a "change" address (it's assumed you have already specified an address)
-// Note: this will NOT handle "fee" calculation (it's assumed you have already calculated the fee)
+// This will NOT create a "change" address (it's assumed you have already specified an address)
+// This will NOT handle "fee" calculation (it's assumed you have already calculated the fee)
 //
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
@@ -352,6 +362,11 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 		totalFee = 1
 	}
 
+	// Safety check for negative fee (should never happen in practice)
+	if totalFee < 0 {
+		totalFee = 1
+	}
+
 	// Return the total fee as an uint (easier to use with satoshi values)
-	return uint64(totalFee)
+	return uint64(totalFee) //nolint:gosec // totalFee is checked to be non-negative above
 }

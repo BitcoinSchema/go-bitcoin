@@ -51,7 +51,7 @@ func CreatePrivateKeyString() (string, error) {
 		return "", err
 	}
 
-	return hex.EncodeToString(privateKey.Serialise()), nil
+	return hex.EncodeToString(privateKey.Serialise()), nil //nolint:misspell // external library method name
 }
 
 // CreateWif will create a new WIF (*wif.WIF)
@@ -149,7 +149,7 @@ func WifToPrivateKeyString(wif string) (string, error) {
 	}
 
 	// Return the hex (string) version of the private key
-	return hex.EncodeToString(privateKey.Serialise()), nil
+	return hex.EncodeToString(privateKey.Serialise()), nil //nolint:misspell // external library method name
 }
 
 // WifFromString will convert a WIF (string) to a WIF (*wif.WIF)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/hex"
+	"errors"
 	"fmt"
 
 	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
@@ -11,6 +12,9 @@ import (
 	"github.com/libsv/go-bk/bec"
 	"github.com/libsv/go-bt/v2/bscript"
 )
+
+// ErrAddressNotFound is returned when the signature address does not match the expected address
+var ErrAddressNotFound = errors.New("address not found")
 
 const (
 	// hBSV is the magic header string required fore Bitcoin Signed Messages
@@ -65,7 +69,8 @@ func VerifyMessage(address, sig, data string, mainnet bool) error {
 		return nil
 	}
 	return fmt.Errorf(
-		"address (%s) not found - compressed: %t\n%s was found instead",
+		"%w: expected %s (compressed: %t), found %s",
+		ErrAddressNotFound,
 		address,
 		wasCompressed,
 		bscriptAddress.AddressString,
@@ -83,28 +88,28 @@ func VerifyMessageDER(hash [32]byte, pubKey, signature string) (verified bool, e
 	// Decode the signature string
 	var sigBytes []byte
 	if sigBytes, err = hex.DecodeString(signature); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Parse the signature
 	var sig *bec.Signature
 	if sig, err = bec.ParseDERSignature(sigBytes, bec.S256()); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Decode the pubKey
 	var pubKeyBytes []byte
 	if pubKeyBytes, err = hex.DecodeString(pubKey); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Parse the pubKey
 	var rawPubKey *bec.PublicKey
 	if rawPubKey, err = bec.ParsePubKey(pubKeyBytes, bec.S256()); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Verify the signature against the pubKey
 	verified = sig.Verify(hash[:], rawPubKey)
-	return
+	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 }

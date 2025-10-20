@@ -4,28 +4,24 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
+	"errors"
 
 	"github.com/libsv/go-bk/bec"
 	"github.com/libsv/go-bk/crypto"
 	"github.com/libsv/go-bt/v2/bscript"
 )
 
+var (
+	// ErrPublicKeyNil is returned when the public key is nil
+	ErrPublicKeyNil = errors.New("public key cannot be nil")
+	// ErrPublicKeyXNil is returned when the public key X coordinate is nil
+	ErrPublicKeyXNil = errors.New("public key X coordinate cannot be nil")
+	// ErrInvalidOutputScript is returned when the output script is missing an address
+	ErrInvalidOutputScript = errors.New("invalid output script, missing an address")
+)
+
 // A25 is a type for a 25 byte (not base58 encoded) bitcoin address.
 type A25 [25]byte
-
-// DoubleSHA256 computes a double sha256 hash of the first 21 bytes of the
-// address.  This is the one function shared with the other bitcoin RC task.
-// Returned is the full 32 byte sha256 hash.  (The bitcoin checksum will be
-// the first four bytes of the slice.)
-func (a *A25) doubleSHA256() []byte {
-	h := sha256.New()
-	_, _ = h.Write(a[:21])
-	d := h.Sum([]byte{})
-	h = sha256.New()
-	_, _ = h.Write(d)
-	return h.Sum(d[:0])
-}
 
 // Version returns the version byte of an A25 address
 func (a *A25) Version() byte {
@@ -35,11 +31,13 @@ func (a *A25) Version() byte {
 // EmbeddedChecksum returns the 4 checksum bytes of an A25 address
 func (a *A25) EmbeddedChecksum() (c [4]byte) {
 	copy(c[:], a[21:])
-	return
+	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 }
 
 // Tmpl and Set58 are adapted from the C solution.
 // Go has big integers but this technique seems better.
+//
+//nolint:gochecknoglobals // base58 alphabet constant
 var tmpl = []byte("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
 
 // Set58 takes a base58 encoded address and decodes it into the receiver.
@@ -68,7 +66,20 @@ func (a *A25) Set58(s []byte) error {
 // bytes of the address.  The embedded checksum is not updated.
 func (a *A25) ComputeChecksum() (c [4]byte) {
 	copy(c[:], a.doubleSHA256())
-	return
+	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
+}
+
+// doubleSHA256 computes a double sha256 hash of the first 21 bytes of the
+// address.  This is the one function shared with the other bitcoin RC task.
+// Returned is the full 32 byte sha256 hash.  (The bitcoin checksum will be
+// the first four bytes of the slice.)
+func (a *A25) doubleSHA256() []byte {
+	h := sha256.New()
+	_, _ = h.Write(a[:21])
+	d := h.Sum([]byte{})
+	h = sha256.New()
+	_, _ = h.Write(d)
+	return h.Sum(d[:0])
 }
 
 // ValidA58 validates a base58 encoded bitcoin address.  An address is valid
@@ -112,9 +123,9 @@ func GetAddressFromPrivateKeyString(privateKey string, compressed, mainnet bool)
 // GetAddressFromPubKey gets a bscript.Address from a bec.PublicKey
 func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed, mainnet bool) (*bscript.Address, error) {
 	if publicKey == nil {
-		return nil, fmt.Errorf("publicKey cannot be nil")
+		return nil, ErrPublicKeyNil
 	} else if publicKey.X == nil {
-		return nil, fmt.Errorf("publicKey.X cannot be nil")
+		return nil, ErrPublicKeyXNil
 	}
 
 	if !compressed {
@@ -167,7 +178,7 @@ func GetAddressFromScript(script string) (string, error) {
 	if len(addresses) == 0 {
 		// This error case should not occur since the error above will occur when no address is found,
 		// however we ensure that we have an address for the NewLegacyAddressPubKeyHash() below
-		return "", fmt.Errorf("invalid output script, missing an address")
+		return "", ErrInvalidOutputScript
 	}
 
 	// Use the encoded version of the address

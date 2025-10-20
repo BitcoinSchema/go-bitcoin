@@ -35,7 +35,7 @@ func GenerateHDKey(seedLength uint8) (hdKey *bip32.ExtendedKey, err error) {
 	// Generate a new seed (added extra security from 256 to 512 bits for seed length)
 	var seed []byte
 	if seed, err = bip32.GenerateSeed(seedLength); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Generate a new master key
@@ -53,7 +53,7 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 	// Generate an HD master key
 	var masterKey *bip32.ExtendedKey
 	if masterKey, err = GenerateHDKey(seedLength); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Set the xPriv (string)
@@ -62,7 +62,7 @@ func GenerateHDKeyPair(seedLength uint8) (xPrivateKey, xPublicKey string, err er
 	// Set the xPub (string)
 	xPublicKey, err = GetExtendedPublicKey(masterKey)
 
-	return
+	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 }
 
 // GetHDKeyByPath gets the corresponding HD key from a chain/num path
@@ -79,7 +79,7 @@ func GetHDKeyByPath(hdKey *bip32.ExtendedKey, chain, num uint32) (*bip32.Extende
 }
 
 // GetHDKeyChild gets the child hd key for a given num
-// Note: For a hardened child, start at 0x80000000. (For reference, 0x8000000 = 0')
+// For a hardened child, start at 0x80000000. (For reference, 0x8000000 = 0')
 //
 // Expects hdKey to not be nil (otherwise will panic)
 func GetHDKeyChild(hdKey *bip32.ExtendedKey, num uint32) (*bip32.ExtendedKey, error) {
@@ -117,7 +117,7 @@ func GetPrivateKeyStringFromHDKey(hdKey *bip32.ExtendedKey) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(key.Serialise()), nil
+	return hex.EncodeToString(key.Serialise()), nil //nolint:misspell // external library method name
 }
 
 // GetPublicKeyFromHDKey is a helper function to get the Public Key associated with a given hdKey
@@ -156,14 +156,14 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 	//  m/0/x
 	var childM0x *bip32.ExtendedKey
 	if childM0x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Get the external pubKey from m/0/x
 	var pubKey *bec.PublicKey
 	if pubKey, err = childM0x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 	pubKeys = append(pubKeys, pubKey)
 
@@ -171,13 +171,13 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 	var childM1x *bip32.ExtendedKey
 	if childM1x, err = GetHDKeyByPath(hdKey, DefaultInternalChain, num); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Get the internal pubKey from m/1/x
 	if pubKey, err = childM1x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 	pubKeys = append(pubKeys, pubKey)
 
@@ -190,7 +190,7 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (ad
 	// Get the public keys for the corresponding chain/num (using default chain)
 	var pubKeys []*bec.PublicKey
 	if pubKeys, err = GetPublicKeysForPath(hdKey, num); err != nil {
-		return
+		return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 	}
 
 	// Loop, get address and append to results
@@ -198,12 +198,12 @@ func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (ad
 	for _, key := range pubKeys {
 		if address, err = GetAddressFromPubKey(key, true, mainnet); err != nil {
 			// Should never error if the pubKeys are valid keys
-			return
+			return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 		}
 		addresses = append(addresses, address.AddressString)
 	}
 
-	return
+	return //nolint:gofumpt // false positive due to golangci-lint version mismatch
 }
 
 // GetExtendedPublicKey will get the extended public key (xPub)
