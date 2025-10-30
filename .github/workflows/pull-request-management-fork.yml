@@ -84,14 +84,52 @@ jobs:
         uses: ./.github/actions/load-env
 
   # ------------------------------------------------------------
+  # Detect if this is truly a fork PR with proper null handling
+  # ------------------------------------------------------------
+  detect-fork:
+    name: 🔍 Detect Fork PR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      is-fork: ${{ steps.detection.outputs.is-fork }}
+    steps:
+      - name: 🔍 Fork detection with null checks
+        id: detection
+        env:
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
+        run: |
+          echo "════════════════════════════════════════════════════════════════"
+          echo "🔍 Fork Detection Debug"
+          echo "════════════════════════════════════════════════════════════════"
+          echo "  PR Head Repo: '${PR_HEAD_REPO}'"
+          echo "  Base Repo: '${BASE_REPO}'"
+          echo "  Event: ${{ github.event_name }}"
+          echo "════════════════════════════════════════════════════════════════"
+
+          # Check if this is a fork PR with proper null/empty handling
+          # A fork PR is when:
+          # 1. PR_HEAD_REPO is not empty (not null/undefined)
+          # 2. PR_HEAD_REPO != BASE_REPO (different repositories)
+          if [[ -n "$PR_HEAD_REPO" ]] && [[ "$PR_HEAD_REPO" != "$BASE_REPO" ]]; then
+            echo "🚨 FORK PR DETECTED"
+            echo "is-fork=true" >> $GITHUB_OUTPUT
+          else
+            echo "✅ NOT A FORK PR (Same repository or invalid head repo)"
+            echo "is-fork=false" >> $GITHUB_OUTPUT
+          fi
+          echo "════════════════════════════════════════════════════════════════"
+
+  # ------------------------------------------------------------
   # Fork detector + labeller/commenter/assignee
   # ------------------------------------------------------------
   handle-fork:
     name: 🏷️ Label/Assign/Comment (Fork PR)
-    needs: [load-env]
+    needs: [load-env, detect-fork]
     runs-on: ubuntu-latest
-    # Only run for fork PRs (different repository)
-    if: github.event.pull_request.head.repo.full_name != github.repository
+    # Only run for fork PRs (different repository) - using detection output
+    if: needs.detect-fork.outputs.is-fork == 'true'
     permissions:
       # We need to WRITE to PR for labels/comments/assignees
       pull-requests: write
@@ -248,7 +286,7 @@ jobs:
   # ------------------------------------------------------------
   clean-cache:
     name: 🧹 Clean Runner Cache
-    needs: [load-env]
+    needs: [load-env, detect-fork]
     runs-on: ubuntu-latest
     permissions:
       actions: write # Required: Delete GitHub Actions caches for closed PRs
@@ -353,7 +391,7 @@ jobs:
     name: 📊 Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: [load-env, handle-fork, clean-cache]
+    needs: [load-env, detect-fork, handle-fork, clean-cache]
     steps:
       - name: 📄 Write summary
         env:
@@ -361,13 +399,31 @@ jobs:
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_ACTION: ${{ github.event.action }}
+          IS_FORK: ${{ needs.detect-fork.outputs.is-fork }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          BASE_REPO: ${{ github.repository }}
         run: |
           echo "# 🔧 Fork PR Management Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**PR:** #$PR_NUMBER — $PR_TITLE" >> $GITHUB_STEP_SUMMARY
           echo "**Author:** @$PR_AUTHOR" >> $GITHUB_STEP_SUMMARY
           echo "**Action:** $PR_ACTION" >> $GITHUB_STEP_SUMMARY
-          echo "**Source:** Fork" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Show fork detection results
+          echo "## 🔍 Fork Detection" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| PR Head Repo | \`$PR_HEAD_REPO\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Base Repo | \`$BASE_REPO\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Is Fork PR? | **$IS_FORK** |" >> $GITHUB_STEP_SUMMARY
+
+          if [ "$IS_FORK" = "true" ]; then
+            echo "| Status | ✅ Fork PR - Handled with restricted permissions |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Status | ℹ️ **NOT a fork PR** - This workflow should not have processed this PR |" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
 
           # Show cache cleanup results if PR was closed
