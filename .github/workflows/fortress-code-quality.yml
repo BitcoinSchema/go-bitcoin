@@ -109,6 +109,7 @@ jobs:
         with:
           magex-version: ${{ env.MAGE_X_VERSION }}
           runner-os: ${{ inputs.primary-runner }}
+          use-local: ${{ env.MAGE_X_USE_LOCAL }}
 
       # --------------------------------------------------------------------
       # Run go vet with sequential execution to avoid memory issues
@@ -232,16 +233,6 @@ jobs:
           echo "GOLANGCI_LINT_CACHE=$HOME/.cache/golangci-lint" >> $GITHUB_ENV
 
       # --------------------------------------------------------------------
-      # Extract golangci-lint version (MAGE-X managed)
-      # --------------------------------------------------------------------
-      - name: 🔍 Use MAGE-X managed golangci-lint version
-        id: golangci-lint-version
-        run: |
-          # MAGE-X handles golangci-lint version automatically
-          echo "✅ Using MAGE-X managed golangci-lint version"
-          echo "version=${{ env.MAGE_X_GOLANGCI_LINT_VERSION }}" >> $GITHUB_OUTPUT
-
-      # --------------------------------------------------------------------
       # Setup Go with caching and version management
       # --------------------------------------------------------------------
       - name: 🏗️ Setup Go with Cache
@@ -270,6 +261,7 @@ jobs:
         with:
           magex-version: ${{ env.MAGE_X_VERSION }}
           runner-os: ${{ inputs.primary-runner }}
+          use-local: ${{ env.MAGE_X_USE_LOCAL }}
 
       # --------------------------------------------------------------------
       # Restore Cache golangci-lint
@@ -279,7 +271,7 @@ jobs:
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
           path: ${{ env.GOLANGCI_LINT_CACHE }}
-          key: ${{ inputs.primary-runner }}-golangci-lint-analysis-${{ hashFiles('.golangci.json', env.GO_SUM_FILE) }}-${{ steps.golangci-lint-version.outputs.version }}
+          key: ${{ inputs.primary-runner }}-golangci-lint-analysis-${{ hashFiles('.golangci.json', env.GO_SUM_FILE) }}
 
       - name: 🔍 Debug cache usage
         run: |
@@ -409,6 +401,7 @@ jobs:
         with:
           magex-version: ${{ env.MAGE_X_VERSION }}
           runner-os: ${{ inputs.primary-runner }}
+          use-local: ${{ env.MAGE_X_USE_LOCAL }}
 
       # --------------------------------------------------------------------
       # Get yamlfmt version from MAGE-X
