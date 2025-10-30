@@ -8,7 +8,7 @@
 #  Configuration: All settings are loaded from .env.base and .env.custom files for
 #  centralized management across all workflows.
 #
-#  Triggers: Pull request events (opened, reopened, ready for review, closed)
+#  Triggers: Pull request events (opened, reopened, ready for review, closed, synchronize)
 #
 #  Features:
 #  - Automatic labeling based on branch prefix and PR title
@@ -20,6 +20,13 @@
 #
 #  Maintainer: @mrz1836
 #
+#  SECURITY MODEL:
+#  - Uses pull_request trigger (runs in PR context with limited permissions)
+#  - Safe to check out PR code as workflow has read-only access by default
+#  - Fork detection uses full_name comparison for accuracy (not owner.login which fails for org members)
+#  - Job-level permissions grant write access only where needed (labels, comments, cache cleanup)
+#  - Mutually exclusive with fork workflow - each PR triggers only ONE workflow
+#
 # ------------------------------------------------------------------------------------
 
 name: PR Management
@@ -29,7 +36,7 @@ name: PR Management
 # --------------------------------------------------------------------
 on:
   pull_request:
-    types: [opened, reopened, ready_for_review, closed]
+    types: [opened, reopened, ready_for_review, closed, synchronize]
 
 # Security: Restrictive default permissions with job-level overrides for least privilege access
 permissions:
@@ -85,7 +92,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    if: github.event.action != 'closed'
+    # Only run for non-fork PRs (same repository)
+    if: |
+      github.event.action != 'closed' &&
+      github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       labels-applied: ${{ steps.apply-labels.outputs.labels-applied }}
 
@@ -253,9 +263,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+    # Only run for non-fork PRs (same repository)
     if: |
       github.event.action != 'closed' &&
-      github.event.pull_request.head.repo.owner.login == github.repository_owner
+      github.event.pull_request.head.repo.full_name == github.repository
     outputs:
       assignee-added: ${{ steps.assign.outputs.assignee-added }}
 
@@ -431,7 +442,9 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    if: github.event.action == 'opened'
+    if: |
+      github.event.action == 'opened' &&
+      github.event.pull_request.head.repo.owner.login == github.repository_owner
     outputs:
       size-label: ${{ steps.analyze.outputs.size-label }}
       total-changes: ${{ steps.analyze.outputs.total-changes }}
@@ -637,6 +650,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write # Required: Delete branches after PR merge
+    # Only run for non-fork PRs (same repository) that were merged
     if: |
       github.event.action == 'closed' &&
       github.event.pull_request.merged == true &&
