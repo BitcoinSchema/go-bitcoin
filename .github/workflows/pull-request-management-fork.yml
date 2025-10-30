@@ -106,8 +106,8 @@ jobs:
           # pull minimal config, with sensible fallbacks
           DEFAULT_ASSIGNEE=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_DEFAULT_ASSIGNEE // ""')
           SKIP_BOT_USERS=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_SKIP_BOT_USERS // ""')
-          FORK_LABEL=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_FORK_LABEL // "from-fork"')
-          TRIAGE_LABEL=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_TRIAGE_LABEL // "needs-triage"')
+          FORK_LABEL=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_FORK_LABEL // "fork-pr"')
+          TRIAGE_LABEL=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_TRIAGE_LABEL // "requires-manual-review"')
           WELCOME_FORKS=$(echo "$ENV_JSON" | jq -r '.PR_MANAGEMENT_WELCOME_FORKS // "true"')
 
           echo "DEFAULT_ASSIGNEE=$DEFAULT_ASSIGNEE" >> "$GITHUB_ENV"
@@ -212,16 +212,36 @@ jobs:
             A maintainer will triage this shortly and run any additional checks as needed.
 
             - 🏷️ Labeled: \`${process.env.FORK_LABEL}\`, \`${process.env.TRIAGE_LABEL}\`
-            - 👀 We’ll review and follow up here if anything else is needed.
+            - 👀 We'll review and follow up here if anything else is needed.
 
-            Thanks for contributing to **${repoOwner}/${repoName}**! 🚀`;
+            Thanks for contributing to **${repoOwner}/${repoName}**! 🚀
 
-            await github.rest.issues.createComment({
+            <!-- fork-welcome-v1 -->`;
+
+            // Check for existing welcome comment to avoid duplicates
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: pr.number,
-              body
+              per_page: 100
             });
+
+            const welcomeExists = comments.some(comment =>
+              comment.body.includes('<!-- fork-welcome-v1 -->') &&
+              comment.user.login === 'github-actions[bot]'
+            );
+
+            if (!welcomeExists) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body
+              });
+              core.info(`✅ Posted welcome comment for fork PR from @${author}`);
+            } else {
+              core.info(`ℹ️ Welcome comment already exists, skipping duplicate`);
+            }
 
   # ------------------------------------------------------------
   # Clean Runner Cache (on PR close)

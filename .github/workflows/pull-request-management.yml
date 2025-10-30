@@ -772,6 +772,46 @@ jobs:
           echo "**🔗 Source:** ${{ github.event.pull_request.head.repo.full_name == github.repository && 'Internal' || 'Fork' }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
 
+          # Add fork PR specific information if this is a fork PR
+          if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 🔐 Fork PR Status" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **This is a FORK Pull Request** - Some automated actions are restricted for security." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+
+            if [ "$PR_ACTION" != "closed" ]; then
+              echo "### ✅ Actions Completed for Fork PR:" >> $GITHUB_STEP_SUMMARY
+              echo "- **Labels Applied** - Automated based on branch prefix and PR title" >> $GITHUB_STEP_SUMMARY
+              echo "- **Type Detection** - PR type classification" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### ⛔ Actions Skipped (Fork Restrictions):" >> $GITHUB_STEP_SUMMARY
+              echo "- **Default Assignee** - Fork PRs are not auto-assigned" >> $GITHUB_STEP_SUMMARY
+              echo "- **Size Analysis** - Only available for internal PRs" >> $GITHUB_STEP_SUMMARY
+              echo "- **Branch Operations** - Fork branches cannot be deleted from base repo" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "### 📝 Why Are Actions Restricted?" >> $GITHUB_STEP_SUMMARY
+              echo "Fork PRs have limited permissions to protect repository security:" >> $GITHUB_STEP_SUMMARY
+              echo "- Prevents unauthorized repository modifications" >> $GITHUB_STEP_SUMMARY
+              echo "- Protects branch management operations" >> $GITHUB_STEP_SUMMARY
+              echo "- Ensures only repository members can perform sensitive actions" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "**Note for Contributors:** Repository maintainers will review your PR and can manually" >> $GITHUB_STEP_SUMMARY
+              echo "apply additional labels, assignees, or other management actions as needed." >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### 🧹 Cleanup Status for Fork PR:" >> $GITHUB_STEP_SUMMARY
+              echo "- **Cache Cleanup** - Runner caches cleaned" >> $GITHUB_STEP_SUMMARY
+              echo "- **Branch Deletion** - Fork branches remain in fork repository" >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "_Fork PR branches are managed by the contributor in their forked repository._" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "---" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
           # Show results based on action type
           if [ "$PR_ACTION" != "closed" ]; then
             echo "## 📋 Actions Taken" >> $GITHUB_STEP_SUMMARY
@@ -796,6 +836,12 @@ jobs:
               else
                 echo "| 👤 Default Assignee | Already assigned |" >> $GITHUB_STEP_SUMMARY
               fi
+            elif [ "${{ needs.assign-assignee.result }}" = "skipped" ]; then
+              if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+                echo "| 👤 Default Assignee | ⛔ Skipped (Fork PR) |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| 👤 Default Assignee | Skipped |" >> $GITHUB_STEP_SUMMARY
+              fi
             fi
 
             # Welcome message
@@ -812,6 +858,12 @@ jobs:
               if [ -n "$SIZE_LABEL" ]; then
                 echo "| 📏 Size Analysis | $SIZE_LABEL ($TOTAL_CHANGES changes) |" >> $GITHUB_STEP_SUMMARY
               fi
+            elif [ "${{ needs.analyze-size.result }}" = "skipped" ]; then
+              if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+                echo "| 📏 Size Analysis | ⛔ Skipped (Fork PR) |" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "| 📏 Size Analysis | Skipped |" >> $GITHUB_STEP_SUMMARY
+              fi
             fi
 
           else
@@ -827,14 +879,22 @@ jobs:
             fi
 
             # Branch deletion
-            if [ "$PR_MERGED" = "true" ] && [ "${{ needs.delete-branch.result }}" = "success" ]; then
-              DELETED="${{ needs.delete-branch.outputs.branch-deleted }}"
-              if [ "$DELETED" = "true" ]; then
-                echo "| 🌿 Branch Deletion | Deleted |" >> $GITHUB_STEP_SUMMARY
-              elif [ "$DELETED" = "skip" ]; then
-                echo "| 🌿 Branch Deletion | Skipped (protected) |" >> $GITHUB_STEP_SUMMARY
-              else
-                echo "| 🌿 Branch Deletion | Already deleted |" >> $GITHUB_STEP_SUMMARY
+            if [ "$PR_MERGED" = "true" ]; then
+              if [ "${{ needs.delete-branch.result }}" = "success" ]; then
+                DELETED="${{ needs.delete-branch.outputs.branch-deleted }}"
+                if [ "$DELETED" = "true" ]; then
+                  echo "| 🌿 Branch Deletion | Deleted |" >> $GITHUB_STEP_SUMMARY
+                elif [ "$DELETED" = "skip" ]; then
+                  echo "| 🌿 Branch Deletion | Skipped (protected) |" >> $GITHUB_STEP_SUMMARY
+                else
+                  echo "| 🌿 Branch Deletion | Already deleted |" >> $GITHUB_STEP_SUMMARY
+                fi
+              elif [ "${{ needs.delete-branch.result }}" = "skipped" ]; then
+                if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+                  echo "| 🌿 Branch Deletion | ⛔ Skipped (Fork PR - managed by contributor) |" >> $GITHUB_STEP_SUMMARY
+                else
+                  echo "| 🌿 Branch Deletion | Skipped |" >> $GITHUB_STEP_SUMMARY
+                fi
               fi
             fi
           fi
