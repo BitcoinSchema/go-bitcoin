@@ -264,6 +264,14 @@ jobs:
           use-local: ${{ env.MAGE_X_USE_LOCAL }}
 
       # --------------------------------------------------------------------
+      # Capture golangci-lint version for outputs and reporting
+      # --------------------------------------------------------------------
+      - name: 🔍 Capture golangci-lint version
+        id: golangci-lint-version
+        run: |
+          echo "version=${{ env.MAGE_X_GOLANGCI_LINT_VERSION }}" >> $GITHUB_OUTPUT
+
+      # --------------------------------------------------------------------
       # Restore Cache golangci-lint
       # --------------------------------------------------------------------
       - name: 💾 Cache golangci-lint analysis
