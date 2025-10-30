@@ -245,7 +245,7 @@ jobs:
         with:
           path: |
             ~/.cache/govulncheck-bin
-          key: ${{ inputs.primary-runner }}-govulncheck-${{ env.GOVULNCHECK_VERSION }}
+          key: ${{ inputs.primary-runner }}-govulncheck-${{ env.GOVULNCHECK_VERSION }}-go${{ env.GOVULNCHECK_GO_VERSION }}
 
       - name: 🛠️ Make cached govulncheck usable
         run: |
