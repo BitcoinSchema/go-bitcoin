@@ -207,26 +207,43 @@ jobs:
             // ————————————————————————————————————————————————————————————————
             // Check if we should skip fork PRs
             // ————————————————————————————————————————————————————————————————
-            const isForkPR = pr.head.repo.full_name !== `${owner}/${repo}`;
-            if (isForkPR && process.env.SKIP_FORK_PRS === 'true') {
-              console.log('🍴 Skipping fork PR (security policy: fork PRs are not auto-merged)');
-              console.log(`   Fork source: ${pr.head.repo.full_name}`);
-              console.log(`   Base repository: ${owner}/${repo}`);
-              console.log('   Security reason: Fork PRs require manual maintainer review before merge');
 
-              // Optional: Add comment notifying author about security policy
-              if (process.env.COMMENT_ON_FORK_SKIP === 'true') {
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number: prNumber,
-                  body: `🍴 **Fork PR Detected**\n\nThis pull request originates from a forked repository (\`${pr.head.repo.full_name}\`). For security reasons, pull requests from external forks cannot be automatically merged.\n\n**Why?** Auto-merge could allow unreviewed code changes to bypass certain security checks. To maintain repository security, maintainers must manually review and merge fork PRs.\n\n**Next Steps:** A maintainer will review this PR and merge it if it meets all requirements. Thank you for your contribution! 🙏`
-                });
-                console.log('   💬 Posted security policy comment to PR');
+            // Handle edge case: fork repository deleted/inaccessible (pr.head.repo is null)
+            if (!pr.head.repo) {
+              console.log('⚠️  PR head repository is null (fork may have been deleted)');
+              if (process.env.SKIP_FORK_PRS === 'true') {
+                console.log('🍴 Skipping PR with deleted fork source (security policy)');
+                core.setOutput('action', 'skip-deleted-fork');
+                return;
               }
+              // If not skipping forks, log and continue (will be treated as same-repo PR)
+              console.log('⚠️  Continuing with auto-merge processing (null repo treated as same-repo)');
+            } else {
+              // Safe to access pr.head.repo.full_name now
+              const headRepoFullName = pr.head.repo.full_name;
+              const baseRepoFullName = `${owner}/${repo}`;
+              const isForkPR = headRepoFullName !== baseRepoFullName;
 
-              core.setOutput('action', 'skip-fork');
-              return;
+              if (isForkPR && process.env.SKIP_FORK_PRS === 'true') {
+                console.log('🍴 Skipping fork PR (security policy: fork PRs are not auto-merged)');
+                console.log(`   Fork source: ${headRepoFullName}`);
+                console.log(`   Base repository: ${baseRepoFullName}`);
+                console.log('   Security reason: Fork PRs require manual maintainer review before merge');
+
+                // Optional: Add comment notifying author about security policy
+                if (process.env.COMMENT_ON_FORK_SKIP === 'true') {
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: prNumber,
+                    body: `🍴 **Fork PR Detected**\n\nThis pull request originates from a forked repository (\`${headRepoFullName}\`). For security reasons, pull requests from external forks cannot be automatically merged.\n\n**Why?** Auto-merge could allow unreviewed code changes to bypass certain security checks. To maintain repository security, maintainers must manually review and merge fork PRs.\n\n**Next Steps:** A maintainer will review this PR and merge it if it meets all requirements. Thank you for your contribution! 🙏`
+                  });
+                  console.log('   💬 Posted security policy comment to PR');
+                }
+
+                core.setOutput('action', 'skip-fork');
+                return;
+              }
             }
 
             // ————————————————————————————————————————————————————————————————
@@ -318,7 +335,7 @@ jobs:
                 execSync(`gh pr merge --disable-auto "${pr.html_url}"`, {
                   env: {
                     ...process.env,
-                    GH_TOKEN: '${{ secrets.GH_PAT_TOKEN || secrets.GITHUB_TOKEN }}'
+                    GH_TOKEN: process.env.GH_TOKEN || process.env.GITHUB_TOKEN
                   },
                   stdio: 'inherit'
                 });
@@ -335,8 +352,17 @@ jobs:
                 }
 
                 core.setOutput('action', 'disabled-changes-requested');
-              } catch (error) {
-                console.log('ℹ️ Could not disable auto-merge (may not have been enabled)');
+              } catch (disableError) {
+                // Differentiate between "not enabled" and actual failures
+                if (disableError.message && (
+                  disableError.message.includes('not enabled') ||
+                  disableError.message.includes('auto-merge is not enabled')
+                )) {
+                  console.log('ℹ️  Auto-merge was not enabled, no action needed');
+                } else {
+                  console.error(`❌ Failed to disable auto-merge: ${disableError.message}`);
+                  // Don't fail workflow, but log the error properly
+                }
               }
               return;
             }
@@ -373,15 +399,29 @@ jobs:
 
               console.log(`🚀 Enabling auto-merge with command: ${mergeCommand}`);
 
-              execSync(mergeCommand, {
-                env: {
-                  ...process.env,
-                  GH_TOKEN: '${{ secrets.GH_PAT_TOKEN || secrets.GITHUB_TOKEN }}'
-                },
-                stdio: 'inherit'
-              });
+              try {
+                execSync(mergeCommand, {
+                  env: {
+                    ...process.env,
+                    GH_TOKEN: process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+                  },
+                  stdio: 'inherit'
+                });
 
-              console.log('✅ Auto-merge enabled! PR will merge when all status checks pass.');
+                console.log('✅ Auto-merge enabled! PR will merge when all status checks pass.');
+              } catch (enableError) {
+                // Handle race condition: another workflow run may have enabled auto-merge
+                if (enableError.message && (
+                  enableError.message.includes('already enabled') ||
+                  enableError.message.includes('auto-merge is already enabled')
+                )) {
+                  console.log('ℹ️  Auto-merge already enabled by another workflow run');
+                  core.setOutput('action', 'already-enabled');
+                  return;
+                }
+                // Re-throw other errors to be caught by outer catch block
+                throw enableError;
+              }
 
               // Add comment if configured
               if (process.env.COMMENT_ON_ENABLE === 'true') {
@@ -478,6 +518,9 @@ jobs:
               ;;
             "skip-fork")
               ACTION_DESC="🍴 Skipped (fork PR - security policy)"
+              ;;
+            "skip-deleted-fork")
+              ACTION_DESC="🍴 Skipped (deleted fork PR)"
               ;;
             "skip-draft")
               ACTION_DESC="📝 Skipped (draft PR)"
