@@ -100,7 +100,6 @@ jobs:
         id: config
         env:
           ENV_JSON: ${{ needs.load-env.outputs.env-json }}
-          GH_PAT_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
         run: |
           echo "📋 Extracting auto-merge configuration from environment..."
 
@@ -162,12 +161,7 @@ jobs:
           echo "  🤖 Skip bot PRs: $SKIP_BOT_PRS"
           echo "  🍴 Skip fork PRs: $SKIP_FORK_PRS"
           echo "  💬 Comment on fork skip: $COMMENT_ON_FORK_SKIP"
-
-          if [[ "$PREFERRED_TOKEN" == "GH_PAT_TOKEN" && -n "$GH_PAT_TOKEN" ]]; then
-            echo "  🔑 Token: Personal Access Token (PAT)"
-          else
-            echo "  🔑 Token: Default GITHUB_TOKEN"
-          fi
+          echo "  🔑 Token: Selected via github-script action"
 
       # --------------------------------------------------------------------
       # Process the PR for auto-merge
@@ -335,7 +329,7 @@ jobs:
                 execSync(`gh pr merge --disable-auto "${pr.html_url}"`, {
                   env: {
                     ...process.env,
-                    GH_TOKEN: process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+                    GH_TOKEN: process.env.GITHUB_TOKEN
                   },
                   stdio: 'inherit'
                 });
@@ -403,7 +397,7 @@ jobs:
                 execSync(mergeCommand, {
                   env: {
                     ...process.env,
-                    GH_TOKEN: process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+                    GH_TOKEN: process.env.GITHUB_TOKEN
                   },
                   stdio: 'inherit'
                 });
