@@ -893,7 +893,7 @@ jobs:
                 echo "| 👤 Default Assignee | Already assigned |" >> $GITHUB_STEP_SUMMARY
               fi
             elif [ "${{ needs.assign-assignee.result }}" = "skipped" ]; then
-              if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+              if [ "$IS_SAME_REPO" = "false" ]; then
                 echo "| 👤 Default Assignee | ⛔ Skipped (Fork PR) |" >> $GITHUB_STEP_SUMMARY
               else
                 echo "| 👤 Default Assignee | Skipped |" >> $GITHUB_STEP_SUMMARY
@@ -915,7 +915,7 @@ jobs:
                 echo "| 📏 Size Analysis | $SIZE_LABEL ($TOTAL_CHANGES changes) |" >> $GITHUB_STEP_SUMMARY
               fi
             elif [ "${{ needs.analyze-size.result }}" = "skipped" ]; then
-              if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+              if [ "$IS_SAME_REPO" = "false" ]; then
                 echo "| 📏 Size Analysis | ⛔ Skipped (Fork PR) |" >> $GITHUB_STEP_SUMMARY
               else
                 echo "| 📏 Size Analysis | Skipped |" >> $GITHUB_STEP_SUMMARY
@@ -946,7 +946,7 @@ jobs:
                   echo "| 🌿 Branch Deletion | Already deleted |" >> $GITHUB_STEP_SUMMARY
                 fi
               elif [ "${{ needs.delete-branch.result }}" = "skipped" ]; then
-                if [ "${{ github.event.pull_request.head.repo.full_name != github.repository }}" = "true" ]; then
+                if [ "$IS_SAME_REPO" = "false" ]; then
                   echo "| 🌿 Branch Deletion | ⛔ Skipped (Fork PR - managed by contributor) |" >> $GITHUB_STEP_SUMMARY
                 else
                   echo "| 🌿 Branch Deletion | Skipped |" >> $GITHUB_STEP_SUMMARY

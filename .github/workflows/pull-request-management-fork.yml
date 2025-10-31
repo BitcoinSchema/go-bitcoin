@@ -246,7 +246,7 @@ jobs:
 
             const body = `## 👋 Thanks, @${author}!
 
-            This pull request comes from a **fork**. For security, our CI runs in a restricted mode (no repo secrets).
+            This pull request comes from a **fork**. For security, our CI runs in a restricted mode.
             A maintainer will triage this shortly and run any additional checks as needed.
 
             - 🏷️ Labeled: \`${process.env.FORK_LABEL}\`, \`${process.env.TRIAGE_LABEL}\`
