@@ -216,7 +216,7 @@ jobs:
 
           # Maximum lengths for GitHub labels
           MAX_NAME_LENGTH = 50
-          MAX_DESCRIPTION_LENGTH = 100  # GitHub allows 300, but we enforce stricter limit
+          MAX_DESCRIPTION_LENGTH = 100  # GitHub allows 200, but we enforce stricter limit
 
           try:
               with open('${{ needs.load-env.outputs.labels-file }}', 'r') as f:

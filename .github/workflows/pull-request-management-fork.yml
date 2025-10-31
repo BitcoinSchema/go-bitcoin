@@ -291,7 +291,7 @@ jobs:
     permissions:
       actions: write # Required: Delete GitHub Actions caches for closed PRs
       contents: read # Read repository content for cache management
-    if: github.event.action == 'closed'
+    if: github.event.action == 'closed' && needs.detect-fork.outputs.is-fork == 'true'
     outputs:
       caches-cleaned: ${{ steps.clean.outputs.caches-cleaned }}
 

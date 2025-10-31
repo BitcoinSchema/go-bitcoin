@@ -106,7 +106,7 @@ runs:
             fi
 
             # Check for suspicious command injection patterns
-            if echo "$value" | grep -qE '`|\$\(|;\s*\||&&\s*\||>\s*/'; then
+            if echo "$value" | grep -qE '`|\$\(|\$\{|;|&|\||<\(|>|<|\\|'"'"'|"|\x00|[[:cntrl:]]'; then
               echo "⚠️  WARNING: Potentially unsafe characters in $source variable '$key'" >&2
               echo "   Value contains backticks, command substitution, or shell metacharacters" >&2
               echo "   Value will be treated as a literal string during extraction" >&2
