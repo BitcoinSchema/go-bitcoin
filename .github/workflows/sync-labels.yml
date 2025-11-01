@@ -145,13 +145,13 @@ jobs:
       - name: 📋 Log commit source
         id: log_source
         env:
-          COMMIT_SHA: ${{ github.sha }}
-          COMMITTER_NAME: ${{ github.event.head_commit.committer.name }}
-          COMMITTER_EMAIL: ${{ github.event.head_commit.committer.email }}
-          AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
-          AUTHOR_EMAIL: ${{ github.event.head_commit.author.email }}
-          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-          COMMIT_TIMESTAMP: ${{ github.event.head_commit.timestamp }}
+          COMMIT_SHA: "${{ github.sha }}"
+          COMMITTER_NAME: "${{ github.event_name == 'workflow_dispatch' && github.actor || github.event.head_commit.committer.name }}"
+          COMMITTER_EMAIL: "${{ github.event_name == 'workflow_dispatch' && format('{0}@users.noreply.github.com', github.actor) || github.event.head_commit.committer.email }}"
+          AUTHOR_NAME: "${{ github.event_name == 'workflow_dispatch' && github.actor || github.event.head_commit.author.name }}"
+          AUTHOR_EMAIL: "${{ github.event_name == 'workflow_dispatch' && format('{0}@users.noreply.github.com', github.actor) || github.event.head_commit.author.email }}"
+          COMMIT_MESSAGE: "${{ github.event_name == 'workflow_dispatch' && format('Manual label sync by {0} (dry-run: {1})', github.actor, github.event.inputs.dry_run) || github.event.head_commit.message }}"
+          COMMIT_TIMESTAMP: "${{ github.event_name == 'workflow_dispatch' && github.event.repository.updated_at || github.event.head_commit.timestamp }}"
         run: |
           echo "🔍 === Commit Source Audit ==="
           echo "Commit SHA: $COMMIT_SHA"
@@ -591,8 +591,8 @@ jobs:
           DRY_RUN_MODE: ${{ github.event.inputs.dry_run == 'true' && '🔍 DRY RUN' || '🚀 LIVE' }}
           TRIGGER_TYPE: ${{ github.event_name == 'workflow_dispatch' && '🔧 Manual' || '📝 File Change' }}
           COMMIT_SHA: ${{ github.sha }}
-          COMMITTER_NAME: ${{ github.event.head_commit.committer.name }}
-          AUTHOR_NAME: ${{ github.event.head_commit.author.name }}
+          COMMITTER_NAME: ${{ github.event_name == 'workflow_dispatch' && github.actor || github.event.head_commit.committer.name }}
+          AUTHOR_NAME: ${{ github.event_name == 'workflow_dispatch' && github.actor || github.event.head_commit.author.name }}
           IS_MERGE: ${{ steps.log_source.outputs.is-merge }}
           PR_NUMBER: ${{ steps.log_source.outputs.pr-number }}
         run: |

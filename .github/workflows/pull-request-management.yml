@@ -96,7 +96,7 @@ jobs:
       - name: 🔍 Same-repo detection with null checks
         id: detection
         env:
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo && github.event.pull_request.head.repo.full_name || '' }}
           BASE_REPO: ${{ github.repository }}
         run: |
           echo "════════════════════════════════════════════════════════════════"
@@ -799,7 +799,7 @@ jobs:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_MERGED: ${{ github.event.pull_request.merged }}
           IS_SAME_REPO: ${{ needs.detect-same-repo.outputs.is-same-repo }}
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo && github.event.pull_request.head.repo.full_name || '' }}
           BASE_REPO: ${{ github.repository }}
         run: |
           echo "📊 Generating workflow summary..."

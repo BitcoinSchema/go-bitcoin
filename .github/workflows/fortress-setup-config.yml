@@ -244,7 +244,7 @@ jobs:
         id: fork-detection
         env:
           EVENT_NAME: ${{ github.event_name }}
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo && github.event.pull_request.head.repo.full_name || '' }}
           BASE_REPO: ${{ github.repository }}
         run: |
           echo "🔍 Detecting fork status..."
