@@ -224,15 +224,10 @@ jobs:
                 console.log(`   Base repository: ${baseRepoFullName}`);
                 console.log('   Security reason: Fork PRs require manual maintainer review before merge');
 
-                // Optional: Add comment notifying author about security policy
+                // Note: Comments are not posted to fork PRs due to read-only GITHUB_TOKEN permissions
+                // Fork PR handling is already managed by pull-request-management-fork.yml workflow
                 if (process.env.COMMENT_ON_FORK_SKIP === 'true') {
-                  await github.rest.issues.createComment({
-                    owner,
-                    repo,
-                    issue_number: prNumber,
-                    body: `🍴 **Fork PR Detected**\n\nThis pull request originates from a forked repository (\`${headRepoFullName}\`). For security reasons, pull requests from external forks cannot be automatically merged.\n\n**Why?** Auto-merge could allow unreviewed code changes to bypass certain security checks. To maintain repository security, maintainers must manually review and merge fork PRs.\n\n**Next Steps:** A maintainer will review this PR and merge it if it meets all requirements. Thank you for your contribution! 🙏`
-                  });
-                  console.log('   💬 Posted security policy comment to PR');
+                  console.log('   ℹ️  Comment posting skipped for fork PR (handled by fork PR workflow)');
                 }
 
                 core.setOutput('action', 'skip-fork');

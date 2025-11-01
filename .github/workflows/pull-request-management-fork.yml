@@ -97,7 +97,7 @@ jobs:
       - name: 🔍 Fork detection with null checks
         id: detection
         env:
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo && github.event.pull_request.head.repo.full_name || '' }}
           BASE_REPO: ${{ github.repository }}
         run: |
           echo "════════════════════════════════════════════════════════════════"
@@ -400,7 +400,7 @@ jobs:
           PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_ACTION: ${{ github.event.action }}
           IS_FORK: ${{ needs.detect-fork.outputs.is-fork }}
-          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR_HEAD_REPO: ${{ github.event.pull_request.head.repo && github.event.pull_request.head.repo.full_name || '' }}
           BASE_REPO: ${{ github.repository }}
         run: |
           echo "# 🔧 Fork PR Management Summary" >> $GITHUB_STEP_SUMMARY
