@@ -88,6 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write # Required: Update PR status and enable auto-merge
+      issues: write # Required: Add labels and create comments
     outputs:
       action-taken: ${{ steps.process.outputs.action }}
       pr-number: ${{ github.event.pull_request.number }}

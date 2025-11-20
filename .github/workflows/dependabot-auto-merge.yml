@@ -202,14 +202,14 @@ jobs:
           echo "  Title: $PR_TITLE"
 
           # Using environment variables to prevent script injection
-          if [[ "$PR_LABELS" == *"security"* ]]; then
+          if [[ "${PR_LABELS,,}" == *"security"* ]]; then
             echo "  ✅ MATCH: 'security' found in PR labels"
             echo "is_security=true" >> $GITHUB_OUTPUT
             echo "════════════════════════════════════════════════════════════════"
             echo "🎯 RESULT: Security update detected (via labels)"
             echo "════════════════════════════════════════════════════════════════"
             exit 0
-          elif [[ "$PR_TITLE" == *"security"* ]] || [[ "$PR_TITLE" == *"[Security]"* ]]; then
+          elif [[ "${PR_TITLE,,}" == *"security"* ]]; then
             echo "  ✅ MATCH: Security keyword found in PR title"
             echo "is_security=true" >> $GITHUB_OUTPUT
             echo "════════════════════════════════════════════════════════════════"
@@ -224,14 +224,14 @@ jobs:
           echo ""
           echo "📄 Check 2: Scanning PR body for security indicators..."
 
-          if [[ "$PR_BODY" == *"security"* ]]; then
+          if [[ "${PR_BODY,,}" == *"security"* ]]; then
             echo "  ✅ MATCH: 'security' found in PR body"
             echo "is_security=true" >> $GITHUB_OUTPUT
             echo "════════════════════════════════════════════════════════════════"
             echo "🎯 RESULT: Security update detected (via PR body - 'security')"
             echo "════════════════════════════════════════════════════════════════"
             exit 0
-          elif [[ "$PR_BODY" == *"vulnerability"* ]]; then
+          elif [[ "${PR_BODY,,}" == *"vulnerability"* ]]; then
             echo "  ✅ MATCH: 'vulnerability' found in PR body"
             echo "is_security=true" >> $GITHUB_OUTPUT
             echo "════════════════════════════════════════════════════════════════"
@@ -287,6 +287,7 @@ jobs:
             echo "════════════════════════════════════════════════════════════════"
             echo "🎯 RESULT: Security update detected (via GitHub Advisories)"
             echo "════════════════════════════════════════════════════════════════"
+            exit 0
           else
             echo "  ❌ NO MATCH: No vulnerabilities found in GitHub Advisories"
             echo "is_security=false" >> $GITHUB_OUTPUT
