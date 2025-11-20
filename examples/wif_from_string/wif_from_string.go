@@ -4,9 +4,8 @@ package main
 import (
 	"log"
 
-	"github.com/libsv/go-bk/wif"
-
 	"github.com/bitcoinschema/go-bitcoin/v2"
+	"github.com/libsv/go-bk/wif"
 )
 
 func main() {
