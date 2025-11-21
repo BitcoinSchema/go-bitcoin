@@ -61,7 +61,7 @@ jobs:
       # Checkout code (full checkout to ensure local actions are available)
       # --------------------------------------------------------------------
       - name: 📥 Checkout code
-        uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
+        uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
           fetch-depth: 0 # Fetch full history to enable file change detection for all commit ranges
 
@@ -572,7 +572,7 @@ jobs:
           echo "📂 ~/.cache/go-pre-commit contents:"
           if [[ -d "$HOME/.cache/go-pre-commit" ]]; then
             echo "  Directory exists"
-            find "$HOME/.cache/go-pre-commit" -type f -name "golangci-lint" -o -name "gofumpt" -o -name "gitleaks" -o -name "goimports" 2>/dev/null || echo "  No tools found"
+            find "$HOME/.cache/go-pre-commit" -type f \( -name "golangci-lint" -o -name "gofumpt" -o -name "gitleaks" -o -name "goimports" \) 2>/dev/null || echo "  No tools found"
           else
             echo "  ❌ Directory does not exist"
           fi
@@ -744,11 +744,12 @@ jobs:
             echo "  ❌ Directory does not exist"
           fi
           echo ""
-          echo "📂 Searching entire home directory for tool binaries:"
-          echo "  (This may take a moment...)"
+          echo "📂 Searching common tool locations for binaries:"
+          echo "  (Checking: GOPATH/bin, .local/bin, .cache, bin)"
           for tool in golangci-lint gofumpt gitleaks goimports; do
             echo "  🔍 Searching for $tool:"
-            find "$HOME" -type f -name "$tool" 2>/dev/null | head -5 | sed 's/^/    /' || echo "    Not found"
+            find "$HOME/go/bin" "$HOME/.local/bin" "$HOME/.cache" "$HOME/bin" \
+              -maxdepth 3 -type f -name "$tool" 2>/dev/null | head -5 | sed 's/^/    /' || echo "    Not found"
           done
           echo "==========================================================="
 
@@ -757,10 +758,10 @@ jobs:
       # Primary tool: gitleaks (installed as binary by go-pre-commit)
       # Note: golangci-lint, gofumpt, goimports are not installed as binaries
       #       (managed by MAGE-X or invoked via go run by go-pre-commit)
-      # Runs on every successful execution to ensure cache is always complete and up-to-date
+      # Only cache when tools cache was not hit - tools won't have changed if restored from cache
       # --------------------------------------------------------------------
       - name: 💾 Cache go-pre-commit tools after installation
-        if: steps.install-pre-commit.outputs.install_success == 'true' || steps.install-pre-commit-cached.outputs.install_success == 'true'
+        if: steps.go-pre-commit-tools-cache.outputs.cache-hit != 'true' && (steps.install-pre-commit.outputs.install_success == 'true' || steps.install-pre-commit-cached.outputs.install_success == 'true')
         run: |
           set -euo pipefail  # Enable strict error handling
           echo "💾 Caching go-pre-commit tools..."
