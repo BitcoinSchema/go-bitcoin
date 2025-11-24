@@ -47,8 +47,12 @@ inputs:
     required: false
     default: "false"
   go-sum-file:
-    description: "Path to go.sum file for cache key generation"
+    description: "Path to go.sum file for cache key generation (single module mode)"
     required: true
+  enable-multi-module:
+    description: "Enable multi-module mode - uses hash of all go.sum files for cache keys"
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
@@ -91,6 +95,7 @@ runs:
         go-primary-version: ${{ inputs.go-primary-version }}
         go-secondary-version: ${{ inputs.go-secondary-version }}
         go-sum-file: ${{ inputs.go-sum-file }}
+        enable-multi-module: ${{ inputs.enable-multi-module }}
 
     # ────────────────────────────────────────────────────────────────────────────
     # Setup MAGE-X (required for magex commands in cache warming)
@@ -136,6 +141,25 @@ runs:
         echo "module-dir=$GO_MODULE_DIR" >> $GITHUB_OUTPUT
 
     # --------------------------------------------------------------------
+    # Compute cache keys for saving (must match restore keys)
+    # --------------------------------------------------------------------
+    - name: 🔑 Compute cache keys for saving
+      id: cache-keys
+      shell: bash
+      run: |
+        if [ "${{ inputs.enable-multi-module }}" == "true" ]; then
+          echo "📦 Multi-module mode - cache keys will use hash of all go.sum files"
+          HASH="${{ hashFiles('**/go.sum') }}"
+          echo "module-key=${{ inputs.matrix-os }}-gomod-multi-${HASH}" >> $GITHUB_OUTPUT
+          echo "build-key=${{ inputs.matrix-os }}-gobuild-multi-${{ inputs.go-version }}-${HASH}" >> $GITHUB_OUTPUT
+        else
+          echo "📁 Single module mode - cache keys will use hash of ${{ inputs.go-sum-file }}"
+          HASH="${{ hashFiles(inputs.go-sum-file) }}"
+          echo "module-key=${{ inputs.matrix-os }}-gomod-${HASH}" >> $GITHUB_OUTPUT
+          echo "build-key=${{ inputs.matrix-os }}-gobuild-${{ inputs.go-version }}-${HASH}" >> $GITHUB_OUTPUT
+        fi
+
+    # --------------------------------------------------------------------
     # Ensure go.sum exists and download modules
     # --------------------------------------------------------------------
     - name: 📋 Ensure go.sum exists
@@ -147,7 +171,11 @@ runs:
         echo "🔍 Checking for go.sum file at: $GO_SUM_FILE"
         if [ ! -f "$GO_SUM_FILE" ]; then
           echo "⚠️ Go.sum not found at $GO_SUM_FILE, running 'magex tidy' to generate it."
-          if [ -n "$GO_MODULE_DIR" ]; then
+          if [ "$ENABLE_MULTI_MODULE_TESTING" == "true" ]; then
+            echo "🔧 Multi-module mode - running magex tidy from repository root"
+            echo "📦 magex will discover all Go modules"
+            magex tidy
+          elif [ -n "$GO_MODULE_DIR" ]; then
             echo "🔧 Running magex tidy from directory: $GO_MODULE_DIR"
             (cd "$GO_MODULE_DIR" && magex tidy)
           else
@@ -172,6 +200,18 @@ runs:
         echo "✅ Cache directories created successfully"
 
     # ────────────────────────────────────────────────────────────────────────────
+    # Full checkout for module download (only when module cache misses)
+    # The initial sparse checkout only includes go.mod/go.sum for cache key generation.
+    # Module download requires full checkout because go.mod has replace directives
+    # pointing to local sibling modules (e.g., ../functions/pkg/config).
+    # ────────────────────────────────────────────────────────────────────────────
+    - name: 📥 Full checkout for module download (module cache miss)
+      if: steps.setup-go.outputs.module-cache-hit != 'true'
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      with:
+        persist-credentials: false
+
+    # ────────────────────────────────────────────────────────────────────────────
     # Download modules when module cache missed
     # ────────────────────────────────────────────────────────────────────────────
     - name: ⬇️ Download modules (module cache miss)
@@ -186,7 +226,11 @@ runs:
         echo "=== Downloading Dependencies ==="
         echo "============================================================"
 
-        if [ -n "$GO_MODULE_DIR" ]; then
+        if [ "$ENABLE_MULTI_MODULE_TESTING" == "true" ]; then
+          echo "🔧 Multi-module mode - running magex deps:download from repository root"
+          echo "📦 magex will discover all Go modules and download dependencies"
+          magex deps:download
+        elif [ -n "$GO_MODULE_DIR" ]; then
           echo "🔧 Running magex deps:download from directory: $GO_MODULE_DIR"
           (cd "$GO_MODULE_DIR" && magex deps:download)
         else
@@ -194,6 +238,17 @@ runs:
           magex deps:download
         fi
         echo "✅ Modules downloaded successfully"
+
+    # ────────────────────────────────────────────────────────────────────────────
+    # Full checkout for build cache warming (only when module cache hit but build missed)
+    # If module cache missed, we already did a full checkout above.
+    # This handles the case where module cache was warm but build cache needs warming.
+    # ────────────────────────────────────────────────────────────────────────────
+    - name: 📥 Full checkout for build warming (module hit, build miss)
+      if: steps.setup-go.outputs.module-cache-hit == 'true' && steps.setup-go.outputs.build-cache-hit != 'true'
+      uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
+      with:
+        persist-credentials: false
 
     # ────────────────────────────────────────────────────────────────────────────
     # Warm build cache when build cache missed
@@ -214,7 +269,15 @@ runs:
         PARALLEL_JOBS="${MAGE_X_PARALLEL:-1}"
         echo "🔧 Using parallelism level: $PARALLEL_JOBS (from MAGE_X_PARALLEL env var)"
 
-        if [ -n "$GO_MODULE_DIR" ]; then
+        if [ "$ENABLE_MULTI_MODULE_TESTING" == "true" ]; then
+          echo "🔧 Multi-module mode - running build commands from repository root"
+          echo "📦 magex will discover all Go modules and pre-build packages"
+          # Use configured parallelism to avoid OOM on GitHub Actions runners
+          magex build:prebuild p="$PARALLEL_JOBS" strategy="${MAGE_X_BUILD_STRATEGY:-smart}" batch_size="${MAGE_X_BUILD_BATCH_SIZE:-20}" batch_delay="${MAGE_X_BUILD_BATCH_DELAY_MS:-0}" exclude="${MAGE_X_BUILD_EXCLUDE_PATTERN:-}"
+
+          echo "🏗️ Building stdlib for host platform..."
+          magex install:stdlib
+        elif [ -n "$GO_MODULE_DIR" ]; then
           echo "🔧 Running build commands from directory: $GO_MODULE_DIR"
           # Use configured parallelism to avoid OOM on GitHub Actions runners
           (cd "$GO_MODULE_DIR" && magex build:prebuild p="$PARALLEL_JOBS" strategy="${MAGE_X_BUILD_STRATEGY:-smart}" batch_size="${MAGE_X_BUILD_BATCH_SIZE:-20}" batch_delay="${MAGE_X_BUILD_BATCH_DELAY_MS:-0}" exclude="${MAGE_X_BUILD_EXCLUDE_PATTERN:-}")
@@ -242,7 +305,7 @@ runs:
         path: |
           ~/.cache/go-build
           ~/.cache/go-build/test
-        key: ${{ inputs.matrix-os }}-gobuild-${{ inputs.go-version }}-${{ hashFiles(inputs.go-sum-file) }}
+        key: ${{ steps.cache-keys.outputs.build-key }}
 
     # ────────────────────────────────────────────────────────────────────────────
     # Save the Go module cache we just populated
@@ -252,7 +315,7 @@ runs:
       uses: actions/cache/save@5a3ec84eff668545956fd18022155c47e93e2684 # v4.0.2
       with:
         path: ~/go/pkg/mod
-        key: ${{ inputs.matrix-os }}-gomod-${{ hashFiles(inputs.go-sum-file) }}
+        key: ${{ steps.cache-keys.outputs.module-key }}
 
     # --------------------------------------------------------------------
     # Track cache performance (no outputs - use artifacts instead)
