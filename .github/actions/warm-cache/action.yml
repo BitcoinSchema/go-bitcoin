@@ -160,9 +160,10 @@ runs:
         fi
 
     # --------------------------------------------------------------------
-    # Ensure go.sum exists and download modules
+    # Ensure go.sum exists (single-module mode only)
     # --------------------------------------------------------------------
-    - name: 📋 Ensure go.sum exists
+    - name: 📋 Ensure go.sum exists (single-module)
+      if: ${{ inputs.enable-multi-module != 'true' }}
       shell: bash
       run: |
         GO_SUM_FILE="${{ inputs.go-sum-file }}"
@@ -171,11 +172,7 @@ runs:
         echo "🔍 Checking for go.sum file at: $GO_SUM_FILE"
         if [ ! -f "$GO_SUM_FILE" ]; then
           echo "⚠️ Go.sum not found at $GO_SUM_FILE, running 'magex tidy' to generate it."
-          if [ "$ENABLE_MULTI_MODULE_TESTING" == "true" ]; then
-            echo "🔧 Multi-module mode - running magex tidy from repository root"
-            echo "📦 magex will discover all Go modules"
-            magex tidy
-          elif [ -n "$GO_MODULE_DIR" ]; then
+          if [ -n "$GO_MODULE_DIR" ]; then
             echo "🔧 Running magex tidy from directory: $GO_MODULE_DIR"
             (cd "$GO_MODULE_DIR" && magex tidy)
           else
@@ -186,6 +183,19 @@ runs:
         else
           echo "✅ Go.sum already exists at $GO_SUM_FILE"
         fi
+
+    # --------------------------------------------------------------------
+    # Ensure all modules are tidy (multi-module mode only)
+    # --------------------------------------------------------------------
+    - name: 📋 Ensure modules are tidy (multi-module)
+      if: ${{ inputs.enable-multi-module == 'true' }}
+      shell: bash
+      run: |
+        echo "🔧 Multi-module mode - running magex tidy from repository root"
+        echo "📦 magex will discover all Go modules in the workspace"
+        echo "ℹ️  No root go.sum validation (go.work workspaces don't require root go.sum)"
+        magex tidy
+        echo "✅ All modules tidied successfully"
 
     # ────────────────────────────────────────────────────────────────────────────
     # Ensure cache directories exist
