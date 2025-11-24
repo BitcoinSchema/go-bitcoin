@@ -41,8 +41,12 @@ inputs:
     description: "Secondary Go version for toolchain comparison"
     required: true
   go-sum-file:
-    description: "Path to go.sum file for cache key generation"
+    description: "Path to go.sum file for cache key generation (single module mode)"
     required: true
+  enable-multi-module:
+    description: "Enable multi-module mode - uses hash of all go.sum files for cache keys"
+    required: false
+    default: "false"
 
 outputs:
   go-version-actual:
@@ -161,6 +165,28 @@ runs:
         echo "============================================================"
 
     # --------------------------------------------------------------------
+    # Compute cache keys based on multi-module mode
+    # --------------------------------------------------------------------
+    - name: 🔑 Compute cache keys
+      id: cache-keys
+      shell: bash
+      run: |
+        if [ "${{ inputs.enable-multi-module }}" == "true" ]; then
+          echo "📦 Multi-module mode enabled - using hash of all go.sum files"
+          HASH="${{ hashFiles('**/go.sum') }}"
+          echo "module-key=${{ inputs.matrix-os }}-gomod-multi-${HASH}" >> $GITHUB_OUTPUT
+          echo "build-key=${{ inputs.matrix-os }}-gobuild-multi-${{ inputs.go-version }}-${HASH}" >> $GITHUB_OUTPUT
+          echo "mode=multi" >> $GITHUB_OUTPUT
+        else
+          echo "📁 Single module mode - using hash of ${{ inputs.go-sum-file }}"
+          HASH="${{ hashFiles(inputs.go-sum-file) }}"
+          echo "module-key=${{ inputs.matrix-os }}-gomod-${HASH}" >> $GITHUB_OUTPUT
+          echo "build-key=${{ inputs.matrix-os }}-gobuild-${{ inputs.go-version }}-${HASH}" >> $GITHUB_OUTPUT
+          echo "mode=single" >> $GITHUB_OUTPUT
+        fi
+        echo "🔑 Cache keys computed successfully"
+
+    # --------------------------------------------------------------------
     # Restore Go module cache (shared across versions)
     # --------------------------------------------------------------------
     - name: 💾 Restore Go module cache
@@ -168,7 +194,7 @@ runs:
       uses: actions/cache/restore@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
         path: ~/go/pkg/mod
-        key: ${{ inputs.matrix-os }}-gomod-${{ hashFiles(inputs.go-sum-file) }}
+        key: ${{ steps.cache-keys.outputs.module-key }}
 
     # --------------------------------------------------------------------
     # DEBUG: Build cache key components
@@ -227,7 +253,7 @@ runs:
         path: |
           ~/.cache/go-build
           ~/.cache/go-build/test
-        key: ${{ inputs.matrix-os }}-gobuild-${{ inputs.go-version }}-${{ hashFiles(inputs.go-sum-file) }}
+        key: ${{ steps.cache-keys.outputs.build-key }}
 
     # --------------------------------------------------------------------
     # DEBUG: Cache restoration summary
