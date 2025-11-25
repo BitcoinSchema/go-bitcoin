@@ -186,16 +186,49 @@ runs:
 
     # --------------------------------------------------------------------
     # Ensure all modules are tidy (multi-module mode only)
+    # Handles both go.work workspaces and single-module repos with multi-module testing enabled
     # --------------------------------------------------------------------
     - name: 📋 Ensure modules are tidy (multi-module)
       if: ${{ inputs.enable-multi-module == 'true' }}
       shell: bash
       run: |
-        echo "🔧 Multi-module mode - running magex tidy from repository root"
-        echo "📦 magex will discover all Go modules in the workspace"
-        echo "ℹ️  No root go.sum validation (go.work workspaces don't require root go.sum)"
-        magex tidy
-        echo "✅ All modules tidied successfully"
+        echo "🔧 Multi-module mode - detecting workspace configuration"
+
+        # Check if go.work exists (workspace mode)
+        if [ -f "go.work" ]; then
+          echo "📦 go.work workspace detected - syncing and tidying all modules"
+          echo "ℹ️  No root go.sum validation required (go.work manages workspace modules)"
+
+          # Sync the workspace
+          echo "🔄 Running 'go work sync' to synchronize workspace modules..."
+          go work sync
+
+          # Find and tidy each module in the workspace
+          echo "🔍 Finding all modules in workspace..."
+          tidy_failed=0
+          while read -r module_dir; do
+            if [ -f "$module_dir/go.mod" ]; then
+              echo "🔧 Tidying module: $module_dir"
+              if ! (cd "$module_dir" && go mod tidy); then
+                echo "❌ Failed to tidy module: $module_dir"
+                tidy_failed=1
+              fi
+            fi
+          done < <(go work edit -json | jq -r '(.Use // [])[].DiskPath')
+
+          if [ "$tidy_failed" -ne 0 ]; then
+            echo "❌ One or more modules failed to tidy"
+            exit 1
+          fi
+
+          echo "✅ All workspace modules synced and tidied successfully"
+        else
+          # No go.work - single module with multi-module testing enabled
+          echo "📁 No go.work file - running single module tidy from repository root"
+          echo "ℹ️  Multi-module testing mode without workspace (legacy behavior)"
+          magex tidy
+          echo "✅ Module tidied successfully"
+        fi
 
     # ────────────────────────────────────────────────────────────────────────────
     # Ensure cache directories exist
