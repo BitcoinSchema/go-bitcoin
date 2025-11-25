@@ -192,6 +192,7 @@ runs:
       if: ${{ inputs.enable-multi-module == 'true' }}
       shell: bash
       run: |
+        set -euo pipefail
         echo "🔧 Multi-module mode - detecting workspace configuration"
 
         # Check if go.work exists (workspace mode)
@@ -205,16 +206,26 @@ runs:
 
           # Find and tidy each module in the workspace
           echo "🔍 Finding all modules in workspace..."
+          module_paths=$(go work edit -json | jq -r '(.Use // [])[].DiskPath')
+          if [ -z "$module_paths" ]; then
+            echo "⚠️ Warning: No modules found in workspace"
+          fi
+
           tidy_failed=0
           while read -r module_dir; do
-            if [ -f "$module_dir/go.mod" ]; then
-              echo "🔧 Tidying module: $module_dir"
-              if ! (cd "$module_dir" && go mod tidy); then
-                echo "❌ Failed to tidy module: $module_dir"
-                tidy_failed=1
-              fi
+            # Skip empty lines
+            [ -n "$module_dir" ] || continue
+
+            if [ ! -f "$module_dir/go.mod" ]; then
+              echo "❌ Module directory $module_dir is missing go.mod file"
+              exit 1
             fi
-          done < <(go work edit -json | jq -r '(.Use // [])[].DiskPath')
+            echo "🔧 Tidying module: $module_dir"
+            if ! (cd "$module_dir" && go mod tidy); then
+              echo "❌ Failed to tidy module: $module_dir"
+              tidy_failed=1
+            fi
+          done <<< "$module_paths"
 
           if [ "$tidy_failed" -ne 0 ]; then
             echo "❌ One or more modules failed to tidy"
