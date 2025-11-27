@@ -306,6 +306,7 @@ jobs:
           sparse-checkout: |
             .mage.yaml
             go.mod
+            go.work
             ${{ env.GO_SUM_FILE }}
             .github/workflows/fortress.yml
             .github/actions/configure-redis
