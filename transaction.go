@@ -368,5 +368,5 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 	}
 
 	// Return the total fee as an uint (easier to use with satoshi values)
-	return uint64(totalFee) //nolint:gosec // totalFee is checked to be non-negative above
+	return uint64(totalFee)
 }
