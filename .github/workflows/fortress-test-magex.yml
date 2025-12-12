@@ -214,6 +214,7 @@ jobs:
       - name: 📊 Collect Mage Metrics
         id: mage-metrics
         run: |
+          set -euo pipefail
           echo "📋 Running magex metrics:mage..."
 
           # Run magex metrics:mage and capture output
@@ -232,7 +233,7 @@ jobs:
           echo "total-functions=$TOTAL_FUNCTIONS" >> $GITHUB_OUTPUT
 
           # Count number of mage files (lines in table excluding header)
-          FILE_COUNT=$(echo "$METRICS_OUTPUT" | grep -E "^\| magefiles/" | wc -l | tr -d ' ')
+          FILE_COUNT=$(echo "$METRICS_OUTPUT" | { grep -E "^\| magefiles/" || true; } | wc -l | tr -d ' ')
           echo "file-count=$FILE_COUNT" >> $GITHUB_OUTPUT
 
           echo ""
