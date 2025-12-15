@@ -61,9 +61,20 @@ copy_ci_artifact() {
   fi
 
   # Extract artifact directory name for unique naming
-  # Path structure: *-artifacts/ARTIFACT_NAME/.mage-x/ci-results.jsonl
   local parent_dir=$(dirname "$file")
-  local artifact_dir=$(dirname "$parent_dir" 2>/dev/null | xargs basename 2>/dev/null || basename "$parent_dir")
+  local parent_basename=$(basename "$parent_dir")
+  local artifact_dir
+
+  # Detect which structure we have by checking parent directory
+  # Expected: *-artifacts/ARTIFACT_NAME/.mage-x/ci-results.jsonl
+  if [[ "$parent_basename" == ".mage-x" ]]; then
+    # Expected structure: use grandparent as artifact dir
+    artifact_dir=$(dirname "$parent_dir" | xargs basename)
+  else
+    # Fallback: parent is the artifact dir (not grandparent)
+    echo "  Warning: Unexpected artifact structure for: $file" >&2
+    artifact_dir="$parent_basename"
+  fi
   local filename=$(basename "$file")
   local dest="${prefix}-${artifact_dir}-${filename}"
 
