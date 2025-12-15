@@ -277,7 +277,10 @@ jobs:
           # When running from GO_MODULE_DIR, results are created there
           if [ -n "$GO_MODULE_DIR" ] && [ -f "$GO_MODULE_DIR/.mage-x/ci-results.jsonl" ]; then
             mkdir -p .mage-x
-            cp "$GO_MODULE_DIR/.mage-x/ci-results.jsonl" .mage-x/
+            if ! cp "$GO_MODULE_DIR/.mage-x/ci-results.jsonl" .mage-x/; then
+              echo "❌ Failed to copy CI results from $GO_MODULE_DIR/.mage-x/ci-results.jsonl to .mage-x/"
+              exit 1
+            fi
             echo "✅ Copied CI results from module directory: $GO_MODULE_DIR"
           elif [ -f ".mage-x/ci-results.jsonl" ]; then
             echo "✅ CI results already in expected location"
