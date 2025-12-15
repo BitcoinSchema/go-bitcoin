@@ -130,6 +130,15 @@ jobs:
         run: |
           echo "🗂️ Flattening downloaded artifacts..."
 
+          # Source shared helper functions for artifact processing
+          source .github/scripts/parse-test-label.sh || { echo "❌ Failed to source parse-test-label.sh"; exit 1; }
+
+          # Verify critical function is available
+          if ! type copy_ci_artifact &>/dev/null; then
+            echo "❌ Error: copy_ci_artifact function not found after sourcing"
+            exit 1
+          fi
+
           # Process stats artifacts (bench-stats, cache-stats JSON files)
           if [ -d "./artifacts/" ]; then
             find ./artifacts/ -name "*.json" -type f | while read -r file; do
@@ -147,14 +156,7 @@ jobs:
           if [ -d "./ci-artifacts/" ]; then
             echo "📋 Processing unit test CI results..."
             find ./ci-artifacts/ -name "*.jsonl" -type f | while read -r file; do
-              # Extract artifact directory name for unique naming
-              # Path structure: ci-artifacts/ARTIFACT_NAME/.mage-x/ci-results.jsonl
-              parent_dir=$(dirname "$file")
-              artifact_dir=$(dirname "$parent_dir" 2>/dev/null | xargs basename 2>/dev/null || basename "$parent_dir")
-              filename=$(basename "$file")
-              dest="ci-${artifact_dir}-${filename}"
-              echo "Copying CI results $file to ./$dest"
-              cp "$file" "./$dest"
+              copy_ci_artifact "$file" "ci"
             done
           fi
 
@@ -162,14 +164,7 @@ jobs:
           if [ -d "./test-artifacts/" ]; then
             echo "📋 Processing fuzz test CI results..."
             find ./test-artifacts/ -name "*.jsonl" -type f | while read -r file; do
-              # Extract artifact directory name for unique naming
-              # Path structure: test-artifacts/ARTIFACT_NAME/.mage-x/ci-results-fuzz.jsonl
-              parent_dir=$(dirname "$file")
-              artifact_dir=$(dirname "$parent_dir" 2>/dev/null | xargs basename 2>/dev/null || basename "$parent_dir")
-              filename=$(basename "$file")
-              dest="ci-${artifact_dir}-${filename}"
-              echo "Copying fuzz CI results $file to ./$dest"
-              cp "$file" "./$dest"
+              copy_ci_artifact "$file" "ci"
             done
           fi
 
@@ -191,7 +186,11 @@ jobs:
         id: process-tests
         run: |
           # Source shared helper function for generating test labels
-          source .github/scripts/parse-test-label.sh
+          source .github/scripts/parse-test-label.sh || { echo "❌ Failed to source parse-test-label.sh"; exit 1; }
+
+          # Enable nullglob so "for f in *.jsonl" loops safely skip when no files match
+          # (prevents iterating with literal pattern string "ci-*.jsonl")
+          shopt -s nullglob
 
           # Initialize totals for summary
           TOTAL_TESTS=0
@@ -291,7 +290,7 @@ jobs:
               FAILURE_COUNT=0
               for jsonl_file in ci-*.jsonl; do
                 if [ -f "$jsonl_file" ] && [[ $FAILURE_COUNT -lt 20 ]]; then
-                  grep '"type":"failure"' "$jsonl_file" 2>/dev/null | while read -r line; do
+                  while read -r line; do
                     if [[ $FAILURE_COUNT -ge 20 ]]; then
                       break
                     fi
@@ -300,14 +299,14 @@ jobs:
                     PKG=$(echo "$line" | jq -r '.failure.package // "unknown"' | sed 's|.*/||')
                     ERROR=$(echo "$line" | jq -r '.failure.error // ""' | head -c 100 | tr '\n' ' ')
 
-                    # Truncate error message for table display
+                    # Truncate error message for table display (max 80 chars: 77 + "...")
                     if [[ ${#ERROR} -gt 80 ]]; then
                       ERROR="${ERROR:0:77}..."
                     fi
 
                     echo "| \`$TEST\` | $PKG | ${ERROR:-_no message_} |"
                     FAILURE_COUNT=$((FAILURE_COUNT + 1))
-                  done >> tests-section.md || true
+                  done < <(grep '"type":"failure"' "$jsonl_file" 2>/dev/null) >> tests-section.md || true
                 fi
               done
 

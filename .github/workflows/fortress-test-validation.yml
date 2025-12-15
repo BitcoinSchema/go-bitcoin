@@ -115,15 +115,29 @@ jobs:
           find ci-results/ -name "ci-results.jsonl" -o -name "*.jsonl" 2>/dev/null | head -20
 
           # Process each CI results file
-          # Note: Using find instead of compgen -G because ** glob requires shopt -s globstar
+          # Note: Using find for recursive directory traversal to locate all matching files
           if find ci-results/ -name "*.jsonl" 2>/dev/null | grep -q .; then
             echo "✅ Found CI results JSONL files"
 
             for jsonl_file in $(find ci-results/ -name "*.jsonl" 2>/dev/null); do
-              # Extract artifact directory name (grandparent of JSONL file)
-              # Path: ci-results/ARTIFACT_NAME/.mage-x/ci-results.jsonl
+              # Extract artifact directory name from JSONL file path
+              # Supported directory structures:
+              #   1. Expected: ci-results/ARTIFACT_NAME/.mage-x/ci-results.jsonl
+              #      → Use grandparent (skip .mage-x) to get ARTIFACT_NAME
+              #   2. Fallback: ci-results/ARTIFACT_NAME/ci-results.jsonl
+              #      → Use parent directory as ARTIFACT_NAME
               ARTIFACT_DIR=$(dirname "$(dirname "$jsonl_file")" | xargs basename)
               JSONL_NAME=$(basename "$jsonl_file")
+
+              # Detect which structure we have by checking parent directory
+              PARENT_DIR=$(basename "$(dirname "$jsonl_file")")
+              if [[ "$PARENT_DIR" != ".mage-x" ]]; then
+                echo "  Warning: Unexpected artifact structure for: $jsonl_file"
+                echo "  Expected: ci-results/ARTIFACT_NAME/.mage-x/ci-results.jsonl"
+                # Fallback: parent is the artifact dir (not grandparent)
+                ARTIFACT_DIR=$(basename "$(dirname "$jsonl_file")")
+              fi
+
               TEST_LABEL=$(parse_test_label "$ARTIFACT_DIR" "$JSONL_NAME")
 
               echo ""
@@ -287,10 +301,22 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
 
             for jsonl_file in $(find ci-results/ -name "*.jsonl" 2>/dev/null); do
-              # Extract artifact directory name (grandparent of JSONL file)
-              # Path: ci-results/ARTIFACT_NAME/.mage-x/ci-results.jsonl
+              # Extract artifact directory name from JSONL file path
+              # Supported directory structures:
+              #   1. Expected: ci-results/ARTIFACT_NAME/.mage-x/ci-results.jsonl
+              #      → Use grandparent (skip .mage-x) to get ARTIFACT_NAME
+              #   2. Fallback: ci-results/ARTIFACT_NAME/ci-results.jsonl
+              #      → Use parent directory as ARTIFACT_NAME
               ARTIFACT_DIR=$(dirname "$(dirname "$jsonl_file")" | xargs basename)
               JSONL_NAME=$(basename "$jsonl_file")
+
+              # Detect which structure we have by checking parent directory
+              PARENT_DIR=$(basename "$(dirname "$jsonl_file")")
+              if [[ "$PARENT_DIR" != ".mage-x" ]]; then
+                # Fallback: parent is the artifact dir (not grandparent)
+                ARTIFACT_DIR=$(basename "$(dirname "$jsonl_file")")
+              fi
+
               TEST_LABEL=$(parse_test_label "$ARTIFACT_DIR" "$JSONL_NAME")
 
               SUMMARY=$(grep '"type":"summary"' "$jsonl_file" 2>/dev/null | head -1 || echo "")
@@ -319,7 +345,7 @@ jobs:
 
             FAILURE_COUNT=0
             for jsonl_file in $(find ci-results/ -name "*.jsonl" 2>/dev/null); do
-              grep '"type":"failure"' "$jsonl_file" 2>/dev/null | while read -r line; do
+              while read -r line; do
                 # Limit total failures shown
                 FAILURE_COUNT=$((FAILURE_COUNT + 1))
                 if [[ $FAILURE_COUNT -gt 20 ]]; then
@@ -379,7 +405,7 @@ jobs:
                 echo "" >> $GITHUB_STEP_SUMMARY
                 echo "</details>" >> $GITHUB_STEP_SUMMARY
                 echo "" >> $GITHUB_STEP_SUMMARY
-              done
+              done < <(grep '"type":"failure"' "$jsonl_file" 2>/dev/null)
             done
           fi
 

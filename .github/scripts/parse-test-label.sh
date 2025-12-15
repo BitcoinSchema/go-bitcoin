@@ -46,3 +46,30 @@ parse_test_label() {
     echo "$test_type"
   fi
 }
+
+# Copy CI artifact file with artifact directory prefix for unique naming
+# Usage: copy_ci_artifact "source_file" ["ci"|"fuzz"]
+# Example: copy_ci_artifact "/path/to/ci-artifacts/artifact-name/.mage-x/ci-results.jsonl" "ci"
+copy_ci_artifact() {
+  local file="$1"
+  local prefix="${2:-ci}"
+
+  # Validate input file exists
+  if [[ ! -f "$file" ]]; then
+    echo "⚠️ Warning: File not found: $file" >&2
+    return 1
+  fi
+
+  # Extract artifact directory name for unique naming
+  # Path structure: *-artifacts/ARTIFACT_NAME/.mage-x/ci-results.jsonl
+  local parent_dir=$(dirname "$file")
+  local artifact_dir=$(dirname "$parent_dir" 2>/dev/null | xargs basename 2>/dev/null || basename "$parent_dir")
+  local filename=$(basename "$file")
+  local dest="${prefix}-${artifact_dir}-${filename}"
+
+  echo "Copying $prefix results $file to ./$dest"
+  if ! cp "$file" "./$dest"; then
+    echo "⚠️ Warning: Failed to copy $file to $dest" >&2
+    return 1
+  fi
+}
