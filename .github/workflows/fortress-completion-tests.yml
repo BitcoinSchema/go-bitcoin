@@ -190,41 +190,8 @@ jobs:
       - name: 🧪 Process Test Statistics
         id: process-tests
         run: |
-          # Helper function to generate human-readable test labels from artifact names
-          parse_test_label() {
-            local artifact_name="$1"
-
-            # Determine test type
-            local test_type="Unit Tests"
-            if [[ "$artifact_name" == *fuzz* ]]; then
-              test_type="Fuzz Tests"
-            fi
-
-            # Extract OS from artifact name
-            local os_name=""
-            if [[ "$artifact_name" =~ ubuntu ]]; then
-              os_name="Ubuntu"
-            elif [[ "$artifact_name" =~ windows ]]; then
-              os_name="Windows"
-            elif [[ "$artifact_name" =~ macos ]]; then
-              os_name="macOS"
-            fi
-
-            # Extract Go version (pattern like "1.24.x" or "1.22")
-            local go_version=""
-            go_version=$(echo "$artifact_name" | grep -oE '[0-9]+\.[0-9]+(\.[x0-9]+)?' | tail -1 || echo "")
-
-            # Build label
-            if [[ -n "$os_name" && -n "$go_version" ]]; then
-              echo "$test_type ($os_name, Go $go_version)"
-            elif [[ -n "$os_name" ]]; then
-              echo "$test_type ($os_name)"
-            elif [[ -n "$go_version" ]]; then
-              echo "$test_type (Go $go_version)"
-            else
-              echo "$test_type"
-            fi
-          }
+          # Source shared helper function for generating test labels
+          source .github/scripts/parse-test-label.sh
 
           # Initialize totals for summary
           TOTAL_TESTS=0
