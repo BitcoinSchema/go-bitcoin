@@ -156,7 +156,7 @@ jobs:
           if [ -d "./ci-artifacts/" ]; then
             echo "📋 Processing unit test CI results..."
             find ./ci-artifacts/ -name "*.jsonl" -type f | while read -r file; do
-              copy_ci_artifact "$file" "ci"
+              copy_ci_artifact "$file" "ci" || true
             done
           fi
 
@@ -164,7 +164,7 @@ jobs:
           if [ -d "./test-artifacts/" ]; then
             echo "📋 Processing fuzz test CI results..."
             find ./test-artifacts/ -name "*.jsonl" -type f | while read -r file; do
-              copy_ci_artifact "$file" "ci"
+              copy_ci_artifact "$file" "ci" || true
             done
           fi
 
