@@ -37,8 +37,7 @@ GitHub label system for categorizing issues and PRs, including standard labels, 
 
 ### 🤖 AI Usage & Assistant Guidelines
 **[AI Compliance](ai-compliance.md)**
-Standards for using AI tools in development, including guidelines for AI-generated code, documentation, and
-review processes.
+Guide to AI assistant configuration files and where to find standards for AI-assisted development.
 
 <br><br>
 
@@ -61,4 +60,4 @@ Creating and maintaining GitHub Actions workflows with security, reliability, an
 ### 🏗️ Build & Project Setup
 
 **[MAGE-X Build Automation](mage-x.md)**
-Zero-boilerplate build automation system with 240+ built-in commands that replaces Makefiles. Includes installation, configuration, command reference, and migration guide.
+Zero-boilerplate build automation system with 150+ built-in commands that replaces Makefiles. Includes installation, configuration, command reference, and migration guide.
