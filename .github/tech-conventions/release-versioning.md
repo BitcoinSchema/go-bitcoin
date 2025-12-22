@@ -31,7 +31,7 @@ We follow **Semantic Versioning (✧ SemVer)**:
 
 | Step | Command                                   | Purpose                                                                                            |
 |------|-------------------------------------------|----------------------------------------------------------------------------------------------------|
-| 1    | `magex release:snaphot`                   | Build & upload a **snapshot** (pre‑release) for quick CI validation.                               |
+| 1    | `magex release:snapshot`                   | Build & upload a **snapshot** (pre‑release) for quick CI validation.                               |
 | 2    | `magex version:bump push=true bump=patch` | Create and push a signed Git tag. Triggers GitHub Actions to package the release                   |
 | 3    | GitHub Actions                            | CI runs `goreleaser release` on the tag; artifacts and changelog are published to GitHub Releases. |
 
