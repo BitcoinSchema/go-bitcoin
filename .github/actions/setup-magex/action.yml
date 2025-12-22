@@ -149,7 +149,7 @@ runs:
         TEMP_DIR=$(mktemp -d)
         cd "$TEMP_DIR"
 
-        if curl -fsSL "$DOWNLOAD_URL" -o mage-x.tar.gz; then
+        if curl -fsSL --retry 5 --retry-delay 10 --retry-all-errors -H "Authorization: token ${{ github.token }}" "$DOWNLOAD_URL" -o mage-x.tar.gz; then
           echo "✅ Download successful"
         else
           echo "❌ Download failed from $DOWNLOAD_URL"
