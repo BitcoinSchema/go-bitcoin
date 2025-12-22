@@ -289,6 +289,11 @@ jobs:
           echo "🔍 Running vulnerability analysis..."
           GO_MODULE_DIR="${{ env.GO_MODULE_DIR }}"
 
+          # Show CVE exclusions if configured
+          if [ -n "${MAGE_X_CVE_EXCLUDES:-}" ]; then
+            echo "🚫 CVE exclusions configured: $MAGE_X_CVE_EXCLUDES"
+          fi
+
           if [ "$ENABLE_MULTI_MODULE_TESTING" == "true" ]; then
             echo "🔧 Multi-module enabled - running magex deps:audit from repository root"
             echo "📦 magex will discover all Go modules"
@@ -318,6 +323,15 @@ jobs:
           echo "| **Result** | ✅ No vulnerabilities detected |" >> $GITHUB_STEP_SUMMARY
           echo "| **Version** | ${{ env.GOVULNCHECK_VERSION }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Show excluded vulnerabilities if configured
+          if [ -n "${MAGE_X_CVE_EXCLUDES:-}" ]; then
+            echo "### 🚫 Excluded Vulnerabilities" >> $GITHUB_STEP_SUMMARY
+            echo "The following vulnerabilities were excluded from the scan:" >> $GITHUB_STEP_SUMMARY
+            echo "\`${MAGE_X_CVE_EXCLUDES}\`" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+
           echo "🎯 **Analysis completed successfully with no security issues found.**" >> $GITHUB_STEP_SUMMARY
 
       # --------------------------------------------------------------------
