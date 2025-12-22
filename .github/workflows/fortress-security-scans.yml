@@ -58,9 +58,8 @@ on:
         description: "OSS Index API token for Nancy authentication"
         required: false
 
-# Security: Restrictive default permissions with job-level overrides for least privilege access
-permissions:
-  contents: read
+# Security: Restrict default permissions (jobs must explicitly request what they need)
+permissions: {}
 
 jobs:
   # ----------------------------------------------------------------------------------
@@ -70,6 +69,8 @@ jobs:
     name: 🛡️ Ask Nancy (Dependency Checks)
     runs-on: ${{ inputs.primary-runner }}
     if: ${{ inputs.enable-nancy }}
+    permissions:
+      contents: read
     steps:
       # --------------------------------------------------------------------
       # Checkout code (required for local actions)
@@ -192,6 +193,8 @@ jobs:
     name: 🔐 Run govulncheck (Vulnerability Scan)
     runs-on: ${{ inputs.primary-runner }}
     if: ${{ inputs.enable-govulncheck }}
+    permissions:
+      contents: read
     steps:
       # --------------------------------------------------------------------
       # Checkout code (required for local actions)
@@ -364,6 +367,8 @@ jobs:
     name: 🕵️ Run Gitleaks (Secret Scan)
     runs-on: ${{ inputs.primary-runner }}
     if: ${{ inputs.enable-gitleaks }}
+    permissions:
+      contents: read
     steps:
       # --------------------------------------------------------------------
       # Checkout code (required for local actions)

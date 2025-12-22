@@ -38,9 +38,8 @@ on:
   pull_request:
     types: [opened, reopened, ready_for_review, closed, synchronize]
 
-# Security: Restrictive default permissions with job-level overrides for least privilege access
-permissions:
-  contents: read
+# Security: Restrict default permissions (jobs must explicitly request what they need)
+permissions: {}
 
 # --------------------------------------------------------------------
 # Concurrency Control
