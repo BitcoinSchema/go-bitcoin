@@ -1,5 +1,5 @@
-# Gitpod workspace configuration for go-bitcoin
-# Uses magex for build automation and development tasks
+# Gitpod workspace configuration for this project.
+# Uses magex for build tooling and development tasks
 # This creates a one-click development environment for contributors
 
 image: gitpod/workspace-go:latest
