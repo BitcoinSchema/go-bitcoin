@@ -737,7 +737,7 @@ jobs:
 
           # Count processed files from coverage output
           if [ -f "$COVERAGE_FILE" ]; then
-            FILES_PROCESSED=$(wc -l < "$COVERAGE_FILE" || echo "0")
+            FILES_PROCESSED=$(grep -v '^mode:' "$COVERAGE_FILE" | grep -o '^[^:]*' | sort -u | wc -l | tr -d ' ' || echo "0")
             echo "📁 Files processed: $FILES_PROCESSED"
           fi
 
@@ -2434,7 +2434,7 @@ jobs:
               COVERAGE_PERCENTAGE=""
 
               # Fallback: Calculate from coverage file lines manually
-              # Coverage file format: file.go:line.col,line.col count statements
+              # Coverage file format: path/file.go:startLine.startCol,endLine.endCol stmtCount hitCount
               TOTAL_STATEMENTS=0
               COVERED_STATEMENTS=0
               while IFS= read -r line; do
@@ -2463,7 +2463,7 @@ jobs:
               fi
             fi
 
-            FILES_PROCESSED=$(wc -l < "coverage-artifacts/coverage-data/coverage.txt" | tr -d ' ' || echo "0")
+            FILES_PROCESSED=$(grep -v '^mode:' "coverage-artifacts/coverage-data/coverage.txt" | grep -o '^[^:]*' | sort -u | wc -l | tr -d ' ' || echo "0")
             echo "📈 Calculated coverage percentage: ${COVERAGE_PERCENTAGE}%"
             echo "📁 Files processed: $FILES_PROCESSED"
           else
