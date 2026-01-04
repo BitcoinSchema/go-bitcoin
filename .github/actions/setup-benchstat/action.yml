@@ -26,10 +26,10 @@ description: "Install and cache benchstat binary for benchmark comparison"
 
 inputs:
   benchstat-version:
-    description: "Benchstat version to install (e.g., latest, v0.6.0)"
+    description: "Benchstat version to install (e.g., v0.6.0)"
     required: true
   runner-os:
-    description: "Runner OS for cache key (e.g., ubuntu-latest, windows-latest)"
+    description: "Runner OS for cache key (e.g., ubuntu-latest, mac-latest)"
     required: true
 
 outputs:
