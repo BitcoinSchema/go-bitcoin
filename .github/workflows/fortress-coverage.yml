@@ -737,7 +737,7 @@ jobs:
 
           # Count processed files from coverage output
           if [ -f "$COVERAGE_FILE" ]; then
-            FILES_PROCESSED=$(grep -v '^mode:' "$COVERAGE_FILE" | grep -o '^[^:]*' | sort -u | wc -l | tr -d ' ' || echo "0")
+            FILES_PROCESSED=$(grep -v '^mode:' "$COVERAGE_FILE" | grep '^[^:]*:' | grep -o '^[^:]*' | sort -u | wc -l | tr -d ' ' || echo "0")
             echo "📁 Files processed: $FILES_PROCESSED"
           fi
 
@@ -2463,7 +2463,7 @@ jobs:
               fi
             fi
 
-            FILES_PROCESSED=$(grep -v '^mode:' "coverage-artifacts/coverage-data/coverage.txt" | grep -o '^[^:]*' | sort -u | wc -l | tr -d ' ' || echo "0")
+            FILES_PROCESSED=$(grep -v '^mode:' "coverage-artifacts/coverage-data/coverage.txt" | grep '^[^:]*:' | grep -o '^[^:]*' | sort -u | wc -l | tr -d ' ' || echo "0")
             echo "📈 Calculated coverage percentage: ${COVERAGE_PERCENTAGE}%"
             echo "📁 Files processed: $FILES_PROCESSED"
           else
