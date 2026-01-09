@@ -134,9 +134,8 @@ func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed, mainnet bool) (*
 		// go-bt/v2/bscript does not have a function that exports the uncompressed address
 		// https://github.com/libsv/go-bt/blob/master/bscript/address.go#L98
 		hash := crypto.Hash160(publicKey.SerialiseUncompressed())
-		bb := make([]byte, 1)
-		//nolint: makezero // we need to set up the array with 1
-		bb = append(bb, hash...)
+		bb := make([]byte, 1+len(hash))
+		copy(bb[1:], hash)
 		return &bscript.Address{
 			AddressString: bscript.Base58EncodeMissingChecksum(bb),
 			PublicKeyHash: hex.EncodeToString(hash),
