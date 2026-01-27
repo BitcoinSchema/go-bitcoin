@@ -283,10 +283,17 @@ runs:
           STATUS_CELL_VALUE="⚠️ HTTP $HTTP_STATUS"
         fi
 
+        # Derive summary heading from actual outcome
+        if [[ "$HTTP_STATUS" == "202" ]]; then
+          SUMMARY_HEADING="## 🚨 Workflow Cancelled: Critical Failure Detected"
+        else
+          SUMMARY_HEADING="## ⚠️ Cancellation Skipped: Critical Failure Detected"
+        fi
+
         # Add to job summary (always, regardless of success/failure)
         # Enhanced summary with prominent failure origin when context is provided
         {
-          echo "## 🚨 Workflow Cancelled: Critical Failure Detected"
+          echo "$SUMMARY_HEADING"
           echo ""
 
           # Show prominent failure origin if context was provided
@@ -339,6 +346,7 @@ runs:
           echo "| **Triggered by** | \`$GITHUB_JOB\` |"
           echo "| **Run ID** | $GITHUB_RUN_ID |"
           echo "| **Status** | $STATUS_CELL_VALUE |"
+          echo "| **Cancellation reason** | $CANCEL_REASON_MD |"
           echo ""
           if [[ "$HTTP_STATUS" == "202" ]]; then
             echo "> This cancellation was triggered to save CI resources. Other parallel jobs were stopped."
