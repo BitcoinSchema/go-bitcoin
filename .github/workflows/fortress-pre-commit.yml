@@ -894,3 +894,7 @@ jobs:
         uses: ./.github/actions/cancel-workflow-on-failure
         with:
           reason: "Pre-commit checks failed"
+          failed-job: "Pre-commit Checks"
+          failed-step: "🚀 Run pre-commit checks"
+          failure-tool: "go-pre-commit"
+          failure-summary: "Pre-commit validation failed"
