@@ -73,15 +73,28 @@ jobs:
         run: |
           echo "📋 Parsing workflow inputs..."
           # Note: Replace hyphens with underscores in keys for GitHub Actions expression compatibility
-          echo "$ALL_INPUTS" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS='=' read -r key value; do
+          # Use heredoc syntax to safely handle multiline values (e.g., env-json)
+          echo "$ALL_INPUTS" | jq -r 'to_entries | .[] | @base64' | while read -r entry; do
+            key=$(echo "$entry" | base64 -d | jq -r '.key')
+            value=$(echo "$entry" | base64 -d | jq -r '.value')
             normalized_key=$(echo "$key" | tr '-' '_')
-            echo "INPUT_$normalized_key=$value" >> $GITHUB_ENV
+            {
+              echo "INPUT_$normalized_key<<EOF_INPUT_$normalized_key"
+              echo "$value"
+              echo "EOF_INPUT_$normalized_key"
+            } >> $GITHUB_ENV
           done
 
           echo "📋 Parsing timing data..."
-          echo "$TIMING_DATA" | jq -r 'to_entries | .[] | "\(.key)=\(.value)"' | while IFS='=' read -r key value; do
+          echo "$TIMING_DATA" | jq -r 'to_entries | .[] | @base64' | while read -r entry; do
+            key=$(echo "$entry" | base64 -d | jq -r '.key')
+            value=$(echo "$entry" | base64 -d | jq -r '.value')
             normalized_key=$(echo "$key" | tr '-' '_')
-            echo "TIMING_$normalized_key=$value" >> $GITHUB_ENV
+            {
+              echo "TIMING_$normalized_key<<EOF_TIMING_$normalized_key"
+              echo "$value"
+              echo "EOF_TIMING_$normalized_key"
+            } >> $GITHUB_ENV
           done
 
       # --------------------------------------------------------------------
