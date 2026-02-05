@@ -75,8 +75,9 @@ jobs:
           # Note: Replace hyphens with underscores in keys for GitHub Actions expression compatibility
           # Use heredoc syntax to safely handle multiline values (e.g., env-json)
           echo "$ALL_INPUTS" | jq -r 'to_entries | .[] | @base64' | while read -r entry; do
-            key=$(echo "$entry" | base64 -d | jq -r '.key')
-            value=$(echo "$entry" | base64 -d | jq -r '.value')
+            decoded=$(echo "$entry" | base64 -d)
+            key=$(echo "$decoded" | jq -r '.key')
+            value=$(echo "$decoded" | jq -r '.value')
             normalized_key=$(echo "$key" | tr '-' '_')
             {
               echo "INPUT_$normalized_key<<EOF_INPUT_$normalized_key"
@@ -87,8 +88,9 @@ jobs:
 
           echo "📋 Parsing timing data..."
           echo "$TIMING_DATA" | jq -r 'to_entries | .[] | @base64' | while read -r entry; do
-            key=$(echo "$entry" | base64 -d | jq -r '.key')
-            value=$(echo "$entry" | base64 -d | jq -r '.value')
+            decoded=$(echo "$entry" | base64 -d)
+            key=$(echo "$decoded" | jq -r '.key')
+            value=$(echo "$decoded" | jq -r '.value')
             normalized_key=$(echo "$key" | tr '-' '_')
             {
               echo "TIMING_$normalized_key<<EOF_TIMING_$normalized_key"
