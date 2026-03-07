@@ -454,17 +454,14 @@ runs:
     - name: 🔐 Configure private module authentication
       if: ${{ inputs.github-token != '' && env.GOPRIVATE != '' }}
       shell: bash
+      env:
+        PRIVATE_MODULE_TOKEN: ${{ inputs.github-token }}
       run: |
         echo "🔐 Configuring git authentication for private Go modules..."
         echo "📋 GOPRIVATE=$GOPRIVATE"
 
         # Configure git to use the token for HTTPS URLs
-        git config --global url."https://x-access-token:${{ inputs.github-token }}@github.com/".insteadOf "https://github.com/"
-
-        # Set GONOSUMCHECK to match GOPRIVATE if not explicitly set
-        if [ -z "$GONOSUMCHECK" ]; then
-          echo "GONOSUMCHECK=$GOPRIVATE" >> $GITHUB_ENV
-        fi
+        git config --global url."https://x-access-token:${PRIVATE_MODULE_TOKEN}@github.com/".insteadOf "https://github.com/"
 
         # Set GONOSUMDB to match GOPRIVATE if not explicitly set
         if [ -z "$GONOSUMDB" ]; then
