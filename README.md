@@ -238,7 +238,7 @@ This command ensures all dependencies are brought up to date in a single step, i
 
 ## 🧪 Examples & Tests
 All unit tests and [examples](examples) run via [GitHub Actions](https://github.com/BitcoinSchema/go-bitcoin/actions) and
-uses [Go version 1.23.x](https://golang.org/doc/go1.23). View the [configuration file](.github/workflows/fortress.yml) for more details.
+uses [Go version 1.24.x](https://golang.org/doc/go1.24). View the [configuration file](.github/workflows/fortress.yml) for more details.
 
 Run all tests (fast):
 
