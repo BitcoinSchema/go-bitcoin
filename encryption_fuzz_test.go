@@ -8,7 +8,7 @@ import (
 // with various private key and encrypted data combinations
 func FuzzDecryptWithPrivateKeyString(f *testing.F) {
 	// Seed corpus with valid and invalid combinations
-	validPrivKey := "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"
+	validPrivKey := testPrivateKeyHex
 	f.Add(validPrivKey, "")
 	f.Add(validPrivKey, "00")
 	f.Add(validPrivKey, "invalid")

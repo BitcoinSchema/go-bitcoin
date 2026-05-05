@@ -80,7 +80,7 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 		{"12345678", "1BHxe5Yw72oYoV8tFjySYrV9Y2JwMpAZEy", true, false},
 		{"54035dd4c7dda99ac473905a3d82", "1L5GmmuGeS3HwoEDv7zkWcheayXrRsurUm", true, false},
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9", "13dnka5SaugRchayN84EED7a2E8dCNMLXQ", true, false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", true, false},
+		{testPrivateKeyHex, "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", true, false},
 	}
 
 	for _, test := range tests {
@@ -116,7 +116,7 @@ func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
 func ExampleGetAddressFromPrivateKey() {
-	address, err := GetAddressFromPrivateKeyString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", true, true)
+	address, err := GetAddressFromPrivateKeyString(testPrivateKeyHex, true, true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -153,7 +153,7 @@ func TestGetAddressFromPubKey(t *testing.T) {
 		expectedError   bool
 	}{
 		{&bec.PublicKey{}, "", true, true},
-		{testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
+		{testGetPublicKeyFromPrivateKey(testPrivateKeyHex), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
 		{testGetPublicKeyFromPrivateKey("000000"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", false, false},
 		{testGetPublicKeyFromPrivateKey("0"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", true, true},
 	}
@@ -182,7 +182,7 @@ func TestGetAddressFromPubKey(t *testing.T) {
 
 // ExampleGetAddressFromPubKey example using GetAddressFromPubKey()
 func ExampleGetAddressFromPubKey() {
-	rawAddress, err := GetAddressFromPubKey(testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"), true, true)
+	rawAddress, err := GetAddressFromPubKey(testGetPublicKeyFromPrivateKey(testPrivateKeyHex), true, true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -193,7 +193,7 @@ func ExampleGetAddressFromPubKey() {
 
 // BenchmarkGetAddressFromPubKey benchmarks the method GetAddressFromPubKey()
 func BenchmarkGetAddressFromPubKey(b *testing.B) {
-	pubKey := testGetPublicKeyFromPrivateKey("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	pubKey := testGetPublicKeyFromPrivateKey(testPrivateKeyHex)
 	for i := 0; i < b.N; i++ {
 		_, _ = GetAddressFromPubKey(pubKey, true, true)
 	}

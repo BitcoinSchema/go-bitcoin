@@ -20,8 +20,8 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 		compressed     bool
 		expectedError  bool
 	}{
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", true, false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "041b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f36e7ef720509250313fcf1b4c5af0dc7c5efa126efe2c3b7008e6f1487c61f31", false, false},
+		{testPrivateKeyHex, "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", true, false},
+		{testPrivateKeyHex, "041b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f36e7ef720509250313fcf1b4c5af0dc7c5efa126efe2c3b7008e6f1487c61f31", false, false},
 		{"0", "", true, true},
 		{"", "", true, true},
 	}
@@ -39,7 +39,7 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 
 // ExamplePubKeyFromPrivateKeyString example using PubKeyFromPrivateKeyString()
 func ExamplePubKeyFromPrivateKeyString() {
-	pubKey, err := PubKeyFromPrivateKeyString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", true)
+	pubKey, err := PubKeyFromPrivateKeyString(testPrivateKeyHex, true)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -60,7 +60,7 @@ func BenchmarkPubKeyFromPrivateKeyString(b *testing.B) {
 func TestPubKeyFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
-	priv, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	priv, err := PrivateKeyFromString(testPrivateKeyHex)
 	require.NoError(t, err)
 	assert.NotNil(t, priv)
 
@@ -91,7 +91,7 @@ func TestPubKeyFromPrivateKeyPanic(t *testing.T) {
 
 // ExamplePubKeyFromPrivateKey example using PubKeyFromPrivateKey()
 func ExamplePubKeyFromPrivateKey() {
-	privateKey, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	privateKey, err := PrivateKeyFromString(testPrivateKeyHex)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return

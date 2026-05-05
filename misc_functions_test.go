@@ -149,7 +149,7 @@ func TestCreateKeysExtended(t *testing.T) {
 func TestGetAddressesExtended(t *testing.T) {
 	t.Parallel()
 
-	privateKey := "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"
+	privateKey := testPrivateKeyHex
 
 	t.Run("get address from private key string - mainnet compressed", func(t *testing.T) {
 		address, err := GetAddressFromPrivateKeyString(privateKey, true, true)
@@ -299,7 +299,7 @@ func TestHDKeyExtended(t *testing.T) {
 func TestPubKeyFunctions(t *testing.T) {
 	t.Parallel()
 
-	privateKey := "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"
+	privateKey := testPrivateKeyHex
 
 	t.Run("pubkey from private key string - compressed", func(t *testing.T) {
 		pubKey, err := PubKeyFromPrivateKeyString(privateKey, true)

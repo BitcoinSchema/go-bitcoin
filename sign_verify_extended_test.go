@@ -21,28 +21,28 @@ func TestSignMessageExtended(t *testing.T) {
 	}{
 		{
 			name:                "sign message with compressed key reference",
-			privateKey:          "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd",
+			privateKey:          testPrivateKeyHex,
 			message:             "Test message",
 			sigRefCompressedKey: true,
 			shouldError:         false,
 		},
 		{
 			name:                "sign message with uncompressed key reference",
-			privateKey:          "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd",
+			privateKey:          testPrivateKeyHex,
 			message:             "Test message",
 			sigRefCompressedKey: false,
 			shouldError:         false,
 		},
 		{
 			name:                "sign empty message",
-			privateKey:          "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd",
+			privateKey:          testPrivateKeyHex,
 			message:             "",
 			sigRefCompressedKey: true,
 			shouldError:         false,
 		},
 		{
 			name:                "sign long message",
-			privateKey:          "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd",
+			privateKey:          testPrivateKeyHex,
 			message:             string(make([]byte, 1000)),
 			sigRefCompressedKey: true,
 			shouldError:         false,
@@ -87,7 +87,7 @@ func TestPubKeyFromSignatureExtended(t *testing.T) {
 	t.Parallel()
 
 	// Create a valid signature first
-	privateKey := "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"
+	privateKey := testPrivateKeyHex
 	message := "Test message"
 	signature, err := SignMessage(privateKey, message, true)
 	require.NoError(t, err)
@@ -128,7 +128,7 @@ func TestPubKeyFromSignatureExtended(t *testing.T) {
 func TestVerifyMessageExtended(t *testing.T) {
 	t.Parallel()
 
-	privateKey := "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd"
+	privateKey := testPrivateKeyHex
 	message := "Test message"
 
 	// Get the address for this private key

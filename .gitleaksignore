@@ -4,66 +4,83 @@
 # Each entry represents a finding that has been reviewed and determined to be safe.
 # All keys below are test fixtures and examples - NOT real secrets.
 #
-# Format: <file>:<rule>:<line>
+# Format: <commit>:<file>:<rule>:<line>
 # Reference: https://github.com/gitleaks/gitleaks#gitleaksignore
 
-# Test files with hardcoded test keys for unit testing
-# These are throwaway keys used solely for reproducible test cases
+# Address test fixtures
+5a3f0d573fca9420f9255995f0bd4acc266fbc17:address_test.go:generic-api-key:83
+
+# Encryption fuzz test fixtures
+f5f3335544611ad5de2ee35041e0ffb44ce28293:encryption_fuzz_test.go:generic-api-key:11
 
 # Encryption test fixtures
-encryption_fuzz_test.go:generic-api-key:11
-encryption_test.go:generic-api-key:192
-encryption_test.go:generic-api-key:198
-encryption_test.go:generic-api-key:204
-encryption_test.go:generic-api-key:210
-encryption_test.go:generic-api-key:216
-encryption_test.go:generic-api-key:222
-encryption_test.go:generic-api-key:228
-encryption_test.go:generic-api-key:234
-encryption_test.go:generic-api-key:240
-encryption_test.go:generic-api-key:270
-encryption_test.go:generic-api-key:286
-encryption_test.go:generic-api-key:297
-encryption_test.go:generic-api-key:330
-encryption_test.go:generic-api-key:336
-encryption_test.go:generic-api-key:342
-encryption_test.go:generic-api-key:348
-encryption_test.go:generic-api-key:354
-encryption_test.go:generic-api-key:360
-encryption_test.go:generic-api-key:366
-encryption_test.go:generic-api-key:372
-encryption_test.go:generic-api-key:378
-
-# Example files with test keys for documentation
-examples/verify_signature/verify_signature.go:generic-api-key:12
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:203
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:208
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:213
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:218
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:223
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:228
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:233
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:238
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:243
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:274
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:290
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:301
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:320
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:325
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:330
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:335
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:340
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:345
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:350
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:355
+6ba9da5eb6c0ca00cb2ae1ce526f23de272b3307:encryption_test.go:generic-api-key:360
 
 # HD key test fixtures
-hd_key_test.go:generic-api-key:482
-hd_key_test.go:generic-api-key:508
-hd_key_test.go:generic-api-key:556
-hd_key_test.go:generic-api-key:581
-hd_key_test.go:generic-api-key:621
-hd_key_test.go:generic-api-key:647
-hd_key_test.go:generic-api-key:696
-hd_key_test.go:generic-api-key:723
-hd_key_test.go:generic-api-key:724
-hd_key_test.go:generic-api-key:799
-hd_key_test.go:generic-api-key:800
-hd_key_test.go:generic-api-key:924
-hd_key_test.go:generic-api-key:1032
-hd_key_test.go:generic-api-key:1153
-
-# Misc function test fixtures
-misc_functions_test.go:generic-api-key:152
-misc_functions_test.go:generic-api-key:302
+6cc0f581ec77ed7b3e8a7ed42663c018591c813b:hd_key_test.go:generic-api-key:445
+6cc0f581ec77ed7b3e8a7ed42663c018591c813b:hd_key_test.go:generic-api-key:474
+6cc0f581ec77ed7b3e8a7ed42663c018591c813b:hd_key_test.go:generic-api-key:509
+6cc0f581ec77ed7b3e8a7ed42663c018591c813b:hd_key_test.go:generic-api-key:538
+6cc0f581ec77ed7b3e8a7ed42663c018591c813b:hd_key_test.go:generic-api-key:574
+6cc0f581ec77ed7b3e8a7ed42663c018591c813b:hd_key_test.go:generic-api-key:603
+da4a5dac65f52a2a79249ee92a17235a99842ff2:hd_key_test.go:generic-api-key:607
+da4a5dac65f52a2a79249ee92a17235a99842ff2:hd_key_test.go:generic-api-key:655
+d70f6fdff1a5c99eb84dde64f16a91473c489b13:hd_key_test.go:generic-api-key:704
+d70f6fdff1a5c99eb84dde64f16a91473c489b13:hd_key_test.go:generic-api-key:705
+d70f6fdff1a5c99eb84dde64f16a91473c489b13:hd_key_test.go:generic-api-key:776
+d70f6fdff1a5c99eb84dde64f16a91473c489b13:hd_key_test.go:generic-api-key:777
+da66b8013e3972d9f7974942307618584f54c2f3:hd_key_test.go:generic-api-key:767
+58f2c60aa54341bae534f2c91919484158390dda:hd_key_test.go:generic-api-key:828
+24791fac37052bee86d4ee570e6b66e863daef4f:hd_key_test.go:generic-api-key:938
+54681056aec602b1fda1842476d0403dfb6e2908:hd_key_test.go:generic-api-key:1063
 
 # Private key test fixtures
-private_key_test.go:generic-api-key:114
-private_key_test.go:generic-api-key:172
-private_key_test.go:generic-api-key:336
-private_key_test.go:generic-api-key:383
+17615fe28de8cae5f0abf4e2e4dd2f775a003878:private_key_test.go:generic-api-key:118
+016946f1acaabc865c5d94466e81f489361e9742:private_key_test.go:generic-api-key:175
+5a3f0d573fca9420f9255995f0bd4acc266fbc17:private_key_test.go:generic-api-key:198
+5a3f0d573fca9420f9255995f0bd4acc266fbc17:private_key_test.go:generic-api-key:255
+7d4caf081296ed259db36414fce18c6eb9058790:private_key_test.go:generic-api-key:339
+7d4caf081296ed259db36414fce18c6eb9058790:private_key_test.go:generic-api-key:388
 
-# Sign/verify test fixtures
-sign_test.go:generic-api-key:9
-sign_verify_extended_test.go:generic-api-key:90
-sign_verify_extended_test.go:generic-api-key:131
+# Public key test fixtures
+5a3f0d573fca9420f9255995f0bd4acc266fbc17:pubkey_test.go:generic-api-key:23
+5a3f0d573fca9420f9255995f0bd4acc266fbc17:pubkey_test.go:generic-api-key:24
+
+# Sign test fixtures
+4fbb8e392afa4e9b34f82e4f92d71e0537805ed3:sign_test.go:generic-api-key:8
+10b181739b662ed62a0462c39ca7f4db428183ca:sign_test.go:generic-api-key:10
+70b363c4d25826c4869694287ce26225efc79c59:sign_test.go:generic-api-key:9
+
+# Sign verify extended test fixtures
+977a115015994ef10763cad7e93b91db3ba69d1c:sign_verify_extended_test.go:generic-api-key:90
+977a115015994ef10763cad7e93b91db3ba69d1c:sign_verify_extended_test.go:generic-api-key:131
+
+# Misc function test fixtures
+977a115015994ef10763cad7e93b91db3ba69d1c:misc_functions_test.go:generic-api-key:152
+977a115015994ef10763cad7e93b91db3ba69d1c:misc_functions_test.go:generic-api-key:302
+
+# Example files with test keys for documentation
+fdc1d8ab860f0841f6bae62008fcc142c28253d3:examples/verify_signature/verify_signature.go:generic-api-key:12
+
+# Test constants
+5a3f0d573fca9420f9255995f0bd4acc266fbc17:test_constants_test.go:generic-api-key:4
