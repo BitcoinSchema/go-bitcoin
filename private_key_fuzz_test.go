@@ -8,7 +8,7 @@ import (
 // various hex-encoded private key strings to ensure robust error handling
 func FuzzPrivateKeyFromString(f *testing.F) {
 	// Seed corpus with valid and invalid private keys
-	f.Add("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	f.Add(testPrivateKeyHex)
 	f.Add("E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F2B75")
 	f.Add("0000000000000000000000000000000000000000000000000000000000000001")
 	f.Add("")
@@ -33,7 +33,7 @@ func FuzzWifToPrivateKey(f *testing.F) {
 	f.Add("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
 	f.Add("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU")
 	f.Add("5KgHn2qiftW5LQgCYFtkbrLYB1FuvisDtacax8NCvumw3UTKdcP")
-	f.Add("L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
+	f.Add(testWIF)
 	f.Add("")
 	f.Add("0")
 	f.Add("invalid")
@@ -55,7 +55,7 @@ func FuzzWifToPrivateKeyString(f *testing.F) {
 	f.Add("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
 	f.Add("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU")
 	f.Add("5KgHn2qiftW5LQgCYFtkbrLYB1FuvisDtacax8NCvumw3UTKdcP")
-	f.Add("L3VJH2hcRGYYG6YrbWGmsxQC1zyYixA82YjgEyrEUWDs4ALgk8Vu")
+	f.Add(testWIF)
 	f.Add("")
 	f.Add("0")
 	f.Add("invalid")
@@ -72,7 +72,7 @@ func FuzzWifToPrivateKeyString(f *testing.F) {
 // various hex-encoded private keys to ensure robust error handling
 func FuzzPrivateKeyToWifString(f *testing.F) {
 	// Seed corpus with valid and invalid private keys
-	f.Add("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	f.Add(testPrivateKeyHex)
 	f.Add("E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F2B75")
 	f.Add("0000000000000000000000000000000000000000000000000000000000000001")
 	f.Add("000000")

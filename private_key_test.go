@@ -74,7 +74,7 @@ func TestPrivateKeyFromString(t *testing.T) {
 		expectedNil   bool
 		expectedError bool
 	}{
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
+		{testPrivateKeyHex, testPrivateKeyHex, false, false},
 		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F2B75", "e83385af76b2b1997326b567461fb73dd9c27eab9e1e86d26779f4650c5f2b75", false, false},
 		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F", "0000e83385af76b2b1997326b567461fb73dd9c27eab9e1e86d26779f4650c5f", false, false},
 		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F", "", true, true},
@@ -105,7 +105,7 @@ func TestPrivateKeyFromString(t *testing.T) {
 
 // ExamplePrivateKeyFromString example using PrivateKeyFromString()
 func ExamplePrivateKeyFromString() {
-	key, err := PrivateKeyFromString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	key, err := PrivateKeyFromString(testPrivateKeyHex)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -137,7 +137,7 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 		{"00000", "", true, true},
 		{"0-0-0-0-0", "", true, true},
 		{"z4035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abz", "", true, true},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
+		{testPrivateKeyHex, testPrivateKeyHex, false, false},
 	}
 
 	for _, test := range tests {
@@ -162,7 +162,7 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 
 // ExamplePrivateAndPublicKeys example using PrivateAndPublicKeys()
 func ExamplePrivateAndPublicKeys() {
-	privateKey, publicKey, err := PrivateAndPublicKeys("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	privateKey, publicKey, err := PrivateAndPublicKeys(testPrivateKeyHex)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -195,7 +195,7 @@ func TestPrivateKeyToWif(t *testing.T) {
 		{"000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false, false},
 		{"6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false, false},
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false, false},
+		{testPrivateKeyHex, "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false, false},
 	}
 
 	for _, test := range tests {
@@ -220,7 +220,7 @@ func TestPrivateKeyToWif(t *testing.T) {
 
 // ExamplePrivateKeyToWif example using PrivateKeyToWif()
 func ExamplePrivateKeyToWif() {
-	privateWif, err := PrivateKeyToWif("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	privateWif, err := PrivateKeyToWif(testPrivateKeyHex)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -252,7 +252,7 @@ func TestPrivateKeyToWifString(t *testing.T) {
 		{"000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false},
 		{"6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false},
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false},
+		{testPrivateKeyHex, "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false},
 	}
 
 	for _, test := range tests {
@@ -268,7 +268,7 @@ func TestPrivateKeyToWifString(t *testing.T) {
 
 // ExamplePrivateKeyToWifString example using PrivateKeyToWifString()
 func ExamplePrivateKeyToWifString() {
-	privateWif, err := PrivateKeyToWifString("54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd")
+	privateWif, err := PrivateKeyToWifString(testPrivateKeyHex)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -301,7 +301,7 @@ func TestWifToPrivateKey(t *testing.T) {
 		{"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false, false},
 		{"5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false, false},
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
-		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false, false},
+		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", testPrivateKeyHex, false, false},
 	}
 
 	for _, test := range tests {
@@ -357,7 +357,7 @@ func TestWifToPrivateKeyString(t *testing.T) {
 		{"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false},
 		{"5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false},
 		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
-		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd", false},
+		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", testPrivateKeyHex, false},
 	}
 
 	for _, test := range tests {
