@@ -7,8 +7,9 @@
 #  This workflow coordinates sub-workflows for improved maintainability:
 #    - fortress-test-matrix.yml: Multi-platform test execution
 #    - fortress-test-fuzz.yml: Fuzz testing execution
-#    - fortress-test-validation.yml: Test result validation
-#    - fortress-coverage.yml: Coverage processing (existing)
+#    - fortress-coverage.yml: Coverage processing (now also handles validation
+#      via the .github/actions/validate-test-results composite action — the
+#      standalone validate-test-results job was retired to save billing minutes)
 #
 #  Maintainer: @mrz1836
 #
@@ -168,28 +169,18 @@ jobs:
       github-token: ${{ secrets.github-token }}
 
   # ----------------------------------------------------------------------------------
-  # Test Results Validation (Aggregate all test results)
-  # ----------------------------------------------------------------------------------
-  validate-test-results:
-    name: 🔍 Validate Test Results
-    needs: [execute-test-matrix, execute-fuzz-tests]
-    if: always() && inputs.go-tests-enabled == 'true' # Always run to validate results even if tests failed
-    permissions:
-      contents: read
-      actions: read
-    uses: ./.github/workflows/fortress-test-validation.yml
-    with:
-      env-json: ${{ inputs.env-json }}
-      primary-runner: ${{ inputs.primary-runner }}
-      fuzz-testing-enabled: ${{ inputs.fuzz-testing-enabled }}
-
-  # ----------------------------------------------------------------------------------
-  # Coverage Processing (Existing workflow integration)
+  # Coverage Processing
+  #
+  # Note: Test result validation (previously its own job via fortress-test-validation.yml)
+  # is now performed as a step inside fortress-coverage.yml via the
+  # .github/actions/validate-test-results composite action. This saves one billed minute
+  # without changing behavior: validation still runs before coverage processing and
+  # still fails the workflow on test failures.
   # ----------------------------------------------------------------------------------
   process-coverage:
     name: 📊 Process Coverage
-    needs: [execute-test-matrix, validate-test-results]
-    if: inputs.go-tests-enabled == 'true' && inputs.code-coverage-enabled == 'true' && !startsWith(github.ref, 'refs/tags/')
+    needs: [execute-test-matrix, execute-fuzz-tests]
+    if: always() && inputs.go-tests-enabled == 'true' && inputs.code-coverage-enabled == 'true' && !startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write # Write repository content and push to gh-pages branch for coverage processing
       pull-requests: write # Required: Coverage workflow needs to create PR comments
@@ -207,6 +198,8 @@ jobs:
       event-name: ${{ github.event_name }}
       pr-number: ${{ github.event.pull_request.number }}
       go-sum-file: ${{ inputs.go-sum-file }}
+      coverage-provider: ${{ inputs.coverage-provider }}
+      fuzz-testing-enabled: ${{ inputs.fuzz-testing-enabled }}
     secrets:
       github-token: ${{ secrets.GH_PAT_TOKEN != '' && secrets.GH_PAT_TOKEN || secrets.GITHUB_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
