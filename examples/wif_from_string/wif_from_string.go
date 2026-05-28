@@ -4,8 +4,7 @@ package main
 import (
 	"log"
 
-	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/libsv/go-bk/wif"
+	"github.com/bitcoinschema/go-bitcoin/v3"
 )
 
 func main() {
@@ -16,7 +15,7 @@ func main() {
 	}
 
 	// Create a wif from a string
-	var wifKey *wif.WIF
+	var wifKey *bitcoin.WIF
 	wifKey, err = bitcoin.WifFromString(wifString)
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())

@@ -3,13 +3,13 @@ package bitcoin
 import (
 	"encoding/hex"
 
-	"github.com/libsv/go-bk/bec"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 )
 
 // EncryptWithPrivateKey will encrypt the data using a given private key
-func EncryptWithPrivateKey(privateKey *bec.PrivateKey, data string) (string, error) {
-	// Encrypt using bec
-	encryptedData, err := bec.Encrypt(privateKey.PubKey(), []byte(data))
+func EncryptWithPrivateKey(privateKey *ec.PrivateKey, data string) (string, error) {
+	// Encrypt using ec
+	encryptedData, err := eciesEncrypt(privateKey.PubKey(), []byte(data))
 	if err != nil {
 		return "", err
 	}
@@ -20,7 +20,7 @@ func EncryptWithPrivateKey(privateKey *bec.PrivateKey, data string) (string, err
 
 // DecryptWithPrivateKey is a wrapper to decrypt the previously encrypted
 // information, given a corresponding private key
-func DecryptWithPrivateKey(privateKey *bec.PrivateKey, data string) (string, error) {
+func DecryptWithPrivateKey(privateKey *ec.PrivateKey, data string) (string, error) {
 	// Decode the hex encoded string
 	rawData, err := hex.DecodeString(data)
 	if err != nil {
@@ -29,7 +29,7 @@ func DecryptWithPrivateKey(privateKey *bec.PrivateKey, data string) (string, err
 
 	// Decrypt the data
 	var decrypted []byte
-	if decrypted, err = bec.Decrypt(privateKey, rawData); err != nil {
+	if decrypted, err = eciesDecrypt(privateKey, rawData); err != nil {
 		return "", err
 	}
 	return string(decrypted), nil
@@ -60,26 +60,26 @@ func DecryptWithPrivateKeyString(privateKey, data string) (string, error) {
 }
 
 // EncryptShared will encrypt data and provide shared keys for decryption
-func EncryptShared(user1PrivateKey *bec.PrivateKey, user2PubKey *bec.PublicKey, data []byte) (
-	*bec.PrivateKey, *bec.PublicKey, []byte, error,
+func EncryptShared(user1PrivateKey *ec.PrivateKey, user2PubKey *ec.PublicKey, data []byte) (
+	*ec.PrivateKey, *ec.PublicKey, []byte, error,
 ) {
 	// Generate shared keys that can be decrypted by either user
 	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(user1PrivateKey, user2PubKey)
 
 	// Encrypt data with shared key
-	encryptedData, err := bec.Encrypt(sharedPubKey, data)
+	encryptedData, err := eciesEncrypt(sharedPubKey, data)
 	return sharedPrivKey, sharedPubKey, encryptedData, err
 }
 
 // EncryptSharedString will encrypt a string to a hex encoded encrypted payload, and provide shared keys for decryption
-func EncryptSharedString(user1PrivateKey *bec.PrivateKey, user2PubKey *bec.PublicKey, data string) (
-	*bec.PrivateKey, *bec.PublicKey, string, error,
+func EncryptSharedString(user1PrivateKey *ec.PrivateKey, user2PubKey *ec.PublicKey, data string) (
+	*ec.PrivateKey, *ec.PublicKey, string, error,
 ) {
 	// Generate shared keys that can be decrypted by either user
 	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(user1PrivateKey, user2PubKey)
 
 	// Encrypt data with shared key
-	encryptedData, err := bec.Encrypt(sharedPubKey, []byte(data))
+	encryptedData, err := eciesEncrypt(sharedPubKey, []byte(data))
 
 	return sharedPrivKey, sharedPubKey, hex.EncodeToString(encryptedData), err
 }

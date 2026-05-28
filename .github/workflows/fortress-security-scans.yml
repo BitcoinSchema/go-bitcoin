@@ -92,7 +92,7 @@ jobs:
     timeout-minutes: 10
     if: ${{ inputs.enable-nancy || inputs.enable-govulncheck || inputs.enable-gitleaks }}
     permissions:
-      contents: read       # All scans
+      contents: read # All scans
       pull-requests: write # Gitleaks needs to create PR comments
     steps:
       # ====================================================================

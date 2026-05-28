@@ -2,9 +2,10 @@ package bitcoin
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
-	"github.com/libsv/go-bk/bec"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,6 +29,8 @@ func TestValidA58(t *testing.T) {
 		{"1KCEAmV", false, false},
 		{"", false, false},
 		{"0", false, true},
+		// Valid base58 testnet address (version 0x6f) decodes cleanly but is not version 0
+		{"mmobaZaCeFGujSmej9ESfohgfWjXBW1u7m", false, true},
 	}
 
 	for _, test := range tests {
@@ -96,7 +99,7 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 
 // TestGetAddressFromPrivateKeyCompression will test the method GetAddressFromPrivateKey()
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
-	privateKey, err := bec.NewPrivateKey(bec.S256())
+	privateKey, err := ec.NewPrivateKey()
 	require.NoError(t, err)
 
 	var addressUncompressed string
@@ -109,9 +112,30 @@ func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 
 	assert.NotEqual(t, addressCompressed, addressUncompressed)
 
-	addressCompressed, err = GetAddressFromPrivateKey(&bec.PrivateKey{}, true, true)
+	addressCompressed, err = GetAddressFromPrivateKey(&ec.PrivateKey{}, true, true)
 	require.Error(t, err)
 	assert.Empty(t, addressCompressed)
+}
+
+// TestGetAddressFromPubKeyUncompressedNetwork ensures the uncompressed branch
+// honors the mainnet flag: mainnet uses version 0x00 (1...) and testnet uses
+// version 0x6f (m.../n...).
+func TestGetAddressFromPubKeyUncompressedNetwork(t *testing.T) {
+	t.Parallel()
+
+	pubKey := testGetPublicKeyFromPrivateKey(testPrivateKeyHex)
+
+	mainnetAddr, err := GetAddressFromPubKey(pubKey, false, true)
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(mainnetAddr.AddressString, "1"), "got %q", mainnetAddr.AddressString)
+
+	testnetAddr, err := GetAddressFromPubKey(pubKey, false, false)
+	require.NoError(t, err)
+	firstChar := testnetAddr.AddressString[:1]
+	assert.Contains(t, []string{"m", "n"}, firstChar, "testnet P2PKH must start with m or n, got %q", testnetAddr.AddressString)
+
+	assert.NotEqual(t, mainnetAddr.AddressString, testnetAddr.AddressString)
+	assert.Equal(t, mainnetAddr.PublicKeyHash, testnetAddr.PublicKeyHash, "hash160 is network-independent")
 }
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()
@@ -134,7 +158,7 @@ func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 }
 
 // testGetPublicKeyFromPrivateKey is a helper method for tests
-func testGetPublicKeyFromPrivateKey(privateKey string) *bec.PublicKey {
+func testGetPublicKeyFromPrivateKey(privateKey string) *ec.PublicKey {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return nil
@@ -147,18 +171,18 @@ func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		input           *bec.PublicKey
+		input           *ec.PublicKey
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{&bec.PublicKey{}, "", true, true},
+		{&ec.PublicKey{}, "", true, true},
 		{testGetPublicKeyFromPrivateKey(testPrivateKeyHex), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
 		{testGetPublicKeyFromPrivateKey("000000"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", false, false},
 		{testGetPublicKeyFromPrivateKey("0"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", true, true},
 	}
 
-	// todo: add more error cases of invalid *bec.PublicKey
+	// todo: add more error cases of invalid *ec.PublicKey
 
 	for _, test := range tests {
 		rawKey, err := GetAddressFromPubKey(test.input, true, true)

@@ -133,9 +133,9 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      actions: write        # Required: Delete GitHub Actions caches for closed PRs
-      contents: write       # Required: Delete merged branches from the base repo
-      pull-requests: write  # Required: Apply labels, assign reviewers, post comments
+      actions: write # Required: Delete GitHub Actions caches for closed PRs
+      contents: write # Required: Delete merged branches from the base repo
+      pull-requests: write # Required: Apply labels, assign reviewers, post comments
 
     steps:
       # --------------------------------------------------------------------
@@ -736,10 +736,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      actions: write        # Required: Delete GitHub Actions caches for closed PRs
-      contents: read        # Sparse checkout of base branch only — no write needed
-      issues: write         # Required: Create fork/triage labels lazily if missing
-      pull-requests: write  # Required: Apply labels, assign reviewers, post comments
+      actions: write # Required: Delete GitHub Actions caches for closed PRs
+      contents: read # Sparse checkout of base branch only — no write needed
+      issues: write # Required: Create fork/triage labels lazily if missing
+      pull-requests: write # Required: Apply labels, assign reviewers, post comments
 
     steps:
       # --------------------------------------------------------------------

@@ -3,10 +3,10 @@ package bitcoin
 import (
 	"encoding/hex"
 
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bk/bip32"
-	"github.com/libsv/go-bk/chaincfg"
-	"github.com/libsv/go-bt/v2/bscript"
+	"github.com/bsv-blockchain/go-bt/v2/bscript"
+	bip32 "github.com/bsv-blockchain/go-sdk/compat/bip32"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
+	chaincfg "github.com/bsv-blockchain/go-sdk/transaction/chaincfg"
 )
 
 const (
@@ -89,7 +89,7 @@ func GetHDKeyChild(hdKey *bip32.ExtendedKey, num uint32) (*bip32.ExtendedKey, er
 // GetPrivateKeyByPath gets the key for a given derivation path (chain/num)
 //
 // Expects hdKey to not be nil (otherwise will panic)
-func GetPrivateKeyByPath(hdKey *bip32.ExtendedKey, chain, num uint32) (*bec.PrivateKey, error) {
+func GetPrivateKeyByPath(hdKey *bip32.ExtendedKey, chain, num uint32) (*ec.PrivateKey, error) {
 	// Get the child key from the num & chain
 	childKeyNum, err := GetHDKeyByPath(hdKey, chain, num)
 	if err != nil {
@@ -104,7 +104,7 @@ func GetPrivateKeyByPath(hdKey *bip32.ExtendedKey, chain, num uint32) (*bec.Priv
 // with a given hdKey
 //
 // Expects hdKey to not be nil (otherwise will panic)
-func GetPrivateKeyFromHDKey(hdKey *bip32.ExtendedKey) (*bec.PrivateKey, error) {
+func GetPrivateKeyFromHDKey(hdKey *bip32.ExtendedKey) (*ec.PrivateKey, error) {
 	return hdKey.ECPrivKey()
 }
 
@@ -117,13 +117,13 @@ func GetPrivateKeyStringFromHDKey(hdKey *bip32.ExtendedKey) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(key.Serialise()), nil //nolint:misspell // external library method name
+	return hex.EncodeToString(key.Serialize()), nil
 }
 
 // GetPublicKeyFromHDKey is a helper function to get the Public Key associated with a given hdKey
 //
 // Expects hdKey to not be nil (otherwise will panic)
-func GetPublicKeyFromHDKey(hdKey *bip32.ExtendedKey) (*bec.PublicKey, error) {
+func GetPublicKeyFromHDKey(hdKey *bip32.ExtendedKey) (*ec.PublicKey, error) {
 	return hdKey.ECPubKey()
 }
 
@@ -152,7 +152,7 @@ func GetAddressStringFromHDKey(hdKey *bip32.ExtendedKey, mainnet bool) (string, 
 // GetPublicKeysForPath gets the PublicKeys for a given derivation path
 // Uses the standard m/0/0 (external) and m/0/1 (internal) paths
 // Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
-func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.PublicKey, err error) {
+func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*ec.PublicKey, err error) {
 	//  m/0/x
 	var childM0x *bip32.ExtendedKey
 	if childM0x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
@@ -160,7 +160,7 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 	}
 
 	// Get the external pubKey from m/0/x
-	var pubKey *bec.PublicKey
+	var pubKey *ec.PublicKey
 	if pubKey, err = childM0x.ECPubKey(); err != nil {
 		// Should never error since the previous method ensures a valid hdKey
 		return nil, err
@@ -188,7 +188,7 @@ func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*bec.
 // Returns 2 keys, first is internal and second is external
 func GetAddressesForPath(hdKey *bip32.ExtendedKey, num uint32, mainnet bool) (addresses []string, err error) {
 	// Get the public keys for the corresponding chain/num (using default chain)
-	var pubKeys []*bec.PublicKey
+	var pubKeys []*ec.PublicKey
 	if pubKeys, err = GetPublicKeysForPath(hdKey, num); err != nil {
 		return nil, err
 	}

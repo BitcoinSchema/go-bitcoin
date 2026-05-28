@@ -101,19 +101,23 @@
 **go-bitcoin** requires a [supported release of Go](https://golang.org/doc/devel/release.html#policy).
 
 ```shell script
-go get -u github.com/bitcoinschema/go-bitcoin/v2
+go get -u github.com/bitcoinschema/go-bitcoin/v3
 ```
+
+> **🔖 Version Support**
+> **v3** is the current, actively maintained, and recommended version — please use it for all new and existing projects.
+> **v1** and **v2** are **deprecated** and no longer supported. Switch to **v3**! 😉
 
 <br/>
 
 ## 📚 Documentation
 
-View the generated [documentation](https://pkg.go.dev/github.com/BitcoinSchema/go-bitcoin)
+View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/go-bitcoin/v3)
 
 ### Features
 
 - **Addresses**
-  - [Address from PrivateKey (bec.PrivateKey)](address.go)
+  - [Address from PrivateKey (ec.PrivateKey)](address.go)
   - [Address from Script](address.go)
 - **Encryption**
   - [Encrypt With Private Key](encryption.go)
@@ -125,7 +129,7 @@ View the generated [documentation](https://pkg.go.dev/github.com/BitcoinSchema/g
   - [Get HD Key by Path](hd_key.go)
   - [Get PrivateKey by Path](hd_key.go)
   - [Get HD Child Key](hd_key.go)
-  - [Get Addresses from HD Key](hd_key.go)
+  - [Get Address from HD Key](hd_key.go)
   - [Get XPub from HD Key](hd_key.go)
   - [Get HD Key from XPub](hd_key.go)
   - [Get PublicKeys for Path](hd_key.go)
@@ -158,9 +162,9 @@ View the generated [documentation](https://pkg.go.dev/github.com/BitcoinSchema/g
 <summary><strong><code>Package Dependencies</code></strong></summary>
 <br/>
 
-- [bitcoinsv/bsvd](https://github.com/bitcoinsv/bsvd)
-- [libsv/go-bk](https://github.com/libsv/go-bk)
-- [libsv/go-bt](https://github.com/libsv/go-bt)
+- [bsv-blockchain/go-sdk](https://github.com/bsv-blockchain/go-sdk)
+- [bsv-blockchain/go-bt](https://github.com/bsv-blockchain/go-bt)
+- [stretchr/testify](https://github.com/stretchr/testify) _(testing)_
 </details>
 
 <details>

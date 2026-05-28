@@ -85,9 +85,9 @@ jobs:
       contains(fromJSON('["approved", "changes_requested"]'), github.event.review.state)
     runs-on: ubuntu-24.04
     permissions:
-      contents: read       # Required: Sparse checkout for env files
+      contents: read # Required: Sparse checkout for env files
       pull-requests: write # Required: Update PR status and enable auto-merge
-      issues: write        # Required: Add labels and create comments
+      issues: write # Required: Add labels and create comments
 
     steps:
       # --------------------------------------------------------------------

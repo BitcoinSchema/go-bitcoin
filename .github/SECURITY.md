@@ -5,7 +5,14 @@ Security is a priority. We maintain a proactive stance to identify and fix vulne
 <br/>
 
 ## 🛠️ Supported & Maintained Versions
-Any released version of **go-bitcoin** that is not marked as deprecated is actively supported and maintained.
+
+| Version | Status                          |
+|---------|---------------------------------|
+| v3      | ✅ Supported & maintained        |
+| v2      | ❌ Deprecated — no longer supported |
+| v1      | ❌ Deprecated — no longer supported |
+
+**v3** is the current, actively supported and maintained line. **v1** and **v2** are deprecated and no longer receive updates or security fixes — please upgrade to **v3**.
 
 <br/>
 

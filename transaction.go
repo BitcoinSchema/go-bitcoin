@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bt/v2"
-	"github.com/libsv/go-bt/v2/bscript"
-	"github.com/libsv/go-bt/v2/unlocker"
+	"github.com/bsv-blockchain/go-bt/v2"
+	"github.com/bsv-blockchain/go-bt/v2/bscript"
+	"github.com/bsv-blockchain/go-bt/v2/unlocker"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 )
 
 var (
@@ -42,7 +42,7 @@ type PayToAddress struct {
 
 // account is a struct/interface for implementing unlocker
 type account struct {
-	PrivateKey *bec.PrivateKey
+	PrivateKey *ec.PrivateKey
 }
 
 // Unlocker get the correct un-locker for a given locking script
@@ -66,7 +66,7 @@ func TxFromHex(rawHex string) (*bt.Tx, error) {
 // USE AT YOUR OWN RISK - this will modify a "pay-to" output to accomplish auto-fees
 func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
 	changeAddress string, standardRate, dataRate *bt.Fee,
-	privateKey *bec.PrivateKey,
+	privateKey *ec.PrivateKey,
 ) (*bt.Tx, error) {
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
@@ -179,7 +179,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 // draftTx is a helper method to create a draft tx and associated fees
 func draftTx(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns []OpReturnData,
-	privateKey *bec.PrivateKey, standardRate, dataRate *bt.Fee,
+	privateKey *ec.PrivateKey, standardRate, dataRate *bt.Fee,
 ) (uint64, error) {
 	// Create the "Draft tx"
 	tx, err := CreateTx(utxos, payToAddresses, opReturns, privateKey)
@@ -218,7 +218,7 @@ func CreateTxWithChangeUsingWif(utxos []*Utxo, payToAddresses []*PayToAddress, o
 // Get the raw hex version: tx.ToString()
 // Get the tx id: tx.GetTxID()
 func CreateTx(utxos []*Utxo, addresses []*PayToAddress,
-	opReturns []OpReturnData, privateKey *bec.PrivateKey,
+	opReturns []OpReturnData, privateKey *ec.PrivateKey,
 ) (*bt.Tx, error) {
 	// Start creating a new transaction
 	tx := bt.NewTx()

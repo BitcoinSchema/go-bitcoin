@@ -1,12 +1,9 @@
 package bitcoin
 
 import (
-	"bytes"
 	"encoding/base64"
 
-	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
-	"github.com/bitcoinsv/bsvd/wire"
-	"github.com/libsv/go-bk/bec"
+	bsm "github.com/bsv-blockchain/go-sdk/compat/bsm"
 )
 
 // SignMessage signs a string with the provided private key using Bitcoin Signed Message encoding
@@ -17,27 +14,15 @@ func SignMessage(privateKey, message string, sigRefCompressedKey bool) (string, 
 		return "", ErrPrivateKeyMissing
 	}
 
-	var buf bytes.Buffer
-	var err error
-	if err = wire.WriteVarString(&buf, 0, hBSV); err != nil {
-		return "", err
-	}
-	if err = wire.WriteVarString(&buf, 0, message); err != nil {
-		return "", err
-	}
-
-	// Create the hash
-	messageHash := chainhash.DoubleHashB(buf.Bytes())
-
 	// Get the private key
-	var ecdsaPrivateKey *bec.PrivateKey
-	if ecdsaPrivateKey, err = PrivateKeyFromString(privateKey); err != nil {
+	ecdsaPrivateKey, err := PrivateKeyFromString(privateKey)
+	if err != nil {
 		return "", err
 	}
 
-	// Sign
+	// Sign using Bitcoin Signed Message encoding
 	var sigBytes []byte
-	if sigBytes, err = bec.SignCompact(bec.S256(), ecdsaPrivateKey, messageHash, sigRefCompressedKey); err != nil {
+	if sigBytes, err = bsm.SignMessageWithCompression(ecdsaPrivateKey, []byte(message), sigRefCompressedKey); err != nil {
 		return "", err
 	}
 

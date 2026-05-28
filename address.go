@@ -6,9 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bk/crypto"
-	"github.com/libsv/go-bt/v2/bscript"
+	"github.com/bsv-blockchain/go-bt/v2/bscript"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
+	hash "github.com/bsv-blockchain/go-sdk/primitives/hash"
 )
 
 var (
@@ -100,8 +100,8 @@ func ValidA58(a58 []byte) (bool, error) {
 	return a.EmbeddedChecksum() == a.ComputeChecksum(), nil
 }
 
-// GetAddressFromPrivateKey takes a bec private key and returns a Bitcoin address
-func GetAddressFromPrivateKey(privateKey *bec.PrivateKey, compressed, mainnet bool) (string, error) {
+// GetAddressFromPrivateKey takes an ec private key and returns a Bitcoin address
+func GetAddressFromPrivateKey(privateKey *ec.PrivateKey, compressed, mainnet bool) (string, error) {
 	address, err := GetAddressFromPubKey(privateKey.PubKey(), compressed, mainnet)
 	if err != nil {
 		return "", err
@@ -122,8 +122,8 @@ func GetAddressFromPrivateKeyString(privateKey string, compressed, mainnet bool)
 	return address.AddressString, nil
 }
 
-// GetAddressFromPubKey gets a bscript.Address from a bec.PublicKey
-func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed, mainnet bool) (*bscript.Address, error) {
+// GetAddressFromPubKey gets a bscript.Address from an ec.PublicKey
+func GetAddressFromPubKey(publicKey *ec.PublicKey, compressed, mainnet bool) (*bscript.Address, error) {
 	if publicKey == nil {
 		return nil, ErrPublicKeyNil
 	} else if publicKey.X == nil {
@@ -133,12 +133,15 @@ func GetAddressFromPubKey(publicKey *bec.PublicKey, compressed, mainnet bool) (*
 	if !compressed {
 		// go-bt/v2/bscript does not have a function that exports the uncompressed address
 		// https://github.com/libsv/go-bt/blob/master/bscript/address.go#L98
-		hash := crypto.Hash160(publicKey.SerialiseUncompressed())
-		bb := make([]byte, 1+len(hash))
-		copy(bb[1:], hash)
+		h := hash.Hash160(publicKey.Uncompressed())
+		bb := make([]byte, 1+len(h))
+		if !mainnet {
+			bb[0] = 0x6f // testnet P2PKH version byte (mainnet defaults to 0x00)
+		}
+		copy(bb[1:], h)
 		return &bscript.Address{
 			AddressString: bscript.Base58EncodeMissingChecksum(bb),
-			PublicKeyHash: hex.EncodeToString(hash),
+			PublicKeyHash: hex.EncodeToString(h),
 		}, nil
 	}
 

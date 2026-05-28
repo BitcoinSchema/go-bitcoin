@@ -5,8 +5,7 @@ import (
 	"encoding/hex"
 	"log"
 
-	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/libsv/go-bk/bec"
+	"github.com/bitcoinschema/go-bitcoin/v3"
 )
 
 func main() {
@@ -29,8 +28,8 @@ func main() {
 	user2SharedPrivKey, _ := bitcoin.GenerateSharedKeyPair(privKey2, privKey1.PubKey())
 
 	// User 2 can decrypt using the shared private key
-	var decryptedTestData []byte
-	decryptedTestData, err = bec.Decrypt(user2SharedPrivKey, encryptedData)
+	var decryptedTestData string
+	decryptedTestData, err = bitcoin.DecryptWithPrivateKey(user2SharedPrivKey, hex.EncodeToString(encryptedData))
 	if err != nil {
 		log.Fatalf("failed to decrypt test data %s", err)
 	}
