@@ -2,6 +2,7 @@ package bitcoin
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
@@ -28,6 +29,8 @@ func TestValidA58(t *testing.T) {
 		{"1KCEAmV", false, false},
 		{"", false, false},
 		{"0", false, true},
+		// Valid base58 testnet address (version 0x6f) decodes cleanly but is not version 0
+		{"mmobaZaCeFGujSmej9ESfohgfWjXBW1u7m", false, true},
 	}
 
 	for _, test := range tests {
@@ -112,6 +115,27 @@ func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 	addressCompressed, err = GetAddressFromPrivateKey(&ec.PrivateKey{}, true, true)
 	require.Error(t, err)
 	assert.Empty(t, addressCompressed)
+}
+
+// TestGetAddressFromPubKeyUncompressedNetwork ensures the uncompressed branch
+// honors the mainnet flag: mainnet uses version 0x00 (1...) and testnet uses
+// version 0x6f (m.../n...).
+func TestGetAddressFromPubKeyUncompressedNetwork(t *testing.T) {
+	t.Parallel()
+
+	pubKey := testGetPublicKeyFromPrivateKey(testPrivateKeyHex)
+
+	mainnetAddr, err := GetAddressFromPubKey(pubKey, false, true)
+	require.NoError(t, err)
+	assert.True(t, strings.HasPrefix(mainnetAddr.AddressString, "1"), "got %q", mainnetAddr.AddressString)
+
+	testnetAddr, err := GetAddressFromPubKey(pubKey, false, false)
+	require.NoError(t, err)
+	firstChar := testnetAddr.AddressString[:1]
+	assert.Contains(t, []string{"m", "n"}, firstChar, "testnet P2PKH must start with m or n, got %q", testnetAddr.AddressString)
+
+	assert.NotEqual(t, mainnetAddr.AddressString, testnetAddr.AddressString)
+	assert.Equal(t, mainnetAddr.PublicKeyHash, testnetAddr.PublicKeyHash, "hash160 is network-independent")
 }
 
 // ExampleGetAddressFromPrivateKey example using GetAddressFromPrivateKey()

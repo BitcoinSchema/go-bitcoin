@@ -135,6 +135,9 @@ func GetAddressFromPubKey(publicKey *ec.PublicKey, compressed, mainnet bool) (*b
 		// https://github.com/libsv/go-bt/blob/master/bscript/address.go#L98
 		h := hash.Hash160(publicKey.Uncompressed())
 		bb := make([]byte, 1+len(h))
+		if !mainnet {
+			bb[0] = 0x6f // testnet P2PKH version byte (mainnet defaults to 0x00)
+		}
 		copy(bb[1:], h)
 		return &bscript.Address{
 			AddressString: bscript.Base58EncodeMissingChecksum(bb),
