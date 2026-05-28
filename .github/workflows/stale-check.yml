@@ -60,8 +60,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
-      contents: read       # Required: Sparse checkout for env files
-      issues: write        # Required to add labels and comments
+      contents: read # Required: Sparse checkout for env files
+      issues: write # Required to add labels and comments
       pull-requests: write # Required to add labels and comments on PRs
 
     steps:
