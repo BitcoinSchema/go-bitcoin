@@ -327,6 +327,94 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 		feeWithoutOpReturn := CalculateFeeForTx(tx, nil, nil)
 		assert.Greater(t, fee, feeWithoutOpReturn, "OP_RETURN tx should have higher fee")
 	})
+
+	t.Run("zero-cost rate clamps fee to 1", func(t *testing.T) {
+		zeroRate := &bt.Fee{
+			FeeType:   bt.FeeTypeStandard,
+			MiningFee: bt.FeeUnit{Satoshis: 0, Bytes: 10},
+			RelayFee:  bt.FeeUnit{Satoshis: 0, Bytes: 10},
+		}
+		fee := CalculateFeeForTx(tx, zeroRate, zeroRate)
+		assert.Equal(t, uint64(1), fee, "Fee should be clamped to 1 when it would otherwise be 0")
+	})
+
+	t.Run("negative rate clamps fee to 1", func(t *testing.T) {
+		negativeRate := &bt.Fee{
+			FeeType:   bt.FeeTypeStandard,
+			MiningFee: bt.FeeUnit{Satoshis: -10, Bytes: 10},
+			RelayFee:  bt.FeeUnit{Satoshis: -10, Bytes: 10},
+		}
+		fee := CalculateFeeForTx(tx, negativeRate, negativeRate)
+		assert.Equal(t, uint64(1), fee, "Fee should be clamped to 1 when it would otherwise be negative")
+	})
+}
+
+// TestCreateTxNonP2PKHUtxoFailsSigning ensures CreateTx surfaces the signing
+// error when a UTXO uses a non-P2PKH locking script (the Simple unlocker only
+// supports P2PKH).
+func TestCreateTxNonP2PKHUtxoFailsSigning(t *testing.T) {
+	t.Parallel()
+
+	privateKey, err := WifToPrivateKey(testWIF)
+	require.NoError(t, err)
+
+	// A data (OP_FALSE OP_RETURN) locking script is not P2PKH
+	utxo := &Utxo{
+		TxID:         testTxID,
+		Vout:         0,
+		ScriptPubKey: "006a0461736466",
+		Satoshis:     10000,
+	}
+
+	tx, err := CreateTx(
+		[]*Utxo{utxo},
+		[]*PayToAddress{{Address: testAddress, Satoshis: 1000}},
+		nil,
+		privateKey,
+	)
+	require.Error(t, err)
+	assert.Nil(t, tx)
+}
+
+// TestCreateTxWithChangeFeeRerunRemainder exercises the branch where the fee
+// (with a change output) exceeds the available satoshis, forcing a re-run
+// without change where the payTo amount plus fee is still under the total.
+func TestCreateTxWithChangeFeeRerunRemainder(t *testing.T) {
+	t.Parallel()
+
+	privateKey, err := WifToPrivateKey(testWIF)
+	require.NoError(t, err)
+
+	// With a 50 sat/byte rate: feeNoChange ~9601, feeWithChange ~11251.
+	// leftover (10500) sits between them, so the change-included draft pushes the
+	// total over budget (re-run path) while the no-change draft stays under it.
+	rate := &bt.Fee{
+		FeeType:   bt.FeeTypeStandard,
+		MiningFee: bt.FeeUnit{Satoshis: 50, Bytes: 1},
+		RelayFee:  bt.FeeUnit{Satoshis: 50, Bytes: 1},
+	}
+
+	utxos := []*Utxo{
+		{
+			TxID:         testTxID,
+			Vout:         0,
+			ScriptPubKey: testScriptPubKey,
+			Satoshis:     60500,
+		},
+	}
+
+	addresses := []*PayToAddress{
+		{
+			Address:  testAddress,
+			Satoshis: 50000,
+		},
+	}
+
+	tx, err := CreateTxWithChange(utxos, addresses, nil, testAddress, rate, rate, privateKey)
+	require.NoError(t, err)
+	require.NotNil(t, tx)
+	// Change was dropped and the fee was absorbed by reducing the payTo output
+	assert.Len(t, tx.Outputs, 1)
 }
 
 // TestCreateTxWithChangeExtended provides comprehensive tests for CreateTxWithChange

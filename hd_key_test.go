@@ -188,6 +188,30 @@ func TestGetPrivateKeyByPathPanic(t *testing.T) {
 	})
 }
 
+// TestGetPrivateKeyByPathHardenedFromPublic ensures GetPrivateKeyByPath returns
+// the derivation error when a hardened child is requested from a public-only
+// (neutered) extended key.
+func TestGetPrivateKeyByPathHardenedFromPublic(t *testing.T) {
+	t.Parallel()
+
+	masterKey, err := GenerateHDKey(RecommendedSeedLength)
+	require.NoError(t, err)
+
+	// Neuter the key so only the public portion remains
+	var xPub string
+	xPub, err = GetExtendedPublicKey(masterKey)
+	require.NoError(t, err)
+
+	var publicKey *bip32.ExtendedKey
+	publicKey, err = GetHDKeyFromExtendedPublicKey(xPub)
+	require.NoError(t, err)
+
+	// A hardened chain index cannot be derived from a public key
+	privateKey, pathErr := GetPrivateKeyByPath(publicKey, bip32.HardenedKeyStart, 0)
+	require.Error(t, pathErr)
+	assert.Nil(t, privateKey)
+}
+
 // ExampleGetPrivateKeyByPath example using GetPrivateKeyByPath()
 func ExampleGetPrivateKeyByPath() {
 	hdKey, err := GenerateHDKey(SecureSeedLength)
