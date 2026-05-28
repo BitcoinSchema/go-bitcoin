@@ -39,6 +39,11 @@ var (
 // generateSharedSecret generates a shared secret based on a private key and a
 // public key using Diffie-Hellman key exchange (ECDH) (RFC 4753). RFC 5903
 // Section 9 states we should only return x.
+//
+// X is intentionally returned unpadded (big.Int.Bytes()) to match go-bk/Pyelliptic
+// byte-for-byte; left-padding to the 32-byte curve size would change the SHA-512
+// key material for shared points whose X has leading zeros and break decryption of
+// older ciphertexts.
 func generateSharedSecret(privKey *ec.PrivateKey, pubKey *ec.PublicKey) []byte {
 	x, _ := ec.S256().ScalarMult(pubKey.X, pubKey.Y, privKey.D.Bytes())
 	return x.Bytes()
@@ -198,9 +203,18 @@ func addPKCSPadding(src []byte) []byte {
 // removePKCSPadding removes padding from data added with addPKCSPadding.
 func removePKCSPadding(src []byte) ([]byte, error) {
 	length := len(src)
-	padLength := int(src[length-1])
-	if padLength > aes.BlockSize || length < aes.BlockSize {
+	if length == 0 {
 		return nil, errInvalidPadding
+	}
+	padLength := int(src[length-1])
+	if padLength == 0 || padLength > aes.BlockSize || padLength > length {
+		return nil, errInvalidPadding
+	}
+	// Every padding byte must equal the pad length (full PKCS#7 validation).
+	for _, b := range src[length-padLength:] {
+		if int(b) != padLength {
+			return nil, errInvalidPadding
+		}
 	}
 
 	return src[:length-padLength], nil

@@ -178,6 +178,28 @@ func TestEciesDecryptFailures(t *testing.T) {
 		_, decErr := eciesDecrypt(priv, corrupted)
 		require.ErrorIs(t, decErr, errInvalidYLength)
 	})
+
+	t.Run("invalid curve point", func(t *testing.T) {
+		// Zero out the X (offset 20-51) and Y (offset 54-85) coordinates so the
+		// embedded public key does not lie on the secp256k1 curve.
+		corrupted := append([]byte(nil), valid...)
+		for i := 20; i < 52; i++ {
+			corrupted[i] = 0
+		}
+		for i := 54; i < 86; i++ {
+			corrupted[i] = 0
+		}
+		_, decErr := eciesDecrypt(priv, corrupted)
+		require.Error(t, decErr)
+	})
+
+	t.Run("misaligned ciphertext length", func(t *testing.T) {
+		// Appending a single byte leaves the curve markers and point intact but
+		// makes the ciphertext length no longer a multiple of the AES block size.
+		corrupted := append(append([]byte(nil), valid...), 0x00)
+		_, decErr := eciesDecrypt(priv, corrupted)
+		require.ErrorIs(t, decErr, errInvalidPadding)
+	})
 }
 
 // TestEciesMatchesPublicWrappers confirms the unexported helpers and the public
