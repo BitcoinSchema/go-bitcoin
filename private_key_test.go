@@ -5,8 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bk/wif"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -16,7 +15,7 @@ func TestCreatePrivateKey(t *testing.T) {
 	rawKey, err := CreatePrivateKey()
 	require.NoError(t, err)
 	assert.NotNil(t, rawKey)
-	assert.Len(t, rawKey.Serialise(), 32) //nolint:misspell // external library method name
+	assert.Len(t, rawKey.Serialize(), 32)
 }
 
 // ExampleCreatePrivateKey example using CreatePrivateKey()
@@ -25,7 +24,7 @@ func ExampleCreatePrivateKey() {
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
-	} else if len(rawKey.Serialise()) > 0 { //nolint:misspell // external library method name
+	} else if len(rawKey.Serialize()) > 0 {
 		fmt.Printf("key created successfully!")
 	}
 	// Output:key created successfully!
@@ -97,8 +96,8 @@ func TestPrivateKeyFromString(t *testing.T) {
 		if rawKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		}
-		if rawKey != nil && hex.EncodeToString(rawKey.Serialise()) != test.expectedKey { //nolint:misspell // external library method name
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialise())) //nolint:misspell // external library method name
+		if rawKey != nil && hex.EncodeToString(rawKey.Serialize()) != test.expectedKey {
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialize()))
 		}
 	}
 }
@@ -110,7 +109,7 @@ func ExamplePrivateKeyFromString() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("key converted: %s", hex.EncodeToString(key.Serialise())) //nolint:misspell // external library method name
+	fmt.Printf("key converted: %s", hex.EncodeToString(key.Serialize()))
 	// Output:key converted: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
 }
 
@@ -154,8 +153,8 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 		if (privateKey != nil || publicKey != nil) && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		}
-		if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedPrivateKey { //nolint:misspell // external library method name
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // external library method name
+		if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedPrivateKey {
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialize()))
 		}
 	}
 }
@@ -167,7 +166,7 @@ func ExamplePrivateAndPublicKeys() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key: %s public key: %s", hex.EncodeToString(privateKey.Serialise()), hex.EncodeToString(publicKey.SerialiseCompressed())) //nolint:misspell // Serialise is the actual method name
+	fmt.Printf("private key: %s public key: %s", hex.EncodeToString(privateKey.Serialize()), hex.EncodeToString(publicKey.Compressed()))
 
 	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd public key: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
 }
@@ -318,8 +317,8 @@ func TestWifToPrivateKey(t *testing.T) {
 		if privateKey != nil && test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
 		}
-		if privateKey != nil && hex.EncodeToString(privateKey.Serialise()) != test.expectedKey { //nolint:misspell // Serialise is the actual method name
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // Serialise is the actual method name
+		if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedKey {
+			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
 		}
 	}
 }
@@ -331,7 +330,7 @@ func ExampleWifToPrivateKey() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // Serialise is the actual method name
+	fmt.Printf("private key: %s", hex.EncodeToString(privateKey.Serialize()))
 
 	// Output:private key: 54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abd
 }
@@ -414,11 +413,11 @@ func TestCreateWif(t *testing.T) {
 		require.Lenf(t, wifKey.String(), 51, "WIF should be 51 characters long, got: %d", len(wifKey.String()))
 
 		// Convert WIF to Private Key
-		var privateKey *bec.PrivateKey
+		var privateKey *ec.PrivateKey
 		privateKey, err = WifToPrivateKey(wifKey.String())
 		require.NoError(t, err)
 		require.NotNil(t, privateKey)
-		privateKeyString := hex.EncodeToString(privateKey.Serialise()) //nolint:misspell // external library method name
+		privateKeyString := hex.EncodeToString(privateKey.Serialize())
 		// t.Log("Private Key:", privateKeyString)
 		require.Lenf(t, privateKeyString, 64, "Private Key should be 64 characters long, got: %d", len(privateKeyString))
 	})
@@ -504,7 +503,7 @@ func TestWifFromString(t *testing.T) {
 		require.NotNil(t, privateKey)
 
 		// Create a WIF
-		var wifKey *wif.WIF
+		var wifKey *WIF
 		wifKey, err = PrivateKeyToWif(privateKey)
 		require.NoError(t, err)
 		require.NotNil(t, wifKey)
@@ -524,7 +523,7 @@ func TestWifFromString(t *testing.T) {
 		require.Equalf(t, privateKey, privateKeyString, "Private Key should be equal, got: %s", privateKeyString)
 
 		// Decode WIF
-		var decodedWif *wif.WIF
+		var decodedWif *WIF
 		decodedWif, err = WifFromString(wifKeyString)
 		require.NoError(t, err)
 		require.NotNil(t, decodedWif)
@@ -559,7 +558,7 @@ func ExampleWifFromString() {
 	fmt.Println("Private Key Generated Length:", len(privateKey))
 
 	// Create a WIF
-	var wifKey *wif.WIF
+	var wifKey *WIF
 	wifKey, err = PrivateKeyToWif(privateKey)
 	if err != nil {
 		fmt.Println(err)
@@ -568,7 +567,7 @@ func ExampleWifFromString() {
 	fmt.Println("WIF Key Generated Length:", len(wifKey.String()))
 
 	// Decode WIF
-	var decodedWif *wif.WIF
+	var decodedWif *WIF
 	decodedWif, err = WifFromString(wifKey.String())
 	if err != nil {
 		fmt.Println(err)

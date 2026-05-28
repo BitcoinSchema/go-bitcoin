@@ -3,8 +3,8 @@ package bitcoin
 import (
 	"testing"
 
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bt/v2"
+	"github.com/bsv-blockchain/go-bt/v2"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ func TestCreateTxExtended(t *testing.T) {
 		utxos       []*Utxo
 		addresses   []*PayToAddress
 		opReturns   []OpReturnData
-		privateKey  interface{} // Can be nil or *bec.PrivateKey
+		privateKey  interface{} // Can be nil or *ec.PrivateKey
 		shouldError bool
 		errorText   string
 	}{
@@ -190,7 +190,7 @@ func TestCreateTxExtended(t *testing.T) {
 
 			if tt.privateKey != nil {
 				// Type assertion since we're using interface{} in the test struct
-				pk := tt.privateKey.(*bec.PrivateKey)
+				pk := tt.privateKey.(*ec.PrivateKey)
 				tx, err = CreateTx(tt.utxos, tt.addresses, tt.opReturns, pk)
 			} else {
 				tx, err = CreateTx(tt.utxos, tt.addresses, tt.opReturns, nil)

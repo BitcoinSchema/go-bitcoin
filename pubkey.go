@@ -3,7 +3,7 @@ package bitcoin
 import (
 	"encoding/hex"
 
-	"github.com/libsv/go-bk/bec"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 )
 
 // PubKeyFromPrivateKeyString will derive a pubKey (hex encoded) from a given private key
@@ -17,15 +17,15 @@ func PubKeyFromPrivateKeyString(privateKey string, compressed bool) (string, err
 }
 
 // PubKeyFromPrivateKey will derive a pubKey (hex encoded) from a given private key
-func PubKeyFromPrivateKey(privateKey *bec.PrivateKey, compressed bool) string {
+func PubKeyFromPrivateKey(privateKey *ec.PrivateKey, compressed bool) string {
 	if compressed {
-		return hex.EncodeToString(privateKey.PubKey().SerialiseCompressed())
+		return hex.EncodeToString(privateKey.PubKey().Compressed())
 	}
-	return hex.EncodeToString(privateKey.PubKey().SerialiseUncompressed())
+	return hex.EncodeToString(privateKey.PubKey().Uncompressed())
 }
 
-// PubKeyFromString will convert a pubKey (string) into a pubkey (*bec.PublicKey)
-func PubKeyFromString(pubKey string) (*bec.PublicKey, error) {
+// PubKeyFromString will convert a pubKey (string) into a pubkey (*ec.PublicKey)
+func PubKeyFromString(pubKey string) (*ec.PublicKey, error) {
 	// Invalid pubKey
 	if len(pubKey) == 0 {
 		return nil, ErrMissingPubKey
@@ -38,5 +38,5 @@ func PubKeyFromString(pubKey string) (*bec.PublicKey, error) {
 	}
 
 	// Parse into a pubKey
-	return bec.ParsePubKey(decoded, bec.S256())
+	return ec.ParsePubKey(decoded)
 }

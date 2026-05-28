@@ -1,46 +1,28 @@
 package bitcoin
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"fmt"
 
-	"github.com/bitcoinsv/bsvd/chaincfg/chainhash"
-	"github.com/bitcoinsv/bsvd/wire"
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bt/v2/bscript"
+	"github.com/bsv-blockchain/go-bt/v2/bscript"
+	bsm "github.com/bsv-blockchain/go-sdk/compat/bsm"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 )
 
 // ErrAddressNotFound is returned when the signature address does not match the expected address
 var ErrAddressNotFound = errors.New("address not found")
 
-const (
-	// hBSV is the magic header string required fore Bitcoin Signed Messages
-	hBSV string = "Bitcoin Signed Message:\n"
-)
-
 // PubKeyFromSignature gets a publickey for a signature and tells you whether is was compressed
-func PubKeyFromSignature(sig, data string) (pubKey *bec.PublicKey, wasCompressed bool, err error) {
+func PubKeyFromSignature(sig, data string) (pubKey *ec.PublicKey, wasCompressed bool, err error) {
 	var decodedSig []byte
 	if decodedSig, err = base64.StdEncoding.DecodeString(sig); err != nil {
 		return nil, false, err
 	}
 
-	// Validate the signature - this just shows that it was valid at all
-	// we will compare it with the key next
-	var buf bytes.Buffer
-	if err = wire.WriteVarString(&buf, 0, hBSV); err != nil {
-		return nil, false, err
-	}
-	if err = wire.WriteVarString(&buf, 0, data); err != nil {
-		return nil, false, err
-	}
-
-	// Create the hash
-	expectedMessageHash := chainhash.DoubleHashB(buf.Bytes())
-	return bec.RecoverCompact(bec.S256(), decodedSig, expectedMessageHash)
+	// Validate the signature and recover the public key (Bitcoin Signed Message encoding)
+	return bsm.PubKeyFromSignature(decodedSig, []byte(data))
 }
 
 // VerifyMessage verifies a string and address against the provided
@@ -92,8 +74,8 @@ func VerifyMessageDER(hash [32]byte, pubKey, signature string) (verified bool, e
 	}
 
 	// Parse the signature
-	var sig *bec.Signature
-	if sig, err = bec.ParseDERSignature(sigBytes, bec.S256()); err != nil {
+	var sig *ec.Signature
+	if sig, err = ec.ParseDERSignature(sigBytes); err != nil {
 		return false, err
 	}
 
@@ -104,8 +86,8 @@ func VerifyMessageDER(hash [32]byte, pubKey, signature string) (verified bool, e
 	}
 
 	// Parse the pubKey
-	var rawPubKey *bec.PublicKey
-	if rawPubKey, err = bec.ParsePubKey(pubKeyBytes, bec.S256()); err != nil {
+	var rawPubKey *ec.PublicKey
+	if rawPubKey, err = ec.ParsePubKey(pubKeyBytes); err != nil {
 		return false, err
 	}
 

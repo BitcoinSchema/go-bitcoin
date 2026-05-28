@@ -1,7 +1,7 @@
 package bitcoin
 
 import (
-	"github.com/libsv/go-bt/v2/bscript"
+	"github.com/bsv-blockchain/go-bt/v2/bscript"
 )
 
 // ScriptFromAddress will create an output P2PKH script from an address string

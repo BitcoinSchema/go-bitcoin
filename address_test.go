@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/libsv/go-bk/bec"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -96,7 +96,7 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 
 // TestGetAddressFromPrivateKeyCompression will test the method GetAddressFromPrivateKey()
 func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
-	privateKey, err := bec.NewPrivateKey(bec.S256())
+	privateKey, err := ec.NewPrivateKey()
 	require.NoError(t, err)
 
 	var addressUncompressed string
@@ -109,7 +109,7 @@ func TestGetAddressFromPrivateKeyCompression(t *testing.T) {
 
 	assert.NotEqual(t, addressCompressed, addressUncompressed)
 
-	addressCompressed, err = GetAddressFromPrivateKey(&bec.PrivateKey{}, true, true)
+	addressCompressed, err = GetAddressFromPrivateKey(&ec.PrivateKey{}, true, true)
 	require.Error(t, err)
 	assert.Empty(t, addressCompressed)
 }
@@ -134,7 +134,7 @@ func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 }
 
 // testGetPublicKeyFromPrivateKey is a helper method for tests
-func testGetPublicKeyFromPrivateKey(privateKey string) *bec.PublicKey {
+func testGetPublicKeyFromPrivateKey(privateKey string) *ec.PublicKey {
 	rawKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return nil
@@ -147,18 +147,18 @@ func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		input           *bec.PublicKey
+		input           *ec.PublicKey
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{&bec.PublicKey{}, "", true, true},
+		{&ec.PublicKey{}, "", true, true},
 		{testGetPublicKeyFromPrivateKey(testPrivateKeyHex), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
 		{testGetPublicKeyFromPrivateKey("000000"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", false, false},
 		{testGetPublicKeyFromPrivateKey("0"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", true, true},
 	}
 
-	// todo: add more error cases of invalid *bec.PublicKey
+	// todo: add more error cases of invalid *ec.PublicKey
 
 	for _, test := range tests {
 		rawKey, err := GetAddressFromPubKey(test.input, true, true)

@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"log"
 
-	"github.com/bitcoinschema/go-bitcoin/v2"
+	"github.com/bitcoinschema/go-bitcoin/v3"
 )
 
 func main() {
@@ -14,7 +14,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
-	log.Println("private key (used for encryption): ", hex.EncodeToString(privateKey.Serialise())) //nolint:misspell // external library method name
+	log.Println("private key (used for encryption): ", hex.EncodeToString(privateKey.Serialize()))
 
 	// Encrypt
 	var data string

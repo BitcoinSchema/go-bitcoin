@@ -1,28 +1,24 @@
 package bitcoin
 
 import (
-	"crypto/ecdsa"
 	"encoding/hex"
-	"math/big"
 
-	"github.com/libsv/go-bk/bec"
-	"github.com/libsv/go-bk/chaincfg"
-	"github.com/libsv/go-bk/wif"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
+	chaincfg "github.com/bsv-blockchain/go-sdk/transaction/chaincfg"
 )
 
 // GenerateSharedKeyPair creates shared keys that can be used to encrypt/decrypt data
 // that can be decrypted by yourself (privateKey) and also the owner of the given public key
-func GenerateSharedKeyPair(privateKey *bec.PrivateKey,
-	pubKey *bec.PublicKey,
-) (*bec.PrivateKey, *bec.PublicKey) {
-	return bec.PrivKeyFromBytes(
-		bec.S256(),
-		bec.GenerateSharedSecret(privateKey, pubKey),
+func GenerateSharedKeyPair(privateKey *ec.PrivateKey,
+	pubKey *ec.PublicKey,
+) (*ec.PrivateKey, *ec.PublicKey) {
+	return ec.PrivateKeyFromBytes(
+		generateSharedSecret(privateKey, pubKey),
 	)
 }
 
-// PrivateKeyFromString turns a private key (hex encoded string) into an bec.PrivateKey
-func PrivateKeyFromString(privateKey string) (*bec.PrivateKey, error) {
+// PrivateKeyFromString turns a private key (hex encoded string) into an ec.PrivateKey
+func PrivateKeyFromString(privateKey string) (*ec.PrivateKey, error) {
 	if len(privateKey) == 0 {
 		return nil, ErrPrivateKeyMissing
 	}
@@ -30,18 +26,13 @@ func PrivateKeyFromString(privateKey string) (*bec.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	x, y := bec.S256().ScalarBaseMult(privateKeyBytes)
-	ecdsaPubKey := ecdsa.PublicKey{
-		Curve: bec.S256(),
-		X:     x,
-		Y:     y,
-	}
-	return &bec.PrivateKey{PublicKey: ecdsaPubKey, D: new(big.Int).SetBytes(privateKeyBytes)}, nil
+	rawKey, _ := ec.PrivateKeyFromBytes(privateKeyBytes)
+	return rawKey, nil
 }
 
-// CreatePrivateKey will create a new private key (*bec.PrivateKey)
-func CreatePrivateKey() (*bec.PrivateKey, error) {
-	return bec.NewPrivateKey(bec.S256())
+// CreatePrivateKey will create a new private key (*ec.PrivateKey)
+func CreatePrivateKey() (*ec.PrivateKey, error) {
+	return ec.NewPrivateKey()
 }
 
 // CreatePrivateKeyString will create a new private key (hex encoded)
@@ -51,17 +42,17 @@ func CreatePrivateKeyString() (string, error) {
 		return "", err
 	}
 
-	return hex.EncodeToString(privateKey.Serialise()), nil //nolint:misspell // external library method name
+	return hex.EncodeToString(privateKey.Serialize()), nil
 }
 
-// CreateWif will create a new WIF (*wif.WIF)
-func CreateWif() (*wif.WIF, error) {
+// CreateWif will create a new WIF (*WIF)
+func CreateWif() (*WIF, error) {
 	privateKey, err := CreatePrivateKey()
 	if err != nil {
 		return nil, err
 	}
 
-	return wif.NewWIF(privateKey, &chaincfg.MainNet, false)
+	return NewWIF(privateKey, &chaincfg.MainNet, false)
 }
 
 // CreateWifString will create a new WIF (string)
@@ -76,7 +67,7 @@ func CreateWifString() (string, error) {
 
 // PrivateAndPublicKeys will return both the private and public key in one method
 // Expects a hex encoded privateKey
-func PrivateAndPublicKeys(privateKey string) (*bec.PrivateKey, *bec.PublicKey, error) {
+func PrivateAndPublicKeys(privateKey string) (*ec.PrivateKey, *ec.PublicKey, error) {
 	// No key?
 	if len(privateKey) == 0 {
 		return nil, nil, ErrPrivateKeyMissing
@@ -89,12 +80,12 @@ func PrivateAndPublicKeys(privateKey string) (*bec.PrivateKey, *bec.PublicKey, e
 	}
 
 	// Get the public and private key from the bytes
-	rawKey, publicKey := bec.PrivKeyFromBytes(bec.S256(), privateKeyBytes)
+	rawKey, publicKey := ec.PrivateKeyFromBytes(privateKeyBytes)
 	return rawKey, publicKey, nil
 }
 
-// PrivateKeyToWif will convert a private key to a WIF (*wif.WIF)
-func PrivateKeyToWif(privateKey string) (*wif.WIF, error) {
+// PrivateKeyToWif will convert a private key to a WIF (*WIF)
+func PrivateKeyToWif(privateKey string) (*WIF, error) {
 	// Missing private key
 	if len(privateKey) == 0 {
 		return nil, ErrPrivateKeyMissing
@@ -107,10 +98,10 @@ func PrivateKeyToWif(privateKey string) (*wif.WIF, error) {
 	}
 
 	// Get the private key from bytes
-	rawKey, _ := bec.PrivKeyFromBytes(bec.S256(), decodedKey)
+	rawKey, _ := ec.PrivateKeyFromBytes(decodedKey)
 
 	// Create a new WIF (error never gets hit since (net) is set correctly)
-	return wif.NewWIF(rawKey, &chaincfg.MainNet, false)
+	return NewWIF(rawKey, &chaincfg.MainNet, false)
 }
 
 // PrivateKeyToWifString will convert a private key to a WIF (string)
@@ -123,15 +114,15 @@ func PrivateKeyToWifString(privateKey string) (string, error) {
 	return privateWif.String(), nil
 }
 
-// WifToPrivateKey will convert a WIF to a private key (*bec.PrivateKey)
-func WifToPrivateKey(wifKey string) (*bec.PrivateKey, error) {
+// WifToPrivateKey will convert a WIF to a private key (*ec.PrivateKey)
+func WifToPrivateKey(wifKey string) (*ec.PrivateKey, error) {
 	// Missing wif?
 	if len(wifKey) == 0 {
 		return nil, ErrWifMissing
 	}
 
 	// Decode the wif
-	decodedWif, err := wif.DecodeWIF(wifKey)
+	decodedWif, err := DecodeWIF(wifKey)
 	if err != nil {
 		return nil, err
 	}
@@ -141,26 +132,26 @@ func WifToPrivateKey(wifKey string) (*bec.PrivateKey, error) {
 }
 
 // WifToPrivateKeyString will convert a WIF to private key (string)
-func WifToPrivateKeyString(wif string) (string, error) {
+func WifToPrivateKeyString(wifKey string) (string, error) {
 	// Convert the wif to private key
-	privateKey, err := WifToPrivateKey(wif)
+	privateKey, err := WifToPrivateKey(wifKey)
 	if err != nil {
 		return "", err
 	}
 
 	// Return the hex (string) version of the private key
-	return hex.EncodeToString(privateKey.Serialise()), nil //nolint:misspell // external library method name
+	return hex.EncodeToString(privateKey.Serialize()), nil
 }
 
-// WifFromString will convert a WIF (string) to a WIF (*wif.WIF)
-func WifFromString(wifKey string) (*wif.WIF, error) {
+// WifFromString will convert a WIF (string) to a WIF (*WIF)
+func WifFromString(wifKey string) (*WIF, error) {
 	// Missing wif?
 	if len(wifKey) == 0 {
 		return nil, ErrWifMissing
 	}
 
 	// Decode the WIF
-	decodedWif, err := wif.DecodeWIF(wifKey)
+	decodedWif, err := DecodeWIF(wifKey)
 	if err != nil {
 		return nil, err
 	}

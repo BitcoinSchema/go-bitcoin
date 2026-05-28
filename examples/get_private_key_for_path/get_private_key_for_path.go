@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"log"
 
-	"github.com/bitcoinschema/go-bitcoin/v2"
-	"github.com/libsv/go-bk/bec"
+	"github.com/bitcoinschema/go-bitcoin/v3"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 )
 
 func main() {
@@ -17,12 +17,12 @@ func main() {
 	}
 
 	// Get a private key from a specific path (chain/num)
-	var privateKey *bec.PrivateKey
+	var privateKey *ec.PrivateKey
 	privateKey, err = bitcoin.GetPrivateKeyByPath(hdKey, 10, 2)
 	if err != nil {
 		log.Fatalf("error occurred: %s", err.Error())
 	}
 
 	// Success!
-	log.Printf("private key: %s for chain/path: %d/%d", hex.EncodeToString(privateKey.Serialise()), 10, 2) //nolint:misspell // external library method name
+	log.Printf("private key: %s for chain/path: %d/%d", hex.EncodeToString(privateKey.Serialize()), 10, 2)
 }

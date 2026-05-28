@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/libsv/go-bk/bec"
+	ec "github.com/bsv-blockchain/go-sdk/primitives/ec"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +65,7 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	assert.NotNil(t, priv)
 
 	tests := []struct {
-		inputKey       *bec.PrivateKey
+		inputKey       *ec.PrivateKey
 		expectedPubKey string
 		expectedError  bool
 	}{
@@ -140,8 +140,8 @@ func TestPubKeyFromString(t *testing.T) {
 		if pubKey == nil && !test.expectedNil {
 			t.Fatalf("%s Failed: [%s] inputted and nil was NOT expected", t.Name(), test.inputKey)
 		}
-		if pubKey != nil && hex.EncodeToString(pubKey.SerialiseCompressed()) != test.expectedPubKey {
-			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.SerialiseCompressed()))
+		if pubKey != nil && hex.EncodeToString(pubKey.Compressed()) != test.expectedPubKey {
+			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.Compressed()))
 		}
 	}
 }
@@ -153,7 +153,7 @@ func ExamplePubKeyFromString() {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
 	}
-	fmt.Printf("pubkey from string: %s", hex.EncodeToString(pubKey.SerialiseCompressed()))
+	fmt.Printf("pubkey from string: %s", hex.EncodeToString(pubKey.Compressed()))
 	// Output:pubkey from string: 031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f
 }
 

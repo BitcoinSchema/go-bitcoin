@@ -4,7 +4,7 @@ package main
 import (
 	"log"
 
-	"github.com/bitcoinschema/go-bitcoin/v2"
+	"github.com/bitcoinschema/go-bitcoin/v3"
 )
 
 func main() {

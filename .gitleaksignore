@@ -84,3 +84,6 @@ examples/verify_signature/verify_signature.go:generic-api-key:12
 
 # Test constants
 test_constants_test.go:generic-api-key:4
+
+# ECIES interop test fixtures
+ecies_test.go:generic-api-key:16
