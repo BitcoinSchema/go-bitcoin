@@ -195,3 +195,132 @@ func TestWIFSerializePubKey(t *testing.T) {
 	require.NoError(t, err)
 	assert.Len(t, uncompressed.SerializePubKey(), 65)
 }
+
+// TestPrivateKeyToWifWithCompression verifies both compression modes from a hex key.
+func TestPrivateKeyToWifWithCompression(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		compress    bool
+		expectedWIF string
+		wantLen     int
+		wantPrefix  string
+	}{
+		{"uncompressed", false, testUncompressedWIF, 51, "5"},
+		{"compressed", true, testCompressedWIF, 52, "K"},
+	}
+
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			w, err := PrivateKeyToWifWithCompression(testPrivateKeyHex, test.compress)
+			require.NoError(t, err)
+			require.NotNil(t, w)
+			assert.Equal(t, test.compress, w.CompressPubKey)
+
+			s := w.String()
+			require.Len(t, s, test.wantLen)
+			assert.True(t, strings.HasPrefix(s, test.wantPrefix), "got prefix %q", s[:1])
+			assert.Equal(t, test.expectedWIF, s)
+
+			// The string helper must agree with the object helper.
+			str, strErr := PrivateKeyToWifStringWithCompression(testPrivateKeyHex, test.compress)
+			require.NoError(t, strErr)
+			assert.Equal(t, test.expectedWIF, str)
+
+			// Round-trip back to the original private key (decode auto-detects compression).
+			decoded, decErr := DecodeWIF(s)
+			require.NoError(t, decErr)
+			assert.Equal(t, test.compress, decoded.CompressPubKey)
+			assert.Equal(t, testPrivateKeyHex, hex.EncodeToString(decoded.PrivKey.Serialize()))
+		})
+	}
+}
+
+// TestCreateWifWithCompression verifies freshly generated WIFs honor the flag.
+func TestCreateWifWithCompression(t *testing.T) {
+	t.Parallel()
+
+	t.Run("uncompressed", func(t *testing.T) {
+		w, err := CreateWifWithCompression(false)
+		require.NoError(t, err)
+		assert.False(t, w.CompressPubKey)
+		require.Len(t, w.String(), 51)
+		assert.True(t, strings.HasPrefix(w.String(), "5"))
+	})
+
+	t.Run("compressed", func(t *testing.T) {
+		w, err := CreateWifWithCompression(true)
+		require.NoError(t, err)
+		assert.True(t, w.CompressPubKey)
+		require.Len(t, w.String(), 52)
+		prefix := w.String()[:1]
+		assert.Contains(t, []string{"K", "L"}, prefix, "compressed mainnet WIF starts with K or L")
+	})
+
+	t.Run("string variant compressed", func(t *testing.T) {
+		s, err := CreateWifStringWithCompression(true)
+		require.NoError(t, err)
+		require.Len(t, s, 52)
+	})
+}
+
+// TestWifCompressionDefaults confirms the convenience funcs default to uncompressed.
+func TestWifCompressionDefaults(t *testing.T) {
+	t.Parallel()
+
+	w, err := PrivateKeyToWif(testPrivateKeyHex)
+	require.NoError(t, err)
+	assert.False(t, w.CompressPubKey)
+	assert.Equal(t, testUncompressedWIF, w.String())
+
+	created, err := CreateWif()
+	require.NoError(t, err)
+	assert.False(t, created.CompressPubKey)
+}
+
+// TestPrivateKeyToWifWithCompressionErrors covers invalid inputs for both modes.
+func TestPrivateKeyToWifWithCompressionErrors(t *testing.T) {
+	t.Parallel()
+
+	for _, compress := range []bool{false, true} {
+		_, err := PrivateKeyToWifWithCompression("", compress)
+		require.ErrorIs(t, err, ErrPrivateKeyMissing)
+
+		_, err = PrivateKeyToWifWithCompression("not-hex", compress)
+		require.Error(t, err)
+
+		_, err = PrivateKeyToWifStringWithCompression("", compress)
+		require.ErrorIs(t, err, ErrPrivateKeyMissing)
+	}
+}
+
+// TestNewWIFNilGuards confirms NewWIF rejects a nil private key and a nil network
+// instead of panicking later.
+func TestNewWIFNilGuards(t *testing.T) {
+	t.Parallel()
+
+	priv, err := PrivateKeyFromString(testPrivateKeyHex)
+	require.NoError(t, err)
+
+	_, err = NewWIF(nil, &chaincfg.MainNet, false)
+	require.ErrorIs(t, err, ErrPrivateKeyMissing)
+
+	_, err = NewWIF(priv, nil, false)
+	require.ErrorIs(t, err, ErrNoNetwork)
+}
+
+// TestIsForNetNil confirms IsForNet returns false for a nil network rather than
+// panicking on a nil dereference.
+func TestIsForNetNil(t *testing.T) {
+	t.Parallel()
+
+	priv, err := PrivateKeyFromString(testPrivateKeyHex)
+	require.NoError(t, err)
+
+	w, err := NewWIF(priv, &chaincfg.MainNet, false)
+	require.NoError(t, err)
+
+	assert.False(t, w.IsForNet(nil))
+	assert.True(t, w.IsForNet(&chaincfg.MainNet))
+}

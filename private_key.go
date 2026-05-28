@@ -45,19 +45,37 @@ func CreatePrivateKeyString() (string, error) {
 	return hex.EncodeToString(privateKey.Serialize()), nil
 }
 
-// CreateWif will create a new WIF (*WIF)
+// CreateWif will create a new uncompressed mainnet WIF (*WIF).
+//
+// Use CreateWifWithCompression to choose compressed (52-char, K/L...) vs
+// uncompressed (51-char, 5...) public-key encoding.
 func CreateWif() (*WIF, error) {
+	return CreateWifWithCompression(false)
+}
+
+// CreateWifWithCompression will create a new random mainnet WIF (*WIF) using the
+// chosen public-key compression. Compressed WIFs are 52 characters and start
+// with K or L; uncompressed WIFs are 51 characters and start with 5.
+func CreateWifWithCompression(compress bool) (*WIF, error) {
 	privateKey, err := CreatePrivateKey()
 	if err != nil {
 		return nil, err
 	}
 
-	return NewWIF(privateKey, &chaincfg.MainNet, false)
+	return NewWIF(privateKey, &chaincfg.MainNet, compress)
 }
 
-// CreateWifString will create a new WIF (string)
+// CreateWifString will create a new uncompressed mainnet WIF (string).
+//
+// Use CreateWifStringWithCompression to choose compression.
 func CreateWifString() (string, error) {
-	wifKey, err := CreateWif()
+	return CreateWifStringWithCompression(false)
+}
+
+// CreateWifStringWithCompression will create a new random mainnet WIF (string)
+// using the chosen public-key compression.
+func CreateWifStringWithCompression(compress bool) (string, error) {
+	wifKey, err := CreateWifWithCompression(compress)
 	if err != nil {
 		return "", err
 	}
@@ -84,8 +102,16 @@ func PrivateAndPublicKeys(privateKey string) (*ec.PrivateKey, *ec.PublicKey, err
 	return rawKey, publicKey, nil
 }
 
-// PrivateKeyToWif will convert a private key to a WIF (*WIF)
+// PrivateKeyToWif will convert a private key to an uncompressed mainnet WIF (*WIF).
+//
+// Use PrivateKeyToWifWithCompression to choose compression.
 func PrivateKeyToWif(privateKey string) (*WIF, error) {
+	return PrivateKeyToWifWithCompression(privateKey, false)
+}
+
+// PrivateKeyToWifWithCompression will convert a hex private key to a mainnet WIF
+// (*WIF) using the chosen public-key compression.
+func PrivateKeyToWifWithCompression(privateKey string, compress bool) (*WIF, error) {
 	// Missing private key
 	if len(privateKey) == 0 {
 		return nil, ErrPrivateKeyMissing
@@ -101,12 +127,20 @@ func PrivateKeyToWif(privateKey string) (*WIF, error) {
 	rawKey, _ := ec.PrivateKeyFromBytes(decodedKey)
 
 	// Create a new WIF (error never gets hit since (net) is set correctly)
-	return NewWIF(rawKey, &chaincfg.MainNet, false)
+	return NewWIF(rawKey, &chaincfg.MainNet, compress)
 }
 
-// PrivateKeyToWifString will convert a private key to a WIF (string)
+// PrivateKeyToWifString will convert a private key to an uncompressed mainnet WIF (string).
+//
+// Use PrivateKeyToWifStringWithCompression to choose compression.
 func PrivateKeyToWifString(privateKey string) (string, error) {
-	privateWif, err := PrivateKeyToWif(privateKey)
+	return PrivateKeyToWifStringWithCompression(privateKey, false)
+}
+
+// PrivateKeyToWifStringWithCompression will convert a hex private key to a
+// mainnet WIF (string) using the chosen public-key compression.
+func PrivateKeyToWifStringWithCompression(privateKey string, compress bool) (string, error) {
+	privateWif, err := PrivateKeyToWifWithCompression(privateKey, compress)
 	if err != nil {
 		return "", err
 	}

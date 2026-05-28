@@ -59,6 +59,9 @@ type WIF struct {
 // whether the address intended to be imported or exported was created by
 // serializing the public key compressed rather than uncompressed.
 func NewWIF(privKey *ec.PrivateKey, net *chaincfg.Params, compress bool) (*WIF, error) {
+	if privKey == nil {
+		return nil, ErrPrivateKeyMissing
+	}
 	if net == nil {
 		return nil, ErrNoNetwork
 	}
@@ -68,6 +71,9 @@ func NewWIF(privKey *ec.PrivateKey, net *chaincfg.Params, compress bool) (*WIF, 
 // IsForNet returns whether the decoded WIF structure is associated with the
 // passed bitcoin network.
 func (w *WIF) IsForNet(net *chaincfg.Params) bool {
+	if net == nil {
+		return false
+	}
 	return w.netID == net.PrivateKeyID
 }
 
