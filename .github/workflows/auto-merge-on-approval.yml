@@ -93,11 +93,14 @@ jobs:
         # SECURITY: pin the checkout to the trusted base ref so the local
         # ./.github/actions/load-env action (run below with pull-requests/issues write)
         # can never be a PR-controlled version. Default checkout on pull_request /
-        # pull_request_review events resolves to the PR head, which is attacker-influenced.
-        # Env files and the action are not modified by PRs, so base-ref loading is safe.
+        # pull_request_review events resolves to the PR merge ref, which is attacker-influenced.
+        # `github.base_ref` is ONLY populated for pull_request / pull_request_target — it is
+        # empty on pull_request_review, where `github.ref` is refs/pull/<n>/merge (PR-controlled).
+        # Read the base branch directly from the event payload so it is the trusted base ref for
+        # BOTH triggers. Env files and the action are not modified there, so base-ref loading is safe.
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
-          ref: ${{ github.base_ref || github.ref }}
+          ref: ${{ github.event.pull_request.base.ref }}
           persist-credentials: false
           sparse-checkout: |
             .github/env
