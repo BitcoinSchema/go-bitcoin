@@ -45,11 +45,7 @@ on:
         required: true
         type: string
       coverage-provider:
-        description: "Coverage service provider (internal or codecov). Gates which downstream job runs (replaces the retired check-provider job)."
-        required: true
-        type: string
-      fuzz-testing-enabled:
-        description: "Whether fuzz testing is enabled (passed to the validate-test-results composite action that runs inside this workflow's coverage jobs — previously fortress-test-validation.yml)."
+        description: "Coverage service provider (internal or codecov). Gates which downstream job runs."
         required: true
         type: string
     secrets:
@@ -68,15 +64,42 @@ permissions: {}
 
 jobs:
   # ----------------------------------------------------------------------------------
+  # Validate Coverage Provider (fail-fast guard)
+  #
+  # Both coverage jobs below are gated on `coverage-provider == 'internal' | 'codecov'`.
+  # Without this guard, an invalid value would cause BOTH to skip and the reusable
+  # workflow to report success while silently processing no coverage. This guard provides
+  # an explicit failure path for any direct caller.
+  # ----------------------------------------------------------------------------------
+  validate-provider:
+    name: 🔍 Validate Coverage Provider
+    runs-on: ${{ inputs.primary-runner }}
+    timeout-minutes: 2
+    permissions: {}
+    steps:
+      - name: ✅ Validate coverage-provider input
+        env:
+          COVERAGE_PROVIDER: ${{ inputs.coverage-provider }}
+        run: |
+          echo "🔍 Validating coverage-provider: $COVERAGE_PROVIDER"
+          if [[ "$COVERAGE_PROVIDER" != "internal" && "$COVERAGE_PROVIDER" != "codecov" ]]; then
+            echo "❌ Invalid coverage-provider: '$COVERAGE_PROVIDER'"
+            echo "   Valid options are: internal, codecov"
+            echo "   Fix GO_COVERAGE_PROVIDER in .github/env/ (e.g. 10-coverage.env / 90-project.env)."
+            exit 1
+          fi
+          echo "✅ Coverage provider is valid: $COVERAGE_PROVIDER"
+
+  # ----------------------------------------------------------------------------------
   # Process Coverage and Deploy to GitHub Pages (Internal Provider)
   #
-  # Note: The provider-check job was retired (saved 1 billed minute for 2s of work).
-  # Provider selection is now driven by the `coverage-provider` workflow input. Test
-  # result validation (previously fortress-test-validation.yml) is performed inline
-  # via the .github/actions/validate-test-results composite action.
+  # Note: Provider selection is driven by the `coverage-provider` workflow input. Test
+  # result validation runs as a coverage-independent job (validate-test-results in
+  # fortress-test-suite.yml), not inline here.
   # ----------------------------------------------------------------------------------
   process-coverage:
     name: 📊 Process Coverage & Deploy (Internal)
+    needs: [validate-provider]
     if: inputs.coverage-provider == 'internal'
     runs-on: ${{ inputs.primary-runner }}
     timeout-minutes: 10
@@ -135,14 +158,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 0 # Fetch all history including tags for version display
 
-      # --------------------------------------------------------------------
-      # Validate test results before processing coverage
-      # (formerly fortress-test-validation.yml as its own job)
-      # --------------------------------------------------------------------
-      - name: 🔍 Validate test results
-        uses: ./.github/actions/validate-test-results
-        with:
-          fuzz-testing-enabled: ${{ inputs.fuzz-testing-enabled }}
+      # Note: test result validation runs as a coverage-independent job
+      # (validate-test-results in fortress-test-suite.yml) so failures are enforced
+      # even when coverage is disabled or on tag builds. This job is gated behind it.
 
       # --------------------------------------------------------------------
       # Setup Go with caching and version management
@@ -2403,6 +2421,7 @@ jobs:
   # ----------------------------------------------------------------------------------
   codecov-upload:
     name: 📈 Upload to Codecov
+    needs: [validate-provider]
     if: inputs.coverage-provider == 'codecov'
     runs-on: ${{ inputs.primary-runner }}
     timeout-minutes: 5
@@ -2427,14 +2446,9 @@ jobs:
           persist-credentials: false
           fetch-depth: 2 # Need history for codecov to detect changes
 
-      # --------------------------------------------------------------------
-      # Validate test results before uploading coverage to Codecov
-      # (formerly fortress-test-validation.yml as its own job)
-      # --------------------------------------------------------------------
-      - name: 🔍 Validate test results
-        uses: ./.github/actions/validate-test-results
-        with:
-          fuzz-testing-enabled: ${{ inputs.fuzz-testing-enabled }}
+      # Note: test result validation runs as a coverage-independent job
+      # (validate-test-results in fortress-test-suite.yml) so failures are enforced
+      # even when coverage is disabled or on tag builds. This job is gated behind it.
 
       # --------------------------------------------------------------------
       # Download coverage artifact

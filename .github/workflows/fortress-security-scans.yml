@@ -6,11 +6,7 @@
 #
 #  Maintainer: @mrz1836
 #
-#  BILLING NOTE:
-#  - The three scans (Nancy ~35s, govulncheck ~39s, gitleaks ~6s) used to run as
-#    separate parallel jobs and bill 3 rounded minutes for <60s of work each.
-#  - They're now consolidated into a single job that bills as 1 minute. The shared
-#    checkout + setup-go + setup-magex steps run once instead of three times.
+#  FAILURE HANDLING:
 #  - Each scan keeps `continue-on-error: true` so one failure does not mask another.
 #    A final `🚨 Aggregate failures` step exits non-zero if any real failure occurred
 #    (Nancy rate-limit / 402 are intentionally inconclusive and do NOT fail the job).
@@ -604,27 +600,34 @@ jobs:
       # --------------------------------------------------------------------
       - name: 🚨 Aggregate failures
         if: always()
+        # Security: workflow_call inputs and step results are routed through
+        # `env:` rather than interpolated into the shell body. This prevents
+        # script injection (SonarCloud githubactions script-injection rule) by
+        # passing values as environment data, never splicing them into the script.
+        env:
+          ENABLE_NANCY: ${{ inputs.enable-nancy }}
+          ENABLE_GOVULNCHECK: ${{ inputs.enable-govulncheck }}
+          ENABLE_GITLEAKS: ${{ inputs.enable-gitleaks }}
+          NANCY_STATUS: ${{ steps.run-nancy.outputs.nancy-status }}
+          GOVULN_STATUS: ${{ steps.run-govulncheck.outputs.govuln-status }}
+          GITLEAKS_OUTCOME: ${{ steps.run-gitleaks.outcome }}
+          GITLEAKS_SAME_REPO: ${{ steps.gitleaks-repo-check.outputs.is_same_repo }}
         run: |
-          NANCY_STATUS="${{ steps.run-nancy.outputs.nancy-status }}"
-          GOVULN_STATUS="${{ steps.run-govulncheck.outputs.govuln-status }}"
-          GITLEAKS_OUTCOME="${{ steps.run-gitleaks.outcome }}"
-          GITLEAKS_SAME_REPO="${{ steps.gitleaks-repo-check.outputs.is_same_repo }}"
-
           FAILED=0
 
-          if [[ "${{ inputs.enable-nancy }}" == "true" ]] && [[ "$NANCY_STATUS" == "failure" ]]; then
+          if [[ "${ENABLE_NANCY}" == "true" ]] && [[ "${NANCY_STATUS}" == "failure" ]]; then
             echo "❌ Nancy detected vulnerabilities in dependencies"
             FAILED=1
           fi
 
-          if [[ "${{ inputs.enable-govulncheck }}" == "true" ]] && [[ "$GOVULN_STATUS" == "failure" ]]; then
+          if [[ "${ENABLE_GOVULNCHECK}" == "true" ]] && [[ "${GOVULN_STATUS}" == "failure" ]]; then
             echo "❌ Govulncheck detected vulnerabilities"
             FAILED=1
           fi
 
-          if [[ "${{ inputs.enable-gitleaks }}" == "true" ]] \
-              && [[ "$GITLEAKS_SAME_REPO" == "true" ]] \
-              && [[ "$GITLEAKS_OUTCOME" == "failure" ]]; then
+          if [[ "${ENABLE_GITLEAKS}" == "true" ]] \
+              && [[ "${GITLEAKS_SAME_REPO}" == "true" ]] \
+              && [[ "${GITLEAKS_OUTCOME}" == "failure" ]]; then
             echo "❌ Gitleaks detected secrets in the repository"
             FAILED=1
           fi

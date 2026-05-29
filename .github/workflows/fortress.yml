@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------
 #  🏰 GoFortress - Enterprise-grade CI/CD fortress for Go applications
 #
-#  Version: 1.8.0 | Released: 2026-05-26
+#  Version: 1.8.1 | Released: 2026-05-29
 #
 #  Built Strong. Tested Harder.
 #
@@ -131,13 +131,10 @@ jobs:
           fi
 
   # ----------------------------------------------------------------------------------
-  # Setup Configuration (load env + magex verification absorbed here)
+  # Setup Configuration (loads env + runs MAGE-X verification)
   #
-  # Note: The previously separate load-env and test-magex jobs were retired in
-  # Change 2 of the v1.8.0 billing-optimization pass. The setup-config reusable
-  # workflow now loads .github/env/ internally and runs the MAGE-X verification
-  # steps as part of the same job. This saves ~2 billed minutes per PR (those
-  # jobs each rounded up to 1 minute for <15s of real work).
+  # The setup-config reusable workflow loads .github/env/ internally and runs the
+  # MAGE-X verification steps as part of the same job.
   # ----------------------------------------------------------------------------------
   setup:
     name: 🔧 Setup Configuration
@@ -326,7 +323,7 @@ jobs:
   status-check:
     name: 🎯 All Tests Passed
     if: ${{ always() }}
-    needs: [setup, warm-cache, security, code-quality, pre-commit, test-suite, benchmarks]
+    needs: [paths-check, setup, warm-cache, security, code-quality, pre-commit, test-suite, benchmarks]
     permissions:
       contents: read # Read repository content for status checking
     # Fallback to ubuntu-latest when setup was skipped (e.g. docs-only PR via paths-check)
@@ -338,6 +335,7 @@ jobs:
       # --------------------------------------------------------------------
       - name: 📊 Build results summary
         env:
+          PATHS_RESULT: ${{ needs.paths-check.result }}
           SETUP_RESULT: ${{ needs.setup.result }}
           CACHE_RESULT: ${{ needs.warm-cache.result }}
           SECURITY_RESULT: ${{ needs.security.result }}
@@ -371,6 +369,10 @@ jobs:
                 echo "$result"
               fi
             }
+
+            # Paths Check (docs-only short-circuit gate)
+            PATHS_DISPLAY=$(get_result_display "$PATHS_RESULT")
+            echo "| 📁 Paths Check | $PATHS_DISPLAY | Required |"
 
             # Setup
             SETUP_DISPLAY=$(get_result_display "$SETUP_RESULT")
@@ -425,6 +427,15 @@ jobs:
         if: ${{ always() }}
         run: |
           FAILED=false
+
+          # Path detection must succeed. If it failed/was cancelled, the docs-only
+          # short-circuit could not be computed and the whole pipeline was skipped on a
+          # false premise — this required check must NOT report green in that case.
+          # (The intentional docs-only path leaves paths-check 'success', so it passes.)
+          if [[ "${{ needs.paths-check.result }}" == "failure" || "${{ needs.paths-check.result }}" == "cancelled" ]]; then
+            echo "❌ Paths check failed or was cancelled" >&2
+            FAILED=true
+          fi
 
           # Check required jobs (these must pass)
           if [[ "${{ needs.setup.result }}" == "failure" || "${{ needs.setup.result }}" == "cancelled" ]]; then

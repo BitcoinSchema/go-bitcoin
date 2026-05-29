@@ -19,10 +19,6 @@
 #
 #  Maintainer: @mrz1836
 #
-#  BILLING NOTE:
-#  - All work is consolidated into a single job so the workflow bills as 1 rounded minute
-#    instead of 3. Each phase is preserved as a named step with its own conditional gate.
-#
 # ------------------------------------------------------------------------------------
 
 name: Dependabot Auto-merge
@@ -39,7 +35,7 @@ name: Dependabot Auto-merge
 # never reopens closed PRs (it creates new ones) and never opens drafts,
 # so those events would only fire for human PRs which the job-level `if:`
 # below would skip anyway. Skipping them at the trigger level avoids the
-# corresponding "0-billing but visible" skipped runs in the UI.
+# corresponding skipped runs in the UI.
 # --------------------------------------------------------------------
 on:
   pull_request:
@@ -93,8 +89,15 @@ jobs:
       # Check out code to access env file
       # --------------------------------------------------------------------
       - name: 📥 Checkout code (sparse)
+        # SECURITY: pin the checkout to the trusted base ref so the local
+        # ./.github/actions/load-env action (run below with contents/pull-requests/issues
+        # write) can never be a PR-controlled version. Default checkout on pull_request
+        # events resolves to the PR head. Lower risk here (job is gated to dependabot[bot]),
+        # but pinned for defense-in-depth and consistency with the other PR workflows.
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.base_ref || github.ref }}
+          persist-credentials: false
           sparse-checkout: |
             .github/env
             .github/actions/load-env

@@ -14,10 +14,6 @@
 #
 #  Maintainer: @mrz1836
 #
-#  BILLING NOTE:
-#  - load-env and stale-check are collapsed into a single job so the workflow bills
-#    as 1 rounded minute instead of 2. Each phase is preserved as a named step.
-#
 # ------------------------------------------------------------------------------------
 
 name: Stale Check
