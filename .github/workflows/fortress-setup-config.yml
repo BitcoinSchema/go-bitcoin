@@ -7,20 +7,16 @@
 #
 #  Maintainer: @mrz1836
 #
-#  BILLING NOTE:
-#  - This workflow used to be the "setup" stage in a 4-job serial chain:
-#      load-env → setup → test-magex → warm-cache
-#    The first three each billed 1 rounded minute for <15s of work. Now `load-env`
-#    and `test-magex` are absorbed as steps inside this workflow, saving ~2 billed
-#    minutes per PR. The orchestrator (`fortress.yml`) calls this workflow directly
-#    off `paths-check`, with no `env-json` input — env loading happens inside.
+#  NOTE:
+#  - `load-env` and `test-magex` run as steps inside this workflow. The orchestrator
+#    (`fortress.yml`) calls this workflow directly off `paths-check`, with no
+#    `env-json` input — env loading happens inside.
 #
 # ------------------------------------------------------------------------------------
 name: GoFortress (Setup Configuration)
 on:
   workflow_call:
-    # No inputs — environment is loaded inside the job (previously the standalone
-    # load-env job did this and passed env-json through as an input).
+    # No inputs — environment is loaded inside the job.
     secrets:
       github-token:
         description: "GitHub token for API access"
@@ -156,10 +152,10 @@ on:
         description: "Whether workflow completion report is enabled"
         value: ${{ jobs.setup-config.outputs.completion-report-enabled }}
       # ----------------------------------------------------------------
-      # Absorbed from the retired load-env + test-magex jobs (Change 2)
+      # Environment outputs
       # ----------------------------------------------------------------
       env-json:
-        description: "JSON string of environment variables (now produced inside setup-config)"
+        description: "JSON string of environment variables"
         value: ${{ jobs.setup-config.outputs.env-json }}
       env-file-count:
         description: "Number of env files loaded"
@@ -168,7 +164,7 @@ on:
         description: "Total number of variables loaded"
         value: ${{ jobs.setup-config.outputs.var-count }}
       mage-x-version:
-        description: "MAGE-X version verified by setup-config (formerly test-magex)"
+        description: "MAGE-X version verified by setup-config"
         value: ${{ jobs.setup-config.outputs.mage-x-version }}
 
 # Security: Restrict default permissions (jobs must explicitly request what they need)
@@ -181,14 +177,12 @@ jobs:
   setup-config:
     name: 🔧 Setup CI Config
     # Hard-coded runner: this job loads env from .github/env/ to discover the
-    # eventual `primary-runner` value, so it can't run on it. ubuntu-24.04 matches
-    # what the retired load-env job used.
+    # eventual `primary-runner` value, so it can't run on it.
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     permissions:
       contents: read
     outputs:
-      # Outputs absorbed from the retired load-env + test-magex jobs
       env-json: ${{ steps.load-env.outputs.env-json }}
       env-file-count: ${{ steps.load-env.outputs.env-file-count }}
       var-count: ${{ steps.load-env.outputs.var-count }}
@@ -238,7 +232,7 @@ jobs:
       completion-report-enabled: ${{ steps.config.outputs.completion-report-enabled }}
     steps:
       # ====================================================================
-      # ENVIRONMENT LOAD (formerly fortress.yml's load-env job)
+      # ENVIRONMENT LOAD
       # ====================================================================
       - name: 📥 Checkout (env loader)
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
@@ -358,7 +352,7 @@ jobs:
             magefiles/
 
       # ====================================================================
-      # MAGE-X VERIFICATION (formerly fortress-test-magex.yml as its own job)
+      # MAGE-X VERIFICATION
       # ====================================================================
       - name: 🔧 Setup MAGE-X
         id: setup-magex
@@ -679,16 +673,19 @@ jobs:
           echo "code-coverage-enabled=${{ env.ENABLE_CODE_COVERAGE }}" >> $GITHUB_OUTPUT
           echo "coverage-provider=${{ env.GO_COVERAGE_PROVIDER }}" >> $GITHUB_OUTPUT
 
-          # Validate coverage provider configuration
-          if [ "${{ env.ENABLE_CODE_COVERAGE }}" == "true" ]; then
-            PROVIDER="${{ env.GO_COVERAGE_PROVIDER }}"
-            if [ "$PROVIDER" != "internal" ] && [ "$PROVIDER" != "codecov" ]; then
-              echo "❌ Invalid GO_COVERAGE_PROVIDER: $PROVIDER"
-              echo "   Valid options are: internal, codecov"
-              exit 1
-            fi
+          # Validate coverage provider configuration ALWAYS — even when coverage is
+          # disabled. A typo here would otherwise pass silently and, if coverage is later
+          # enabled, both coverage jobs (gated on internal|codecov) would just skip,
+          # disabling coverage without any failure. Fail fast at the first job instead.
+          PROVIDER="${{ env.GO_COVERAGE_PROVIDER }}"
+          if [ "$PROVIDER" != "internal" ] && [ "$PROVIDER" != "codecov" ]; then
+            echo "❌ Invalid GO_COVERAGE_PROVIDER: $PROVIDER"
+            echo "   Valid options are: internal, codecov"
+            exit 1
+          fi
 
-            # Check for codecov token requirement
+          # Report the active provider when coverage is enabled
+          if [ "${{ env.ENABLE_CODE_COVERAGE }}" == "true" ]; then
             if [ "$PROVIDER" == "codecov" ]; then
               echo "✅ Coverage provider: Codecov"
             else

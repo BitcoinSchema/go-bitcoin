@@ -6,13 +6,6 @@
 #
 #  Maintainer: @mrz1836
 #
-#  BILLING NOTE:
-#  - This workflow was previously 4 jobs (initialize-report, process-statistics,
-#    process-tests, finalize-report) that billed 4 rounded minutes for <60s of work.
-#    All four are now consolidated into a single job; each phase remains a named step.
-#  - Statistics and tests sections used to run in parallel (~15s wall-clock savings),
-#    now serial. Net: ~3 billed minutes saved per PR for ~15s wall-clock cost.
-#
 # ------------------------------------------------------------------------------------
 
 name: GoFortress (Completion Report)
@@ -37,11 +30,6 @@ on:
         default: "unknown"
       setup-result:
         description: "Setup job result"
-        required: false
-        type: string
-        default: "skipped"
-      test-magex-result:
-        description: "Test MAGE-X job result"
         required: false
         type: string
         default: "skipped"
@@ -351,7 +339,7 @@ jobs:
           touch tests-section.md
 
       # ====================================================================
-      # STATISTICS SECTION STEPS (previously process-statistics job)
+      # STATISTICS SECTION STEPS
       # ====================================================================
 
       # --------------------------------------------------------------------
@@ -818,7 +806,7 @@ jobs:
           fi
 
       # ====================================================================
-      # TEST ANALYSIS STEPS (previously process-tests / analyze-tests job)
+      # TEST ANALYSIS STEPS
       # ====================================================================
 
       # --------------------------------------------------------------------
@@ -1086,7 +1074,7 @@ jobs:
           if-no-files-found: "warn"
 
       # ====================================================================
-      # FINAL REPORT ASSEMBLY (previously finalize-report job)
+      # FINAL REPORT ASSEMBLY
       # ====================================================================
 
       # --------------------------------------------------------------------
@@ -1095,7 +1083,6 @@ jobs:
       - name: 📝 Initialize Final Report
         env:
           SETUP_RESULT: ${{ inputs.setup-result }}
-          TEST_MAGEX_RESULT: ${{ inputs.test-magex-result }}
           PRE_COMMIT_RESULT: ${{ inputs.pre-commit-result }}
           SECURITY_RESULT: ${{ inputs.security-result }}
           CODE_QUALITY_RESULT: ${{ inputs.code-quality-result }}
@@ -1111,10 +1098,6 @@ jobs:
           if [[ "$SETUP_RESULT" != "success" && "$SETUP_RESULT" != "skipped" ]]; then
             WORKFLOW_FAILED=true
             FAILED_JOBS="$FAILED_JOBS- ❌ Setup Configuration\n"
-          fi
-          if [[ "$TEST_MAGEX_RESULT" != "success" && "$TEST_MAGEX_RESULT" != "skipped" ]]; then
-            WORKFLOW_FAILED=true
-            FAILED_JOBS="$FAILED_JOBS- ❌ Test MAGE-X\n"
           fi
           if [[ "$PRE_COMMIT_RESULT" != "success" && "$PRE_COMMIT_RESULT" != "skipped" ]]; then
             WORKFLOW_FAILED=true
@@ -1165,7 +1148,6 @@ jobs:
             echo "| Job | Result |"
             echo "|-----|--------|"
             echo "| Setup Configuration | $([ "$SETUP_RESULT" = "success" ] && echo "✅ Passed" || ([ "$SETUP_RESULT" = "skipped" ] && echo "⏭️ Skipped" || echo "❌ Failed")) |"
-            echo "| Test MAGE-X | $([ "$TEST_MAGEX_RESULT" = "success" ] && echo "✅ Passed" || ([ "$TEST_MAGEX_RESULT" = "skipped" ] && echo "⏭️ Skipped" || echo "❌ Failed")) |"
             echo "| Pre-commit Checks | $([ "$PRE_COMMIT_RESULT" = "success" ] && echo "✅ Passed" || ([ "$PRE_COMMIT_RESULT" = "skipped" ] && echo "⏭️ Skipped" || echo "❌ Failed")) |"
             echo "| Security Scans | $([ "$SECURITY_RESULT" = "success" ] && echo "✅ Passed" || ([ "$SECURITY_RESULT" = "skipped" ] && echo "⏭️ Skipped" || echo "❌ Failed")) |"
             echo "| Code Quality | $([ "$CODE_QUALITY_RESULT" = "success" ] && echo "✅ Passed" || ([ "$CODE_QUALITY_RESULT" = "skipped" ] && echo "⏭️ Skipped" || echo "❌ Failed")) |"

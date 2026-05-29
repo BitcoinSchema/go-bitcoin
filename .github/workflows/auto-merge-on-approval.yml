@@ -21,10 +21,6 @@
 #
 #  Maintainer: @mrz1836
 #
-#  BILLING NOTE:
-#  - All work is consolidated into a single job so the workflow bills as 1 rounded minute
-#    instead of 3. Each phase is preserved as a named step.
-#
 # ------------------------------------------------------------------------------------
 
 name: Auto-merge on Approval
@@ -66,15 +62,15 @@ jobs:
   auto-merge:
     name: 🤖 Auto-merge on Approval
     # ----------------------------------------------------------------
-    # Billing-saver gate: skip review events that can't meaningfully
+    # Event gate: skip review events that can't meaningfully
     # change the auto-merge decision.
     #
     # `pull_request_review:submitted` fires for ALL review states —
     # "approved", "changes_requested", "commented", and "dismissed".
     # Only the first two affect auto-merge state. A pure "commented"
     # review (very common — "lgtm but one question") would otherwise
-    # trigger a full workflow run that just exits at conditions-not-met
-    # for 1 billed minute. Same for "dismissed" reviews.
+    # trigger a full workflow run that just exits at conditions-not-met.
+    # Same for "dismissed" reviews.
     #
     # The first clause keeps the non-review triggers
     # (ready_for_review, review_request_removed) running normally —
@@ -94,8 +90,15 @@ jobs:
       # Check out code to access env file
       # --------------------------------------------------------------------
       - name: 📥 Checkout code (sparse)
+        # SECURITY: pin the checkout to the trusted base ref so the local
+        # ./.github/actions/load-env action (run below with pull-requests/issues write)
+        # can never be a PR-controlled version. Default checkout on pull_request /
+        # pull_request_review events resolves to the PR head, which is attacker-influenced.
+        # Env files and the action are not modified by PRs, so base-ref loading is safe.
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
+          ref: ${{ github.base_ref || github.ref }}
+          persist-credentials: false
           sparse-checkout: |
             .github/env
             .github/actions/load-env

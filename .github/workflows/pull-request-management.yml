@@ -13,10 +13,9 @@
 #  🔒 SECURITY MODEL — Single-Workflow / Two-Job Pattern
 #  ══════════════════════════════════════════════════════════════════════════════
 #
-#  This workflow was previously two files (pull-request-management.yml on the
-#  `pull_request` trigger + pull-request-management-fork.yml on the
-#  `pull_request_target` trigger). They were consolidated because NEITHER ever
-#  executed PR code — every action goes through the GitHub REST API.
+#  This workflow handles both same-repo and fork PRs from a single file on the
+#  `pull_request_target` trigger. Using one trigger for both is safe because NEITHER
+#  path ever executes PR code — every action goes through the GitHub REST API.
 #
 #  ┌─────────────────────────────────────────────────────────────────────────────┐
 #  │ WHY USING pull_request_target FOR BOTH IS SAFE:                             │
@@ -57,9 +56,6 @@
 #                 cache cleanup on close. NO branch deletion. NO type labels —
 #                 those require pre-merge code review.
 #
-#  Skipped jobs do not bill (GitHub: skipped jobs allocate no runner time), so
-#  this two-job split costs the same one rounded minute per PR as a single job.
-#
 #  ══════════════════════════════════════════════════════════════════════════════
 #  🔍 WHY pull_request_target ALARMS SECURITY SCANNERS (FALSE POSITIVE)
 #  ══════════════════════════════════════════════════════════════════════════════
@@ -74,7 +70,7 @@
 #  per the official GitHub security guidance.
 #
 #  Suppressions:
-#  - Semgrep:  github-actions-dangerous-checkout (false positive)
+#  - Semgrep:  github-actions-dangerous-checkout  (false positive)
 #  - Checkov:  CKV_GHA_3                          (false positive)
 #  - CodeQL:   GH001                              (false positive)
 #  - Guardian: see .github/guardian.yaml exception entry
@@ -98,8 +94,8 @@ name: PR Management
 # `synchronize` is intentionally NOT included. It fires on every push to a PR
 # and the only work it would do (re-applying labels + re-checking the default
 # assignee) is idempotent — both persist from the `opened` run. Skipping it
-# saves ~1 billed minute per push and lets maintainers manually override
-# auto-applied labels without the workflow fighting back on the next commit.
+# lets maintainers manually override auto-applied labels without the workflow
+# fighting back on the next commit.
 # --------------------------------------------------------------------
 on:
   pull_request_target:
@@ -149,8 +145,9 @@ jobs:
       # semgrep:ignore github-actions-dangerous-checkout
       # codeql:ignore GH001
       # checkov:skip=CKV_GHA_3:Base branch checkout is intentional and safe
+      # sonarcloud:S7631 — false positive: base-ref sparse checkout only (see NOSONAR below)
       - name: 📥 Checkout base repo (sparse)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 — NOSONAR(S7631): base-ref sparse checkout only; PR head is never checked out or executed
         with:
           persist-credentials: false
           ref: ${{ github.base_ref || github.ref }}
@@ -752,8 +749,9 @@ jobs:
       # semgrep:ignore github-actions-dangerous-checkout
       # codeql:ignore GH001
       # checkov:skip=CKV_GHA_3:Base branch checkout is intentional and safe
+      # sonarcloud:S7631 — false positive: base-ref sparse checkout only (see NOSONAR below)
       - name: 📥 Checkout base repo (sparse)
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2 — NOSONAR(S7631): base-ref sparse checkout only; PR head is never checked out or executed
         with:
           persist-credentials: false
           ref: ${{ github.base_ref || github.ref }}
