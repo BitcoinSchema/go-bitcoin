@@ -3,7 +3,7 @@ module github.com/bitcoinschema/go-bitcoin/v3
 go 1.25.0
 
 require (
-	github.com/bsv-blockchain/go-bt/v2 v2.6.5
+	github.com/bsv-blockchain/go-bt/v2 v2.6.6
 	github.com/bsv-blockchain/go-sdk v1.2.24
 	github.com/stretchr/testify v1.11.1
 )
