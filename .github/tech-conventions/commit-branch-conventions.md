@@ -34,8 +34,11 @@ docs(README): improve installation instructions
 To ensure consistent commit messages and code quality, we use the external **go-pre-commit** tool that checks formatting, linting, and other standards before allowing a commit. The system is configured via `.github/env/` and can be installed with:
 
 ```bash
-# Install the external tool
-go install github.com/mrz1836/go-pre-commit/cmd/go-pre-commit@latest
+# Install the latest release binary into ~/.local/bin
+VER=$(curl -fsSL https://api.github.com/repos/mrz1836/go-pre-commit/releases/latest | grep '"tag_name"' | cut -d'"' -f4 | tr -d v)
+OS=$(uname -s | tr '[:upper:]' '[:lower:]'); ARCH=$(uname -m | sed 's/x86_64/amd64/; s/aarch64/arm64/')
+mkdir -p ~/.local/bin
+curl -fsSL "https://github.com/mrz1836/go-pre-commit/releases/download/v${VER}/go-pre-commit_${VER}_${OS}_${ARCH}.tar.gz" | tar -xzf - -C ~/.local/bin go-pre-commit
 
 # Install hooks in your repository
 go-pre-commit install
