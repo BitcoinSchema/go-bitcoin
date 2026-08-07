@@ -25,7 +25,6 @@
        &nbsp;&nbsp;&nbsp;&nbsp; <code>Quality</code> &nbsp;&nbsp;
     </td>
     <td align="left">
-       <a href="https://goreportcard.com/report/github.com/BitcoinSchema/go-bitcoin"><img src="https://goreportcard.com/badge/github.com/BitcoinSchema/go-bitcoin?style=flat-square" alt="Go Report"></a>
        <a href="https://codecov.io/gh/BitcoinSchema/go-bitcoin"><img src="https://codecov.io/gh/BitcoinSchema/go-bitcoin/branch/master/graph/badge.svg?style=flat-square" alt="Coverage"></a>
     </td>
   </tr>
