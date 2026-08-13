@@ -115,12 +115,16 @@ runs:
     - name: ⬇️ Install benchstat (cache miss)
       if: steps.version-check.outputs.skip != 'true' && steps.benchstat-cache.outputs.cache-hit != 'true'
       shell: bash
+      env:
+        # Route the version through env: so it can never break out of the go install
+        # command via ${{ }} interpolation (completes the safe pattern; version is config).
+        BENCHSTAT_VERSION: ${{ inputs.benchstat-version }}
       run: |
         echo "⬇️ Cache miss – installing benchstat via go install..."
-        echo "📋 Installing benchstat version: ${{ inputs.benchstat-version }}"
+        echo "📋 Installing benchstat version: $BENCHSTAT_VERSION"
 
         # Install benchstat
-        go install "golang.org/x/perf/cmd/benchstat@${{ inputs.benchstat-version }}"
+        go install "golang.org/x/perf/cmd/benchstat@${BENCHSTAT_VERSION}"
 
         # Cache the binary for future runs
         mkdir -p ~/.cache/benchstat-bin
