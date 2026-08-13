@@ -10,8 +10,8 @@
 #  FAILURE HANDLING:
 #  - Each scan keeps `continue-on-error: true` so one failure does not mask another.
 #    A final `🚨 Aggregate failures` step exits non-zero if any real failure occurred.
-#    Intentionally inconclusive (never fail the job): Nancy no-token-skip / rate-limit /
-#    402 / network-unreachable, and OSV-Scanner network/database errors. OSV findings
+#    Intentionally inconclusive (never fail the job): Nancy skipped-no-token / rate-limited /
+#    payment-required / unreachable, and OSV-Scanner network/database errors. OSV findings
 #    fail the job when OSV_SCANNER_FAIL_ON_VULNERABILITY=true (the shipped default);
 #    set it to false to make OSV report-only.
 #
@@ -819,9 +819,9 @@ jobs:
         id: run-gitleaks
         if: ${{ inputs.enable-gitleaks && steps.gitleaks-repo-check.outputs.is_same_repo == 'true' }}
         continue-on-error: true
-        # NOTE: gitleaks/gitleaks-action@v2.3.9 is the latest release and still uses Node.js 20.
-        # This will trigger a "Node.js 20 actions are deprecated" warning until the gitleaks
-        # maintainers release a new version with Node.js 24 support. Expected and harmless for now.
+        # Pinned to gitleaks-action v3.0.0 (SHA verified). If a "Node.js actions are
+        # deprecated" warning appears, it originates upstream in this action's runtime and
+        # is harmless until the maintainers ship a newer Node runtime.
         uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
