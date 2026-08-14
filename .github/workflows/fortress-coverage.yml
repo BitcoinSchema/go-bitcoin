@@ -125,8 +125,8 @@ jobs:
       # this job, so `pages: write` and `id-token: write` were unused and are removed to
       # shrink the blast radius of this write+token-bearing job.
       contents: write # Required: Push coverage data to gh-pages branch (git push)
-      pull-requests: read # Required: Read PR metadata for coverage comparison (comments are posted via issues: write below, not the pull-requests API)
-      issues: write # Required: go-coverage posts/updates PR comments via the issues comments API
+      pull-requests: write # Required: go-coverage creates/updates the PR coverage comment AND reads PR metadata. Creating an issue-comment on a PR requires pull-requests: write — issues: write alone 403s ("Resource not accessible by integration").
+      issues: write # Required: go-coverage issue-comment API calls (pull-requests: write above is what actually authorizes the PR comment)
       statuses: write # Required: Create commit status checks
       actions: read # Required: Download artifacts from workflow runs
     env:
