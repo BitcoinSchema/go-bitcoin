@@ -1,7 +1,7 @@
 # ------------------------------------------------------------------------------------
 #  🏰 GoFortress - Enterprise-grade CI/CD fortress for Go applications
 #
-#  Version: 1.8.1 | Released: 2026-05-29
+#  Version: 1.9.0 | Released: 2026-08-13
 #
 #  Built Strong. Tested Harder.
 #
@@ -182,7 +182,7 @@ jobs:
       needs.setup.outputs.is-fork-pr != 'true'
     permissions:
       contents: read # Read repository content for security scanning
-      pull-requests: write # Required: gitleaks needs to create PR comments
+      pull-requests: write # Required: gitleaks creates PR comments (PR issue-comments require pull-requests: write)
       security-events: write # Required: OSV-Scanner uploads SARIF to GitHub Code Scanning
     uses: ./.github/workflows/fortress-security-scans.yml
     with:
@@ -263,7 +263,7 @@ jobs:
       # fortress-test-suite.yml / fortress-coverage.yml): coverage deploys gh-pages via a
       # plain git push (contents: write) and uses no actions/deploy-pages or OIDC.
       contents: write # Write repository content and push to gh-pages branch for test execution
-      pull-requests: read # Coverage reads PR metadata; its PR comments post via issues: write (issue-comments API)
+      pull-requests: write # Required: go-coverage creates the PR coverage comment (PR issue-comments require pull-requests: write) and reads PR metadata
       issues: write # Required: go-coverage posts/updates PR comments via the issues comments API
       statuses: write # Required: Coverage workflow needs to create commit status checks
       actions: read # Required: Coverage workflow needs to access artifacts from workflow runs

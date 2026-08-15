@@ -219,7 +219,7 @@ jobs:
       # from the caller ensures the token minted for the reusable workflow never carries
       # those scopes).
       contents: write # Write repository content and push to gh-pages branch for coverage processing
-      pull-requests: read # Coverage reads PR metadata; its PR comments post via issues: write (issue-comments API)
+      pull-requests: write # Required: go-coverage creates the PR coverage comment (PR issue-comments require pull-requests: write) and reads PR metadata
       issues: write # Required: go-coverage posts/updates PR comments via the issues comments API
       statuses: write # Required: Coverage workflow needs to create commit status checks
       actions: read # Required: Coverage workflow needs to access artifacts from workflow runs

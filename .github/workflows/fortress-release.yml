@@ -170,8 +170,10 @@ jobs:
       # --------------------------------------------------------------------
       - name: 🔧 Extract GoReleaser version
         id: extract-goreleaser
+        env:
+          ENV_JSON: ${{ inputs.env-json }}
         run: |
-          GORELEASER_VERSION=$(echo '${{ inputs.env-json }}' | jq -r '.MAGE_X_GORELEASER_VERSION // empty')
+          GORELEASER_VERSION=$(echo "$ENV_JSON" | jq -r '.MAGE_X_GORELEASER_VERSION // empty')
 
           if [[ -z "$GORELEASER_VERSION" || "$GORELEASER_VERSION" == "null" ]]; then
             echo "❌ ERROR: MAGE_X_GORELEASER_VERSION not found in environment configuration" >&2
@@ -210,9 +212,10 @@ jobs:
         id: validate-goreleaser-configuration
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GO_MODULE_DIR: ${{ env.GO_MODULE_DIR }}
         run: |
           echo "🔍 Validating GoReleaser configuration via MAGE-X..."
-          GO_MODULE_DIR="${{ env.GO_MODULE_DIR }}"
+          # GO_MODULE_DIR is provided via env: (routed, not string-spliced into the shell)
 
           if [ -n "$GO_MODULE_DIR" ]; then
             echo "🔧 Running magex release:validate from directory: $GO_MODULE_DIR"
@@ -330,14 +333,18 @@ jobs:
           # .goreleaser.yml (and sets the SLACK_WEBHOOK secret) gets release announcements.
           # Harmless when unset or when announce.slack is disabled — GoReleaser no-ops it.
           SLACK_WEBHOOK: ${{ secrets.slack-webhook }}
+          # Route config-derived values through env: so they never reach the shell parser
+          # via ${{ }} (avoids single-quote/`$()` breakout if a value ever contains them).
+          ENV_JSON: ${{ inputs.env-json }}
+          GO_MODULE_DIR: ${{ env.GO_MODULE_DIR }}
         run: |
           echo "🚀 Building and publishing release with GoReleaser..."
 
-          # Extract ENABLE_GODOCS_PUBLISHING from environment
-          ENABLE_GODOCS=$(echo '${{ inputs.env-json }}' | jq -r '.ENABLE_GODOCS_PUBLISHING // "false"')
+          # Extract ENABLE_GODOCS_PUBLISHING from environment (ENV_JSON provided via env:)
+          ENABLE_GODOCS=$(echo "$ENV_JSON" | jq -r '.ENABLE_GODOCS_PUBLISHING // "false"')
 
           # Run release with or without godocs based on configuration
-          GO_MODULE_DIR="${{ env.GO_MODULE_DIR }}"
+          # GO_MODULE_DIR is provided via env:
 
           if [[ "$ENABLE_GODOCS" == "true" ]]; then
             echo "📚 Running release with godocs publishing enabled..."
