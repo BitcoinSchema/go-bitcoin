@@ -1,11 +1,13 @@
 # ------------------------------------------------------------------------------------
 #  Test Matrix Execution (Reusable Workflow) (GoFortress)
 #
-#  Purpose: Execute Go tests across multiple operating systems and Go versions
+#  Purpose: Execute Go tests across the configured runners and Go versions
 #  in a matrix strategy with native CI mode for failure detection and reporting.
 #
 #  This workflow handles:
-#    - Multi-platform test execution (ubuntu, windows, macOS)
+#    - Linux test execution (ubuntu runners; macOS only if a runner is configured
+#      as PRIMARY_RUNNER/SECONDARY_RUNNER). Windows is not supported — every step
+#      here is bash-only, so do not add windows runners without adding shells.
 #    - Multiple Go version testing (primary, secondary)
 #    - Race detection and code coverage
 #    - Native CI mode for GitHub annotations and JSONL output
@@ -188,6 +190,8 @@ jobs:
         uses: ./.github/actions/setup-benchstat
         with:
           benchstat-version: ${{ env.MAGE_X_BENCHSTAT_VERSION }}
+          benchstat-version-latest: ${{ env.MAGE_X_BENCHSTAT_VERSION_LATEST }}
+          benchstat-latest-min-go: ${{ env.MAGE_X_BENCHSTAT_VERSION_LATEST_MIN_GO }}
           runner-os: ${{ matrix.os }}
           go-version: ${{ matrix.go-version }}
 
@@ -471,8 +475,16 @@ jobs:
       # no per-test FAIL event, so JSONL-based checks miss it while the process
       # exit code does not. Without this gate a real failure is masked and only
       # resurfaces downstream as the misleading "coverage file not found".
+      # Gate on run-tests actually having executed. If an earlier step (Go/MAGE-X
+      # setup, checkout, …) failed, run-tests is skipped and never records
+      # test-exit-code; without this gate the empty output reads as "!= 0" and this
+      # step masks the real setup failure behind a misleading "exited with '<unset>'".
+      # `outcome != 'skipped'` (not "output is empty") is deliberate: if run-tests
+      # *ran* but died before writing its output, we still enforce and fail closed
+      # rather than let a green slip through — run-tests is continue-on-error, so
+      # this step is the only thing that can fail the job on a bad test process.
       - name: 🚦 Enforce test exit code
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && steps.run-tests.outcome != 'skipped' }}
         run: |
           CODE="${{ steps.run-tests.outputs.test-exit-code }}"
           if [[ "$CODE" != "0" ]]; then
