@@ -106,12 +106,18 @@ runs:
         MAJOR=$(echo "$GO_VERSION" | sed -E 's/^([0-9]+)\..*/\1/')
         MINOR=$(echo "$GO_VERSION" | sed -E 's/^[0-9]+\.([0-9]+).*/\1/')
 
-        # Parse the latest-build minimum Go threshold (default to 1.26 if malformed).
-        MIN_MAJOR=$(echo "$BENCHSTAT_LATEST_MIN_GO" | sed -E 's/^([0-9]+)\..*/\1/')
-        MIN_MINOR=$(echo "$BENCHSTAT_LATEST_MIN_GO" | sed -E 's/^[0-9]+\.([0-9]+).*/\1/')
-        if ! [[ "$MIN_MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MIN_MINOR" =~ ^[0-9]+$ ]]; then
-          MIN_MAJOR=1
-          MIN_MINOR=26
+        # Parse and validate the latest-build minimum Go threshold. Empty input already
+        # defaults to 1.26 above, so a non-empty value that fails to parse is a real config
+        # error (typo). Fail fast with a clear message rather than silently falling back to a
+        # possibly-stale hard-coded 1.26, which could select an incompatible build once the
+        # latest benchstat requires Go 1.27+. Anchored match also rejects inputs the old
+        # sed-based check missed (e.g. "127", "1.2z"). Mirrors the GO_VERSION check below.
+        if [[ "$BENCHSTAT_LATEST_MIN_GO" =~ ^([0-9]+)\.([0-9]+)(\.(x|[0-9]+))?$ ]]; then
+          MIN_MAJOR="${BASH_REMATCH[1]}"
+          MIN_MINOR="${BASH_REMATCH[2]}"
+        else
+          echo "❌ Could not parse benchstat latest minimum Go version '$BENCHSTAT_LATEST_MIN_GO'. Please provide a valid Go version (e.g., '1.26', '1.27.x')." >&2
+          exit 1
         fi
 
         if [ -z "$MAJOR" ] || [ -z "$MINOR" ] || ! [[ "$MAJOR" =~ ^[0-9]+$ ]] || ! [[ "$MINOR" =~ ^[0-9]+$ ]]; then

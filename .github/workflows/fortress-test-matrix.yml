@@ -134,6 +134,25 @@ jobs:
 
     steps:
       # --------------------------------------------------------------------
+      # Guard: this workflow is bash-only and does not support Windows runners.
+      # matrix.os comes from inputs.test-matrix (caller-provided), so fail fast
+      # with a clear message instead of letting later bash-only steps error out
+      # under PowerShell (the default shell on Windows runners) in confusing,
+      # partial ways. `shell: bash` is required so this guard runs under Git Bash
+      # even on a Windows runner and can emit its own message before exiting.
+      # --------------------------------------------------------------------
+      - name: 🛑 Guard against unsupported Windows runners
+        shell: bash
+        run: |
+          MATRIX_OS="${{ matrix.os }}"
+          if [[ "$MATRIX_OS" == windows* ]]; then
+            echo "::error title=Unsupported runner (${{ matrix.name }})::This test matrix workflow is bash-only and does not support Windows runners (got '$MATRIX_OS'). Use ubuntu-* runners, or macOS configured as PRIMARY_RUNNER/SECONDARY_RUNNER."
+            echo "❌ Windows runner '$MATRIX_OS' is not supported — every step here is bash-only."
+            exit 1
+          fi
+          echo "✅ Runner '$MATRIX_OS' is supported (bash available)"
+
+      # --------------------------------------------------------------------
       # Checkout code (required for local actions)
       # --------------------------------------------------------------------
       - name: 📥 Checkout code
