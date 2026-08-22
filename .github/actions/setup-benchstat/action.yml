@@ -96,8 +96,10 @@ runs:
         BENCHSTAT_VERSION_LATEST: ${{ inputs.benchstat-version-latest || inputs.benchstat-version }}
         # Minimum Go version the latest build needs; defaults to 1.26 when unset.
         BENCHSTAT_LATEST_MIN_GO: ${{ inputs.benchstat-latest-min-go || '1.26' }}
+        # go-version is matrix/caller-controlled, so route it through env: too (not
+        # directly interpolated into the script) to preserve the shell-safety invariant.
+        GO_VERSION: ${{ inputs.go-version }}
       run: |
-        GO_VERSION="${{ inputs.go-version }}"
         # Extract major and minor version:
         #   "1.24.x"  -> MAJOR=1, MINOR=24
         #   "1.22"    -> MAJOR=1, MINOR=22

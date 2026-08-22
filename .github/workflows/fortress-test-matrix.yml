@@ -109,10 +109,59 @@ permissions: {}
 
 jobs:
   # ----------------------------------------------------------------------------------
+  # Preflight: validate the caller-provided test matrix on a Linux runner
+  #
+  # This gates test-go (via `needs`) so an unsupported Windows runner fails fast with a
+  # clear message BEFORE test-go is scheduled. test-go declares a service container
+  # (redis, or a busybox placeholder when Redis is disabled), and GitHub initializes
+  # service containers during job setup — a phase that runs before every step and fails
+  # on Windows (service containers are Linux-only). An in-step guard inside test-go
+  # therefore cannot reliably run first; this preflight can, because a failed `needs`
+  # dependency prevents test-go (and all its matrix legs) from starting at all.
+  # ----------------------------------------------------------------------------------
+  validate-matrix:
+    name: 🧭 Validate test matrix
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions: {}
+    steps:
+      - name: 🛑 Reject unsupported Windows runners
+        shell: bash
+        env:
+          # Route the matrix JSON through env: so it can't break out of the shell
+          # via ${{ }} interpolation.
+          TEST_MATRIX: ${{ inputs.test-matrix }}
+        run: |
+          # Fail fast on invalid JSON so the real error isn't a confusing fromJSON
+          # failure later in test-go.
+          if ! jq empty <<< "$TEST_MATRIX" 2>/dev/null; then
+            echo "::error title=Invalid test matrix::The test-matrix input is not valid JSON."
+            exit 1
+          fi
+
+          # Collect every runner OS from both include-based and classic matrix shapes,
+          # then reject Windows: this workflow is bash-only and uses Linux service
+          # containers, so Windows runners are unsupported.
+          WINDOWS=$(jq -r '
+            [ (.include // [] | map(.os // empty)), (.os // []) ]
+            | flatten
+            | map(select(type == "string" and (ascii_downcase | startswith("windows"))))
+            | unique | join(", ")
+          ' <<< "$TEST_MATRIX")
+
+          if [[ -n "$WINDOWS" ]]; then
+            echo "::error title=Unsupported runner::Test matrix contains Windows runner(s): ${WINDOWS}. This workflow is bash-only and uses Linux service containers, so Windows is not supported. Use ubuntu-* runners (or macOS as PRIMARY_RUNNER/SECONDARY_RUNNER)."
+            echo "❌ Windows runners in matrix: ${WINDOWS}"
+            exit 1
+          fi
+          echo "✅ Test matrix contains no unsupported Windows runners."
+
+  # ----------------------------------------------------------------------------------
   # Testing Matrix for Go (Parallel)
   # ----------------------------------------------------------------------------------
   test-go:
     name: 🧪 Test (${{ matrix.name }})
+    needs: validate-matrix # Gate on preflight so Windows entries fail before service setup
     timeout-minutes: 30 # Prevent hung tests
     permissions:
       contents: read # Read repository content for testing
@@ -133,25 +182,6 @@ jobs:
           - ${{ inputs.redis-enabled == 'true' && format('{0}:{0}', inputs.redis-port) || '9999:9999' }}
 
     steps:
-      # --------------------------------------------------------------------
-      # Guard: this workflow is bash-only and does not support Windows runners.
-      # matrix.os comes from inputs.test-matrix (caller-provided), so fail fast
-      # with a clear message instead of letting later bash-only steps error out
-      # under PowerShell (the default shell on Windows runners) in confusing,
-      # partial ways. `shell: bash` is required so this guard runs under Git Bash
-      # even on a Windows runner and can emit its own message before exiting.
-      # --------------------------------------------------------------------
-      - name: 🛑 Guard against unsupported Windows runners
-        shell: bash
-        run: |
-          MATRIX_OS="${{ matrix.os }}"
-          if [[ "$MATRIX_OS" == windows* ]]; then
-            echo "::error title=Unsupported runner (${{ matrix.name }})::This test matrix workflow is bash-only and does not support Windows runners (got '$MATRIX_OS'). Use ubuntu-* runners, or macOS configured as PRIMARY_RUNNER/SECONDARY_RUNNER."
-            echo "❌ Windows runner '$MATRIX_OS' is not supported — every step here is bash-only."
-            exit 1
-          fi
-          echo "✅ Runner '$MATRIX_OS' is supported (bash available)"
-
       # --------------------------------------------------------------------
       # Checkout code (required for local actions)
       # --------------------------------------------------------------------
@@ -258,10 +288,19 @@ jobs:
       - name: 🧪 Run tests
         id: run-tests
         continue-on-error: true
+        env:
+          # Route caller-provided matrix values through env: so they can never break out
+          # of the shell via ${{ }} interpolation (shell-safety invariant).
+          MATRIX_NAME: ${{ matrix.name }}
+          MATRIX_OS: ${{ matrix.os }}
+          MATRIX_GO_VERSION: ${{ matrix.go-version }}
+          # Caller-provided flags routed through env: too (shell-safety invariant).
+          RACE_DETECTION_ENABLED: ${{ inputs.race-detection-enabled || 'false' }}
+          CODE_COVERAGE_ENABLED: ${{ inputs.code-coverage-enabled || 'false' }}
         run: |
           # Determine test type based on inputs
-          RACE="${{ inputs.race-detection-enabled || 'false' }}"
-          COVER="${{ inputs.code-coverage-enabled || 'false' }}"
+          RACE="${RACE_DETECTION_ENABLED:-false}"
+          COVER="${CODE_COVERAGE_ENABLED:-false}"
 
           echo "🔍 Race Detection Enabled: $RACE"
           echo "🔍 Code Coverage Enabled: $COVER"
@@ -315,7 +354,7 @@ jobs:
 
           # Emit GitHub annotation for test failures (surfaces at top of Actions UI)
           if [[ "$TEST_EXIT_CODE" != "0" ]]; then
-            echo "::error title=Test Suite Failed (${{ matrix.name }})::Tests failed on ${{ matrix.os }} with Go ${{ matrix.go-version }} - see job summary for details"
+            echo "::error title=Test Suite Failed (${MATRIX_NAME})::Tests failed on ${MATRIX_OS} with Go ${MATRIX_GO_VERSION} - see job summary for details"
           fi
 
           # Calculate duration
@@ -409,15 +448,23 @@ jobs:
       # --------------------------------------------------------------------
       - name: 📊 Report Redis Cache Performance
         if: inputs.redis-enabled == 'true'
+        env:
+          # Route caller-provided inputs and step outputs through env: (shell-safety invariant).
+          REDIS_ENABLED: ${{ inputs.redis-enabled }}
+          REDIS_VERSION: ${{ inputs.redis-version }}
+          REDIS_CACHE_HIT: ${{ steps.setup-redis.outputs.cache-hit }}
+          REDIS_IMAGE_SIZE: ${{ steps.setup-redis.outputs.image-size }}
+          REDIS_CACHE_OP_TIME: ${{ steps.setup-redis.outputs.cache-operation-time }}
+          REDIS_CONNECTION_TIME: ${{ steps.setup-redis.outputs.connection-time }}
         run: |
           echo "📊 Redis Cache Performance Report"
           echo "================================="
-          echo "• Redis Enabled: ${{ inputs.redis-enabled }}"
-          echo "• Redis Version: ${{ inputs.redis-version }}"
-          echo "• Cache Hit: ${{ steps.setup-redis.outputs.cache-hit }}"
-          echo "• Image Size: ${{ steps.setup-redis.outputs.image-size }}MB"
-          echo "• Cache Operation Time: ${{ steps.setup-redis.outputs.cache-operation-time }}s"
-          echo "• Connection Time: ${{ steps.setup-redis.outputs.connection-time }}s"
+          echo "• Redis Enabled: ${REDIS_ENABLED}"
+          echo "• Redis Version: ${REDIS_VERSION}"
+          echo "• Cache Hit: ${REDIS_CACHE_HIT}"
+          echo "• Image Size: ${REDIS_IMAGE_SIZE}MB"
+          echo "• Cache Operation Time: ${REDIS_CACHE_OP_TIME}s"
+          echo "• Connection Time: ${REDIS_CONNECTION_TIME}s"
 
       # --------------------------------------------------------------------
       # Upload performance cache statistics for completion report
@@ -504,10 +551,17 @@ jobs:
       # this step is the only thing that can fail the job on a bad test process.
       - name: 🚦 Enforce test exit code
         if: ${{ !cancelled() && steps.run-tests.outcome != 'skipped' }}
+        env:
+          # Route matrix values (caller-provided) and the recorded exit code through env:
+          # so nothing can break out of the shell via ${{ }} (shell-safety invariant).
+          MATRIX_NAME: ${{ matrix.name }}
+          MATRIX_OS: ${{ matrix.os }}
+          MATRIX_GO_VERSION: ${{ matrix.go-version }}
+          TEST_EXIT_CODE: ${{ steps.run-tests.outputs.test-exit-code }}
         run: |
-          CODE="${{ steps.run-tests.outputs.test-exit-code }}"
+          CODE="$TEST_EXIT_CODE"
           if [[ "$CODE" != "0" ]]; then
-            echo "::error title=Test Suite Failed (${{ matrix.name }})::go test exited with code '${CODE:-<unset>}' on ${{ matrix.os }} / Go ${{ matrix.go-version }} — see the '🧪 Run tests' step and job summary"
+            echo "::error title=Test Suite Failed (${MATRIX_NAME})::go test exited with code '${CODE:-<unset>}' on ${MATRIX_OS} / Go ${MATRIX_GO_VERSION} — see the '🧪 Run tests' step and job summary"
             echo "❌ Failing job: test process exited '${CODE:-<unset>}' (expected 0)."
             exit 1
           fi
