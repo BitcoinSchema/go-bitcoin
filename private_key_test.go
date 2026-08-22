@@ -32,7 +32,7 @@ func ExampleCreatePrivateKey() {
 
 // BenchmarkCreatePrivateKey benchmarks the method CreatePrivateKey()
 func BenchmarkCreatePrivateKey(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreatePrivateKey()
 	}
 }
@@ -58,7 +58,7 @@ func ExampleCreatePrivateKeyString() {
 
 // BenchmarkCreatePrivateKeyString benchmarks the method CreatePrivateKeyString()
 func BenchmarkCreatePrivateKeyString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreatePrivateKeyString()
 	}
 }
@@ -68,37 +68,38 @@ func TestPrivateKeyFromString(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		input         string
 		expectedKey   string
 		expectedNil   bool
 		expectedError bool
 	}{
-		{testPrivateKeyHex, testPrivateKeyHex, false, false},
-		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F2B75", "e83385af76b2b1997326b567461fb73dd9c27eab9e1e86d26779f4650c5f2b75", false, false},
-		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F", "0000e83385af76b2b1997326b567461fb73dd9c27eab9e1e86d26779f4650c5f", false, false},
-		{"E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F", "", true, true},
-		{"1234567", "", true, true},
-		{"0", "", true, true},
-		{"", "", true, true},
+		{"valid key", testPrivateKeyHex, testPrivateKeyHex, false, false},
+		{"uppercase hex", "E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F2B75", "e83385af76b2b1997326b567461fb73dd9c27eab9e1e86d26779f4650c5f2b75", false, false},
+		{"short key left-padded", "E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F4650C5F", "0000e83385af76b2b1997326b567461fb73dd9c27eab9e1e86d26779f4650c5f", false, false},
+		{"odd length hex", "E83385AF76B2B1997326B567461FB73DD9C27EAB9E1E86D26779F", "", true, true},
+		{"too short odd hex", "1234567", "", true, true},
+		{caseSingleZero, "0", "", true, true},
+		{caseEmpty, "", "", true, true},
 	}
 
 	for _, test := range tests {
-		rawKey, err := PrivateKeyFromString(test.input)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		}
-		if rawKey == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		}
-		if rawKey != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		}
-		if rawKey != nil && hex.EncodeToString(rawKey.Serialize()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(rawKey.Serialize()))
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			rawKey, err := PrivateKeyFromString(test.input)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, rawKey)
+			} else {
+				require.NotNil(t, rawKey)
+				assert.Equal(t, test.expectedKey, hex.EncodeToString(rawKey.Serialize()))
+			}
+		})
 	}
 }
 
@@ -116,7 +117,7 @@ func ExamplePrivateKeyFromString() {
 // BenchmarkPrivateKeyFromString benchmarks the method PrivateKeyFromString()
 func BenchmarkPrivateKeyFromString(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = PrivateKeyFromString(key)
 	}
 }
@@ -126,36 +127,39 @@ func TestPrivateAndPublicKeys(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name               string
 		input              string
 		expectedPrivateKey string
 		expectedNil        bool
 		expectedError      bool
 	}{
-		{"", "", true, true},
-		{"0", "", true, true},
-		{"00000", "", true, true},
-		{"0-0-0-0-0", "", true, true},
-		{"z4035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abz", "", true, true},
-		{testPrivateKeyHex, testPrivateKeyHex, false, false},
+		{caseEmpty, "", "", true, true},
+		{caseSingleZero, "0", "", true, true},
+		{"short zeros", "00000", "", true, true},
+		{"dashes", "0-0-0-0-0", "", true, true},
+		{"invalid hex chars", "z4035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8abz", "", true, true},
+		{"valid key", testPrivateKeyHex, testPrivateKeyHex, false, false},
 	}
 
 	for _, test := range tests {
-		privateKey, publicKey, err := PrivateAndPublicKeys(test.input)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		}
-		if (privateKey == nil || publicKey == nil) && !test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		}
-		if (privateKey != nil || publicKey != nil) && test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		}
-		if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedPrivateKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialize()))
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			privateKey, publicKey, err := PrivateAndPublicKeys(test.input)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, privateKey)
+				assert.Nil(t, publicKey)
+			} else {
+				require.NotNil(t, privateKey)
+				require.NotNil(t, publicKey)
+				assert.Equal(t, test.expectedPrivateKey, hex.EncodeToString(privateKey.Serialize()))
+			}
+		})
 	}
 }
 
@@ -174,7 +178,7 @@ func ExamplePrivateAndPublicKeys() {
 // BenchmarkPrivateAndPublicKeys benchmarks the method PrivateAndPublicKeys()
 func BenchmarkPrivateAndPublicKeys(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _, _ = PrivateAndPublicKeys(key)
 	}
 }
@@ -184,36 +188,37 @@ func TestPrivateKeyToWif(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		input         string
 		expectedWif   string
 		expectedNil   bool
 		expectedError bool
 	}{
-		{"", "", true, true},
-		{"0", "", true, true},
-		{"000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false, false},
-		{"6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false, false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
-		{testPrivateKeyHex, "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false, false},
+		{caseEmpty, "", "", true, true},
+		{caseSingleZero, "0", "", true, true},
+		{"zeros key", "000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false, false},
+		{"ascii key bytes", "6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false, false},
+		{"invalid hex chars", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
+		{"valid key", testPrivateKeyHex, testUncompressedWIF, false, false},
 	}
 
 	for _, test := range tests {
-		privateWif, err := PrivateKeyToWif(test.input)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		}
-		if privateWif == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		}
-		if privateWif != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		}
-		if privateWif != nil && privateWif.String() != test.expectedWif {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif.String())
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			privateWif, err := PrivateKeyToWif(test.input)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, privateWif)
+			} else {
+				require.NotNil(t, privateWif)
+				assert.Equal(t, test.expectedWif, privateWif.String())
+			}
+		})
 	}
 }
 
@@ -232,7 +237,7 @@ func ExamplePrivateKeyToWif() {
 // BenchmarkPrivateKeyToWif benchmarks the method PrivateKeyToWif()
 func BenchmarkPrivateKeyToWif(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = PrivateKeyToWif(key)
 	}
 }
@@ -242,26 +247,31 @@ func TestPrivateKeyToWifString(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		input         string
 		expectedWif   string
 		expectedError bool
 	}{
-		{"", "", true},
-		{"0", "", true},
-		{"000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false},
-		{"6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
-		{testPrivateKeyHex, "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", false},
+		{caseEmpty, "", "", true},
+		{caseSingleZero, "0", "", true},
+		{"zeros key", "000000", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", false},
+		{"ascii key bytes", "6D792070726976617465206B6579", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", false},
+		{"invalid hex chars", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
+		{"valid key", testPrivateKeyHex, testUncompressedWIF, false},
 	}
 
 	for _, test := range tests {
-		if privateWif, err := PrivateKeyToWifString(test.input); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if privateWif != test.expectedWif {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedWif, privateWif)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			privateWif, err := PrivateKeyToWifString(test.input)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.expectedWif, privateWif)
+		})
 	}
 }
 
@@ -280,7 +290,7 @@ func ExamplePrivateKeyToWifString() {
 // BenchmarkPrivateKeyToWifString benchmarks the method PrivateKeyToWifString()
 func BenchmarkPrivateKeyToWifString(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = PrivateKeyToWifString(key)
 	}
 }
@@ -290,42 +300,43 @@ func TestWifToPrivateKey(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		input         string
 		expectedKey   string
 		expectedNil   bool
 		expectedError bool
 	}{
-		{"", "", true, true},
-		{"0", "", true, true},
-		{"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false, false},
-		{"5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false, false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
-		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", testPrivateKeyHex, false, false},
+		{caseEmpty, "", "", true, true},
+		{caseSingleZero, "0", "", true, true},
+		{"zeros wif", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false, false},
+		{"ascii key wif", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false, false},
+		{"invalid wif", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true, true},
+		{"valid uncompressed wif", testUncompressedWIF, testPrivateKeyHex, false, false},
 	}
 
 	for _, test := range tests {
-		privateKey, err := WifToPrivateKey(test.input)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		}
-		if privateKey == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.input)
-		}
-		if privateKey != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		}
-		if privateKey != nil && hex.EncodeToString(privateKey.Serialize()) != test.expectedKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			privateKey, err := WifToPrivateKey(test.input)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, privateKey)
+			} else {
+				require.NotNil(t, privateKey)
+				assert.Equal(t, test.expectedKey, hex.EncodeToString(privateKey.Serialize()))
+			}
+		})
 	}
 }
 
 // ExampleWifToPrivateKey example using WifToPrivateKey()
 func ExampleWifToPrivateKey() {
-	privateKey, err := WifToPrivateKey("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	privateKey, err := WifToPrivateKey(testUncompressedWIF)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -337,8 +348,8 @@ func ExampleWifToPrivateKey() {
 
 // BenchmarkWifToPrivateKey benchmarks the method WifToPrivateKey()
 func BenchmarkWifToPrivateKey(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_, _ = WifToPrivateKey("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	for b.Loop() {
+		_, _ = WifToPrivateKey(testUncompressedWIF)
 	}
 }
 
@@ -347,32 +358,37 @@ func TestWifToPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		input         string
 		expectedKey   string
 		expectedError bool
 	}{
-		{"", "", true},
-		{"0", "", true},
-		{"5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false},
-		{"5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
-		{"5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei", testPrivateKeyHex, false},
+		{caseEmpty, "", "", true},
+		{caseSingleZero, "0", "", true},
+		{"zeros wif", "5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU", "0000000000000000000000000000000000000000000000000000000000000000", false},
+		{"ascii key wif", "5HpHagT65TZzG1PH3CSu63k8DbuTZnNJf6HgyQNymvXmALAsm9s", "0000000000000000000000000000000000006d792070726976617465206b6579", false},
+		{"invalid wif", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9bd8azz", "", true},
+		{"valid uncompressed wif", testUncompressedWIF, testPrivateKeyHex, false},
 	}
 
 	for _, test := range tests {
-		if privateKey, err := WifToPrivateKeyString(test.input); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if privateKey != test.expectedKey {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of keys, got: %s", t.Name(), test.input, test.expectedKey, privateKey)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			privateKey, err := WifToPrivateKeyString(test.input)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.expectedKey, privateKey)
+		})
 	}
 }
 
 // ExampleWifToPrivateKeyString example using WifToPrivateKeyString()
 func ExampleWifToPrivateKeyString() {
-	privateKey, err := WifToPrivateKeyString("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	privateKey, err := WifToPrivateKeyString(testUncompressedWIF)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -384,8 +400,8 @@ func ExampleWifToPrivateKeyString() {
 
 // BenchmarkWifToPrivateKeyString benchmarks the method WifToPrivateKeyString()
 func BenchmarkWifToPrivateKeyString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_, _ = WifToPrivateKeyString("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	for b.Loop() {
+		_, _ = WifToPrivateKeyString(testUncompressedWIF)
 	}
 }
 
@@ -436,7 +452,7 @@ func ExampleCreateWif() {
 
 // BenchmarkCreateWif benchmarks the method CreateWif()
 func BenchmarkCreateWif(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateWif()
 	}
 }
@@ -487,7 +503,7 @@ func ExampleCreateWifString() {
 
 // BenchmarkCreateWifString benchmarks the method CreateWifString()
 func BenchmarkCreateWifString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateWifString()
 	}
 }
@@ -583,7 +599,7 @@ func ExampleWifFromString() {
 func BenchmarkWifFromString(b *testing.B) {
 	wifKey, _ := CreateWif()
 	wifString := wifKey.String()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = WifFromString(wifString)
 	}
 }

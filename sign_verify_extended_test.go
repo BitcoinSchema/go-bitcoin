@@ -66,6 +66,7 @@ func TestSignMessageExtended(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			signature, err := SignMessage(tt.privateKey, tt.message, tt.sigRefCompressedKey)
 
 			if tt.shouldError {
@@ -93,6 +94,7 @@ func TestPubKeyFromSignatureExtended(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid signature", func(t *testing.T) {
+		t.Parallel()
 		pubKey, wasCompressed, err := PubKeyFromSignature(signature, message)
 		require.NoError(t, err)
 		assert.NotNil(t, pubKey)
@@ -100,18 +102,21 @@ func TestPubKeyFromSignatureExtended(t *testing.T) {
 	})
 
 	t.Run("invalid base64 signature", func(t *testing.T) {
+		t.Parallel()
 		pubKey, _, err := PubKeyFromSignature("not-base64!@#", message)
 		require.Error(t, err)
 		assert.Nil(t, pubKey)
 	})
 
 	t.Run("empty signature", func(t *testing.T) {
+		t.Parallel()
 		pubKey, _, err := PubKeyFromSignature("", message)
 		require.Error(t, err)
 		assert.Nil(t, pubKey)
 	})
 
 	t.Run("wrong message", func(t *testing.T) {
+		t.Parallel()
 		// Using a different message should still recover a pubkey, but verification would fail
 		pubKey, wasCompressed, err := PubKeyFromSignature(signature, "Different message")
 		// This might succeed or fail depending on implementation
@@ -140,27 +145,32 @@ func TestVerifyMessageExtended(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("valid signature and address - mainnet", func(t *testing.T) {
+		t.Parallel()
 		err := VerifyMessage(address, signature, message, true)
 		require.NoError(t, err)
 	})
 
 	t.Run("wrong address", func(t *testing.T) {
+		t.Parallel()
 		err := VerifyMessage("1C8bzHM8XFBHZ2ZZVvFy2NSoAZbwCXAicL", signature, message, true)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
 	})
 
 	t.Run("wrong message", func(t *testing.T) {
+		t.Parallel()
 		err := VerifyMessage(address, signature, "Wrong message", true)
 		require.Error(t, err)
 	})
 
 	t.Run("invalid signature", func(t *testing.T) {
+		t.Parallel()
 		err := VerifyMessage(address, "invalid-signature", message, true)
 		require.Error(t, err)
 	})
 
 	t.Run("empty signature", func(t *testing.T) {
+		t.Parallel()
 		err := VerifyMessage(address, "", message, true)
 		require.Error(t, err)
 	})
@@ -234,6 +244,7 @@ func TestVerifyMessageDERExtended(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			verified, err := VerifyMessageDER(tt.hash, tt.pubKey, tt.signature)
 
 			if tt.shouldError {

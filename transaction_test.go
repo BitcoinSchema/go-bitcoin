@@ -14,35 +14,35 @@ func TestTxFromHex(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		inputHex      string
 		expectedTxID  string
 		expectedNil   bool
 		expectedError bool
 	}{
-		{"", "", true, true},
-		{"0", "", true, true},
-		{"000", "", true, true},
-		{"bad-hex", "", true, true},
-		{"01000000012adda020db81f2155ebba69e7c841275517ebf91674268c32ff2f5c7e2853b2c010000006b483045022100872051ef0b6c47714130c12a067db4f38b988bfc22fe270731c2146f5229386b02207abf68bbf092ec03e2c616defcc4c868ad1fc3cdbffb34bcedfab391a1274f3e412102affe8c91d0a61235a3d07b1903476a2e2f7a90451b2ed592fea9937696a07077ffffffff02ed1a0000000000001976a91491b3753cf827f139d2dc654ce36f05331138ddb588acc9670300000000001976a914da036233873cc6489ff65a0185e207d243b5154888ac00000000", "64cd12102af20195d54a107e0ee5989ac5db3491893a0b9d42e24354732a22a5", false, false},
+		{"empty hex errors", "", "", true, true},
+		{"single char errors", "0", "", true, true},
+		{"odd length errors", "000", "", true, true},
+		{"bad hex errors", "bad-hex", "", true, true},
+		{"valid raw tx", "01000000012adda020db81f2155ebba69e7c841275517ebf91674268c32ff2f5c7e2853b2c010000006b483045022100872051ef0b6c47714130c12a067db4f38b988bfc22fe270731c2146f5229386b02207abf68bbf092ec03e2c616defcc4c868ad1fc3cdbffb34bcedfab391a1274f3e412102affe8c91d0a61235a3d07b1903476a2e2f7a90451b2ed592fea9937696a07077ffffffff02ed1a0000000000001976a91491b3753cf827f139d2dc654ce36f05331138ddb588acc9670300000000001976a914da036233873cc6489ff65a0185e207d243b5154888ac00000000", "64cd12102af20195d54a107e0ee5989ac5db3491893a0b9d42e24354732a22a5", false, false},
 	}
 
 	for _, test := range tests {
-		rawTx, err := TxFromHex(test.inputHex)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputHex, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputHex)
-		}
-		if rawTx == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was nil but not expected", t.Name(), test.inputHex)
-		}
-		if rawTx != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and was NOT nil but expected to be nil", t.Name(), test.inputHex)
-		}
-		if rawTx != nil && rawTx.TxID() != test.expectedTxID {
-			t.Fatalf("%s Failed: [%s] inputted [%s] expected but failed comparison of txIDs, got: %s", t.Name(), test.inputHex, test.expectedTxID, rawTx.TxID())
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			rawTx, err := TxFromHex(test.inputHex)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, rawTx)
+			} else {
+				require.NotNil(t, rawTx)
+				assert.Equal(t, test.expectedTxID, rawTx.TxID())
+			}
+		})
 	}
 }
 
@@ -59,7 +59,7 @@ func ExampleTxFromHex() {
 
 // BenchmarkTxFromHex benchmarks the method TxFromHex()
 func BenchmarkTxFromHex(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = TxFromHex("01000000012adda020db81f2155ebba69e7c841275517ebf91674268c32ff2f5c7e2853b2c010000006b483045022100872051ef0b6c47714130c12a067db4f38b988bfc22fe270731c2146f5229386b02207abf68bbf092ec03e2c616defcc4c868ad1fc3cdbffb34bcedfab391a1274f3e412102affe8c91d0a61235a3d07b1903476a2e2f7a90451b2ed592fea9937696a07077ffffffff02ed1a0000000000001976a91491b3753cf827f139d2dc654ce36f05331138ddb588acc9670300000000001976a914da036233873cc6489ff65a0185e207d243b5154888ac00000000")
 	}
 }
@@ -69,30 +69,20 @@ func TestCreateTx(t *testing.T) {
 	t.Parallel()
 
 	t.Run("basic valid tx", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 500,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
-		privateKey, err := WifToPrivateKey(testWIF)
-		require.NoError(t, err)
+		privateKey := mustTestPrivKey(t)
 		assert.NotNil(t, privateKey)
 
-		var tx *bt.Tx
-		tx, err = CreateTx(
+		tx, err := CreateTx(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			privateKey,
 		)
 		require.NoError(t, err)
@@ -120,12 +110,7 @@ func TestCreateTx(t *testing.T) {
 // ExampleCreateTx example using CreateTx()
 func ExampleCreateTx() {
 	// Use a new UTXO
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     1000,
-	}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{
@@ -134,8 +119,6 @@ func ExampleCreateTx() {
 	}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Private key (from wif)
 	privateKey, err := WifToPrivateKey(testWIF)
@@ -148,7 +131,7 @@ func ExampleCreateTx() {
 	rawTx, err := CreateTx(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
-		[]OpReturnData{opReturn1, opReturn2},
+		newTestOpReturns(),
 		privateKey,
 	)
 	if err != nil {
@@ -163,23 +146,21 @@ func ExampleCreateTx() {
 // BenchmarkCreateTx benchmarks the method CreateTx()
 func BenchmarkCreateTx(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: testTxID, Vout: 0, ScriptPubKey: testScriptPubKey, Satoshis: 1000}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: testAddress, Satoshis: 500}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Private key (from wif)
 	privateKey, _ := WifToPrivateKey(testWIF)
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateTx(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			privateKey,
 		)
 	}
@@ -189,7 +170,10 @@ func BenchmarkCreateTx(b *testing.B) {
 func TestCreateTxErrors(t *testing.T) {
 	t.Parallel()
 
+	singleOpReturn := []OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}}
+
 	tests := []struct {
+		name           string
 		inputUtxos     []*Utxo
 		inputAddresses []*PayToAddress
 		inputOpReturns []OpReturnData
@@ -199,72 +183,57 @@ func TestCreateTxErrors(t *testing.T) {
 		expectedError  bool
 	}{
 		{
-			[]*Utxo{{
-				TxID:         testTxID,
-				Vout:         0,
-				ScriptPubKey: testScriptPubKey,
-				Satoshis:     1000,
-			}},
+			"utxo with pay-to and op_return",
+			[]*Utxo{newTestUtxo(1000)},
 			[]*PayToAddress{{
 				Address:  testAddress,
 				Satoshis: 500,
 			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+			singleOpReturn,
 			testWIF,
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100bd31b3d9fbe18468086c0470e99f096e370f0c6ff41b6bb71f1a1d5c1b068ce302204f0c83d792a40337909b8b1bcea192722161f48dc475c653b7c352baa38eea6c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff02f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			false,
 			false,
 		},
 		{
-			[]*Utxo{{
-				TxID:         testTxID,
-				Vout:         0,
-				ScriptPubKey: testScriptPubKey,
-				Satoshis:     1000,
-			}},
+			"outputs exceed inputs",
+			[]*Utxo{newTestUtxo(1000)},
 			[]*PayToAddress{{
 				Address:  testAddress,
 				Satoshis: 1500,
 			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+			singleOpReturn,
 			testWIF,
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100bd31b3d9fbe18468086c0470e99f096e370f0c6ff41b6bb71f1a1d5c1b068ce302204f0c83d792a40337909b8b1bcea192722161f48dc475c653b7c352baa38eea6c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff02f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			true,
 			true,
 		},
 		{
+			"nil utxos",
 			nil,
 			[]*PayToAddress{{
 				Address:  testAddress,
 				Satoshis: 500,
 			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+			singleOpReturn,
 			testWIF,
 			"010000000002f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			false,
 			false,
 		},
 		{
-			[]*Utxo{{
-				TxID:         testTxID,
-				Vout:         0,
-				ScriptPubKey: testScriptPubKey,
-				Satoshis:     1000,
-			}},
+			"nil addresses with op_return",
+			[]*Utxo{newTestUtxo(1000)},
 			nil,
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+			singleOpReturn,
 			testWIF,
 			"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a47304402205ba1a246371bf8db3fb6dfa75e1edaa18b6b86dc1775dc3f2aa3c38f22803ccc022057850f794ebf78e542228d301420d4ec896c30a2bc009b7e55c66120f6c5a57a412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0100000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
 			false,
 			false,
 		},
 		{
-			[]*Utxo{{
-				TxID:         testTxID,
-				Vout:         0,
-				ScriptPubKey: testScriptPubKey,
-				Satoshis:     1000,
-			}},
+			"nil addresses and op_returns",
+			[]*Utxo{newTestUtxo(1000)},
 			nil,
 			nil,
 			testWIF,
@@ -273,6 +242,7 @@ func TestCreateTxErrors(t *testing.T) {
 			false,
 		},
 		{
+			"invalid script pubkey",
 			[]*Utxo{{
 				TxID:         testTxID,
 				Vout:         0,
@@ -283,24 +253,20 @@ func TestCreateTxErrors(t *testing.T) {
 				Address:  testAddress,
 				Satoshis: 500,
 			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+			singleOpReturn,
 			testWIF,
 			"",
 			true,
 			true,
 		},
 		{
-			[]*Utxo{{
-				TxID:         testTxID,
-				Vout:         0,
-				ScriptPubKey: testScriptPubKey,
-				Satoshis:     1000,
-			}},
+			"invalid pay-to address",
+			[]*Utxo{newTestUtxo(1000)},
 			[]*PayToAddress{{
 				Address:  "invalid-address",
 				Satoshis: 500,
 			}},
-			[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
+			singleOpReturn,
 			testWIF,
 			"",
 			true,
@@ -308,31 +274,31 @@ func TestCreateTxErrors(t *testing.T) {
 		},
 	}
 
-	var rawTx *bt.Tx
 	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 
-		// Private key (from wif)
-		privateKey, err := WifToPrivateKey(test.inputWif)
-		if err != nil && !test.expectedError {
-			t.Fatalf("error occurred: %s", err.Error())
-		}
+			// Private key (from wif)
+			privateKey, err := WifToPrivateKey(test.inputWif)
+			require.NoError(t, err)
 
-		rawTx, err = CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error not expected but got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and error was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		}
-		if rawTx == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was not expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		}
-		if rawTx != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted and nil was expected", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif)
-		}
-		if rawTx != nil && rawTx.String() != test.expectedRawTx {
-			t.Fatalf("%s Failed: [%v] [%v] [%v] [%s] inputted [%s] expected but failed comparison of scripts, got: %s", t.Name(), test.inputUtxos, test.inputAddresses, test.inputOpReturns, test.inputWif, test.expectedRawTx, rawTx.String())
-		}
+			rawTx, err := CreateTx(test.inputUtxos, test.inputAddresses, test.inputOpReturns, privateKey)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+
+			if test.expectedNil {
+				assert.Nil(t, rawTx)
+			} else {
+				require.NotNil(t, rawTx)
+			}
+
+			if rawTx != nil {
+				assert.Equal(t, test.expectedRawTx, rawTx.String())
+			}
+		})
 	}
 }
 
@@ -341,25 +307,17 @@ func TestCreateTxUsingWif(t *testing.T) {
 	t.Parallel()
 
 	t.Run("valid tx", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 500,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		tx, err := CreateTxUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			testWIF,
 		)
 		require.NoError(t, err)
@@ -367,25 +325,17 @@ func TestCreateTxUsingWif(t *testing.T) {
 	})
 
 	t.Run("invalid wif", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 500,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		tx, err := CreateTxUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			"",
 		)
 		require.Error(t, err)
@@ -396,12 +346,7 @@ func TestCreateTxUsingWif(t *testing.T) {
 // ExampleCreateTxUsingWif example using CreateTxUsingWif()
 func ExampleCreateTxUsingWif() {
 	// Use a new UTXO
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     1000,
-	}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{
@@ -410,14 +355,12 @@ func ExampleCreateTxUsingWif() {
 	}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Generate the TX
 	rawTx, err := CreateTxUsingWif(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
-		[]OpReturnData{opReturn1, opReturn2},
+		newTestOpReturns(),
 		testWIF,
 	)
 	if err != nil {
@@ -432,20 +375,18 @@ func ExampleCreateTxUsingWif() {
 // BenchmarkCreateTxUsingWif benchmarks the method CreateTxUsingWif()
 func BenchmarkCreateTxUsingWif(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: testTxID, Vout: 0, ScriptPubKey: testScriptPubKey, Satoshis: 1000}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: testAddress, Satoshis: 500}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateTxUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			testWIF,
 		)
 	}
@@ -456,25 +397,17 @@ func TestCalculateFeeForTx(t *testing.T) {
 	t.Parallel()
 
 	t.Run("valid tx", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 868,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		rawTx, err := CreateTxUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			testWIF,
 		)
 		require.NoError(t, err)
@@ -676,7 +609,7 @@ func BenchmarkCalculateFeeForTx(b *testing.B) {
 		b.Fatalf("error occurred: %s", err.Error())
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = CalculateFeeForTx(tx, nil, nil)
 	}
 }
@@ -686,31 +619,21 @@ func TestCreateTxWithChange(t *testing.T) {
 	t.Parallel()
 
 	t.Run("basic tx", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 500,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
-		privateKey, err := WifToPrivateKey(testWIF)
-		require.NoError(t, err)
+		privateKey := mustTestPrivKey(t)
 		assert.NotNil(t, privateKey)
 
-		var rawTx *bt.Tx
-		rawTx, err = CreateTxWithChange(
+		rawTx, err := CreateTxWithChange(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			newTestOpReturns(),
+			testChangeAddress,
 			nil,
 			nil,
 			privateKey,
@@ -754,7 +677,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100b95aff403574aba31b1786e5f5ddb3c57356a13e6207b66babb16a6d851d7cfe02200d0f570f619e4c05b5b7213ce673f46549f9a7ee95814f3ec0cc0233fd54c85e412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff03f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac71010000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
@@ -770,7 +693,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				nil,
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b48304502210092b9d4a913d7103e8770bdeb45528b6aed02126fafdfc64c728243714eac250002205fa4963a90fd69f6ae4cbf02c2ecc2367d585eb616244fb7c85adf4fef468a21412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0277030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
@@ -786,7 +709,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				nil,
 				nil,
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006a4730440220029595a3bc3e94f92b1d08faf298ba938cb7c9824393789a1f3afc5ea5e172a802204d224492ab440c8180b45f39a25e270b0fb0d2fc74d8362db52e3ff960d9dc5d412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0187030000000000001976a914c9d8699bdea34b131e737447b50a8b1af0b040bf88ac00000000",
@@ -805,7 +728,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100fdf1c12b1512db7ced357358a333f3abf0f7b2d0b1a62c8e727d07627d702d5502207446779354f63e785bb8a46c9b2fb9a6da8a6d5503ee90ff35bb4c0774d38e62412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff0276030000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
@@ -856,7 +779,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"0100000001760595866e99c1ce920197844740f5598b34763878696371d41b3a7c0a65b0b7000000006b483045022100bd31b3d9fbe18468086c0470e99f096e370f0c6ff41b6bb71f1a1d5c1b068ce302204f0c83d792a40337909b8b1bcea192722161f48dc475c653b7c352baa38eea6c412102ea87d1fd77d169bd56a71e700628113d0f8dfe57faa0ba0e55a36f9ce8e10be3ffffffff02f4010000000000001976a9147a1980655efbfec416b2b0c663a7b3ac0b6a25d288ac00000000000000001a006a07707265666978310c6578616d706c65206461746102133700000000",
@@ -870,7 +793,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"",
@@ -889,7 +812,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"",
@@ -908,7 +831,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"",
@@ -946,7 +869,7 @@ func TestCreateTxWithChange(t *testing.T) {
 				}},
 				[]OpReturnData{{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}},
 				testWIF,
-				"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+				testChangeAddress,
 				nil,
 				nil,
 				"",
@@ -974,12 +897,7 @@ func TestCreateTxWithChange(t *testing.T) {
 // ExampleCreateTxWithChange example using CreateTxWithChange()
 func ExampleCreateTxWithChange() {
 	// Use a new UTXO
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     1000,
-	}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{
@@ -988,8 +906,6 @@ func ExampleCreateTxWithChange() {
 	}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Get private key from wif
 	privateKey, err := WifToPrivateKey(testWIF)
@@ -1003,8 +919,8 @@ func ExampleCreateTxWithChange() {
 	rawTx, err = CreateTxWithChange(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
-		[]OpReturnData{opReturn1, opReturn2},
-		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+		newTestOpReturns(),
+		testChangeAddress,
 		nil,
 		nil,
 		privateKey,
@@ -1021,24 +937,22 @@ func ExampleCreateTxWithChange() {
 // BenchmarkCreateTxWithChange benchmarks the method CreateTxWithChange()
 func BenchmarkCreateTxWithChange(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: testTxID, Vout: 0, ScriptPubKey: testScriptPubKey, Satoshis: 1000}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: testAddress, Satoshis: 500}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Get private key from wif
 	privateKey, _ := WifToPrivateKey(testWIF)
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateTxWithChange(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			newTestOpReturns(),
+			testChangeAddress,
 			nil,
 			nil,
 			privateKey,
@@ -1053,26 +967,18 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	t.Parallel()
 
 	t.Run("valid tx", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 500,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			newTestOpReturns(),
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1092,9 +998,6 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("valid tx - multiple inputs - send all", func(t *testing.T) {
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{{
 				TxID:         "9e88ca8eec0845e9e864c024bc5e6711e670932c9c7d929f9fccdb2c440ae28e",
@@ -1111,7 +1014,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 				Address:  "1DE7mZ9g3zmzWLM729fneui7eypfX8BBfC",
 				Satoshis: 5689 + 5689,
 			}},
-			[]OpReturnData{opReturn1, opReturn2},
+			newTestOpReturns(),
 			"1BxGFoRPSFgYxoAStEncL6HuELqPkV3JVj",
 			nil,
 			nil,
@@ -1127,12 +1030,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo amount", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
@@ -1143,7 +1041,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1162,12 +1060,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo amount - multiple pay to addresses", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
@@ -1190,7 +1083,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 				},
 			},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1212,12 +1105,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send almost entire utxo amount - 5 sat diff", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
@@ -1228,7 +1116,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1250,12 +1138,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send almost entire utxo amount - 1 sat diff", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
@@ -1266,7 +1149,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1286,12 +1169,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send more than utxos provided - pay to", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
@@ -1302,7 +1180,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1312,26 +1190,18 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo - with op return", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 1000,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			newTestOpReturns(),
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1344,12 +1214,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo amount - last pay-to does not cover fee", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
@@ -1364,7 +1229,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 				},
 			},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1387,12 +1252,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo - cannot cover fee in any pay-to", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
@@ -1479,7 +1339,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 				},
 			},
 			nil,
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1489,12 +1349,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo using data, leaving 1-2 sats", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
@@ -1510,7 +1365,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
 			[]OpReturnData{opReturn1},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1521,12 +1376,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("send entire utxo using data, too much data", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
@@ -1542,7 +1392,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
 			[]OpReturnData{opReturn1},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,
@@ -1552,26 +1402,18 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 	})
 
 	t.Run("invalid wif", func(t *testing.T) {
-		utxo := &Utxo{
-			TxID:         testTxID,
-			Vout:         0,
-			ScriptPubKey: testScriptPubKey,
-			Satoshis:     1000,
-		}
+		utxo := newTestUtxo(1000)
 
 		payTo := &PayToAddress{
 			Address:  testAddress,
 			Satoshis: 500,
 		}
 
-		opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-		opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
-
 		rawTx, err := CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			newTestOpReturns(),
+			testChangeAddress,
 			nil,
 			nil,
 			"",
@@ -1584,12 +1426,7 @@ func TestCreateTxWithChangeUsingWif(t *testing.T) {
 // ExampleCreateTxWithChangeUsingWif example using CreateTxWithChangeUsingWif()
 func ExampleCreateTxWithChangeUsingWif() {
 	// Use a new UTXO
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     1000,
-	}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{
@@ -1598,15 +1435,13 @@ func ExampleCreateTxWithChangeUsingWif() {
 	}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
 	// Generate the TX
 	rawTx, err := CreateTxWithChangeUsingWif(
 		[]*Utxo{utxo},
 		[]*PayToAddress{payTo},
-		[]OpReturnData{opReturn1, opReturn2},
-		"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+		newTestOpReturns(),
+		testChangeAddress,
 		nil,
 		nil,
 		testWIF,
@@ -1623,21 +1458,19 @@ func ExampleCreateTxWithChangeUsingWif() {
 // BenchmarkCreateTxWithChangeUsingWif benchmarks the method CreateTxWithChangeUsingWif()
 func BenchmarkCreateTxWithChangeUsingWif(b *testing.B) {
 	// Use a new UTXO
-	utxo := &Utxo{TxID: testTxID, Vout: 0, ScriptPubKey: testScriptPubKey, Satoshis: 1000}
+	utxo := newTestUtxo(1000)
 
 	// Add a pay-to address
 	payTo := &PayToAddress{Address: testAddress, Satoshis: 500}
 
 	// Add some op return data
-	opReturn1 := OpReturnData{[]byte("prefix1"), []byte("example data"), []byte{0x13, 0x37}}
-	opReturn2 := OpReturnData{[]byte("prefix2"), []byte("more example data")}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateTxWithChangeUsingWif(
 			[]*Utxo{utxo},
 			[]*PayToAddress{payTo},
-			[]OpReturnData{opReturn1, opReturn2},
-			"1KQG5AY9GrPt3b5xrFqVh2C3YEhzSdu4kc",
+			newTestOpReturns(),
+			testChangeAddress,
 			nil,
 			nil,
 			testWIF,

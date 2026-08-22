@@ -23,7 +23,7 @@ func TestCreateTxExtended(t *testing.T) {
 		utxos       []*Utxo
 		addresses   []*PayToAddress
 		opReturns   []OpReturnData
-		privateKey  interface{} // Can be nil or *ec.PrivateKey
+		privateKey  any // Can be nil or *ec.PrivateKey
 		shouldError bool
 		errorText   string
 	}{
@@ -185,6 +185,7 @@ func TestCreateTxExtended(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			var tx *bt.Tx
 			var err error
 
@@ -220,12 +221,7 @@ func TestCreateTxExtended(t *testing.T) {
 func TestCreateTxUsingWifExtended(t *testing.T) {
 	t.Parallel()
 
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     10000,
-	}
+	utxo := newTestUtxo(10000)
 
 	address := &PayToAddress{
 		Address:  testAddress,
@@ -233,18 +229,21 @@ func TestCreateTxUsingWifExtended(t *testing.T) {
 	}
 
 	t.Run("valid wif", func(t *testing.T) {
+		t.Parallel()
 		tx, err := CreateTxUsingWif([]*Utxo{utxo}, []*PayToAddress{address}, nil, testWIF)
 		require.NoError(t, err)
 		assert.NotNil(t, tx)
 	})
 
 	t.Run("invalid wif", func(t *testing.T) {
+		t.Parallel()
 		tx, err := CreateTxUsingWif([]*Utxo{utxo}, []*PayToAddress{address}, nil, "invalid-wif")
 		require.Error(t, err)
 		assert.Nil(t, tx)
 	})
 
 	t.Run("empty wif", func(t *testing.T) {
+		t.Parallel()
 		tx, err := CreateTxUsingWif([]*Utxo{utxo}, []*PayToAddress{address}, nil, "")
 		require.Error(t, err)
 		assert.Nil(t, tx)
@@ -256,15 +255,9 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 	t.Parallel()
 
 	// Create a simple transaction for testing
-	privateKey, err := WifToPrivateKey(testWIF)
-	require.NoError(t, err)
+	privateKey := mustTestPrivKey(t)
 
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     10000,
-	}
+	utxo := newTestUtxo(10000)
 
 	address := &PayToAddress{
 		Address:  testAddress,
@@ -275,11 +268,13 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("calculate fee with default rates", func(t *testing.T) {
+		t.Parallel()
 		fee := CalculateFeeForTx(tx, nil, nil)
 		assert.Positive(t, fee, "Fee should be greater than 0")
 	})
 
 	t.Run("calculate fee with custom standard rate", func(t *testing.T) {
+		t.Parallel()
 		customRate := &bt.Fee{
 			FeeType: bt.FeeTypeStandard,
 			MiningFee: bt.FeeUnit{
@@ -296,6 +291,7 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 	})
 
 	t.Run("calculate fee with custom data rate", func(t *testing.T) {
+		t.Parallel()
 		customDataRate := &bt.Fee{
 			FeeType: bt.FeeTypeData,
 			MiningFee: bt.FeeUnit{
@@ -312,6 +308,7 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 	})
 
 	t.Run("calculate fee for transaction with OP_RETURN", func(t *testing.T) {
+		t.Parallel()
 		txWithOpReturn, err := CreateTx(
 			[]*Utxo{utxo},
 			[]*PayToAddress{address},
@@ -329,6 +326,7 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 	})
 
 	t.Run("zero-cost rate clamps fee to 1", func(t *testing.T) {
+		t.Parallel()
 		zeroRate := &bt.Fee{
 			FeeType:   bt.FeeTypeStandard,
 			MiningFee: bt.FeeUnit{Satoshis: 0, Bytes: 10},
@@ -339,6 +337,7 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 	})
 
 	t.Run("negative rate clamps fee to 1", func(t *testing.T) {
+		t.Parallel()
 		negativeRate := &bt.Fee{
 			FeeType:   bt.FeeTypeStandard,
 			MiningFee: bt.FeeUnit{Satoshis: -10, Bytes: 10},
@@ -355,8 +354,7 @@ func TestCalculateFeeForTxExtended(t *testing.T) {
 func TestCreateTxNonP2PKHUtxoFailsSigning(t *testing.T) {
 	t.Parallel()
 
-	privateKey, err := WifToPrivateKey(testWIF)
-	require.NoError(t, err)
+	privateKey := mustTestPrivKey(t)
 
 	// A data (OP_FALSE OP_RETURN) locking script is not P2PKH
 	utxo := &Utxo{
@@ -382,8 +380,7 @@ func TestCreateTxNonP2PKHUtxoFailsSigning(t *testing.T) {
 func TestCreateTxWithChangeFeeRerunRemainder(t *testing.T) {
 	t.Parallel()
 
-	privateKey, err := WifToPrivateKey(testWIF)
-	require.NoError(t, err)
+	privateKey := mustTestPrivKey(t)
 
 	// With a 50 sat/byte rate: feeNoChange ~9601, feeWithChange ~11251.
 	// leftover (10500) sits between them, so the change-included draft pushes the
@@ -421,10 +418,10 @@ func TestCreateTxWithChangeFeeRerunRemainder(t *testing.T) {
 func TestCreateTxWithChangeExtended(t *testing.T) {
 	t.Parallel()
 
-	privateKey, err := WifToPrivateKey(testWIF)
-	require.NoError(t, err)
+	privateKey := mustTestPrivKey(t)
 
 	t.Run("create tx with change - basic", func(t *testing.T) {
+		t.Parallel()
 		utxos := []*Utxo{
 			{
 				TxID:         testTxID,
@@ -449,6 +446,7 @@ func TestCreateTxWithChangeExtended(t *testing.T) {
 	})
 
 	t.Run("no utxos - should error", func(t *testing.T) {
+		t.Parallel()
 		addresses := []*PayToAddress{
 			{
 				Address:  testAddress,
@@ -463,6 +461,7 @@ func TestCreateTxWithChangeExtended(t *testing.T) {
 	})
 
 	t.Run("no change address - should error", func(t *testing.T) {
+		t.Parallel()
 		utxos := []*Utxo{
 			{
 				TxID:         testTxID,
@@ -486,6 +485,7 @@ func TestCreateTxWithChangeExtended(t *testing.T) {
 	})
 
 	t.Run("insufficient funds - should error", func(t *testing.T) {
+		t.Parallel()
 		utxos := []*Utxo{
 			{
 				TxID:         testTxID,
@@ -509,6 +509,7 @@ func TestCreateTxWithChangeExtended(t *testing.T) {
 	})
 
 	t.Run("exact amount - no change needed", func(t *testing.T) {
+		t.Parallel()
 		// When paying exact amount, no change output should be created
 		// This test verifies the edge case handling
 		utxos := []*Utxo{
@@ -559,12 +560,14 @@ func TestCreateTxWithChangeUsingWifExtended(t *testing.T) {
 	}
 
 	t.Run("valid wif", func(t *testing.T) {
+		t.Parallel()
 		tx, err := CreateTxWithChangeUsingWif(utxos, addresses, nil, testAddress, nil, nil, testWIF)
 		require.NoError(t, err)
 		assert.NotNil(t, tx)
 	})
 
 	t.Run("invalid wif", func(t *testing.T) {
+		t.Parallel()
 		tx, err := CreateTxWithChangeUsingWif(utxos, addresses, nil, testAddress, nil, nil, "invalid-wif")
 		require.Error(t, err)
 		assert.Nil(t, tx)
@@ -574,18 +577,13 @@ func TestCreateTxWithChangeUsingWifExtended(t *testing.T) {
 // BenchmarkCreateTxExtended benchmarks the CreateTx function with different scenarios
 func BenchmarkCreateTxExtended(b *testing.B) {
 	privateKey, _ := WifToPrivateKey(testWIF)
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     10000,
-	}
+	utxo := newTestUtxo(10000)
 	address := &PayToAddress{
 		Address:  testAddress,
 		Satoshis: 5000,
 	}
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = CreateTx([]*Utxo{utxo}, []*PayToAddress{address}, nil, privateKey)
 	}
 }
@@ -593,19 +591,14 @@ func BenchmarkCreateTxExtended(b *testing.B) {
 // BenchmarkCalculateFeeForTxExtended benchmarks the CalculateFeeForTx function
 func BenchmarkCalculateFeeForTxExtended(b *testing.B) {
 	privateKey, _ := WifToPrivateKey(testWIF)
-	utxo := &Utxo{
-		TxID:         testTxID,
-		Vout:         0,
-		ScriptPubKey: testScriptPubKey,
-		Satoshis:     10000,
-	}
+	utxo := newTestUtxo(10000)
 	address := &PayToAddress{
 		Address:  testAddress,
 		Satoshis: 5000,
 	}
 	tx, _ := CreateTx([]*Utxo{utxo}, []*PayToAddress{address}, nil, privateKey)
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = CalculateFeeForTx(tx, nil, nil)
 	}
 }

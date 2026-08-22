@@ -15,25 +15,30 @@ func TestPubKeyFromPrivateKeyString(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name           string
 		inputKey       string
 		expectedPubKey string
 		compressed     bool
 		expectedError  bool
 	}{
-		{testPrivateKeyHex, "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", true, false},
-		{testPrivateKeyHex, "041b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f36e7ef720509250313fcf1b4c5af0dc7c5efa126efe2c3b7008e6f1487c61f31", false, false},
-		{"0", "", true, true},
-		{"", "", true, true},
+		{"compressed", testPrivateKeyHex, testPubKeyCompressed, true, false},
+		{"uncompressed", testPrivateKeyHex, testPubKeyUncompressed, false, false},
+		{caseSingleZero, "0", "", true, true},
+		{caseEmpty, "", "", true, true},
 	}
 
 	for _, test := range tests {
-		if pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, test.compressed); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
-		} else if pubKey != test.expectedPubKey {
-			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			pubKey, err := PubKeyFromPrivateKeyString(test.inputKey, test.compressed)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.expectedPubKey, pubKey)
+		})
 	}
 }
 
@@ -51,7 +56,7 @@ func ExamplePubKeyFromPrivateKeyString() {
 // BenchmarkPubKeyFromPrivateKeyString benchmarks the method PubKeyFromPrivateKeyString()
 func BenchmarkPubKeyFromPrivateKeyString(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = PubKeyFromPrivateKeyString(key, true)
 	}
 }
@@ -65,17 +70,21 @@ func TestPubKeyFromPrivateKey(t *testing.T) {
 	assert.NotNil(t, priv)
 
 	tests := []struct {
+		name           string
 		inputKey       *ec.PrivateKey
 		expectedPubKey string
 		expectedError  bool
 	}{
-		{priv, "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false},
+		{"compressed", priv, testPubKeyCompressed, false},
 	}
 
 	for _, test := range tests {
-		if pubKey := PubKeyFromPrivateKey(test.inputKey, true); pubKey != test.expectedPubKey {
-			t.Fatalf("%s Failed: [%v] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, pubKey)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			pubKey := PubKeyFromPrivateKey(test.inputKey, true)
+			assert.Equal(t, test.expectedPubKey, pubKey)
+		})
 	}
 }
 
@@ -105,7 +114,7 @@ func ExamplePubKeyFromPrivateKey() {
 // BenchmarkPubKeyFromPrivateKey benchmarks the method PubKeyFromPrivateKey()
 func BenchmarkPubKeyFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKey()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = PubKeyFromPrivateKey(key, true)
 	}
 }
@@ -115,40 +124,41 @@ func TestPubKeyFromString(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name           string
 		inputKey       string
 		expectedPubKey string
 		expectedNil    bool
 		expectedError  bool
 	}{
-		{"", "", true, true},
-		{"0", "", true, true},
-		{"00000", "", true, true},
-		{"031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", "031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f", false, false},
+		{caseEmpty, "", "", true, true},
+		{caseSingleZero, "0", "", true, true},
+		{"short zeros", "00000", "", true, true},
+		{"valid compressed", testPubKeyCompressed, testPubKeyCompressed, false, false},
 	}
 
 	for _, test := range tests {
-		pubKey, err := PubKeyFromString(test.inputKey)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.inputKey, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.inputKey)
-		}
-		if pubKey != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and nil was expected", t.Name(), test.inputKey)
-		}
-		if pubKey == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%s] inputted and nil was NOT expected", t.Name(), test.inputKey)
-		}
-		if pubKey != nil && hex.EncodeToString(pubKey.Compressed()) != test.expectedPubKey {
-			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.inputKey, test.expectedPubKey, hex.EncodeToString(pubKey.Compressed()))
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			pubKey, err := PubKeyFromString(test.inputKey)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, pubKey)
+			} else {
+				require.NotNil(t, pubKey)
+				assert.Equal(t, test.expectedPubKey, hex.EncodeToString(pubKey.Compressed()))
+			}
+		})
 	}
 }
 
 // ExamplePubKeyFromString example using PubKeyFromString()
 func ExamplePubKeyFromString() {
-	pubKey, err := PubKeyFromString("031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f")
+	pubKey, err := PubKeyFromString(testPubKeyCompressed)
 	if err != nil {
 		fmt.Printf("error occurred: %s", err.Error())
 		return
@@ -159,7 +169,7 @@ func ExamplePubKeyFromString() {
 
 // BenchmarkPubKeyFromString benchmarks the method PubKeyFromString()
 func BenchmarkPubKeyFromString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
-		_, _ = PubKeyFromString("031b8c93100d35bd448f4646cc4678f278351b439b52b303ea31ec9edb5475e73f")
+	for b.Loop() {
+		_, _ = PubKeyFromString(testPubKeyCompressed)
 	}
 }

@@ -30,7 +30,7 @@ func FuzzPrivateKeyFromString(f *testing.F) {
 // WIF strings to ensure proper error handling and no panics
 func FuzzWifToPrivateKey(f *testing.F) {
 	// Seed corpus with valid and invalid WIF strings
-	f.Add("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	f.Add(testUncompressedWIF)
 	f.Add("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU")
 	f.Add("5KgHn2qiftW5LQgCYFtkbrLYB1FuvisDtacax8NCvumw3UTKdcP")
 	f.Add(testWIF)
@@ -52,7 +52,7 @@ func FuzzWifToPrivateKey(f *testing.F) {
 // various WIF strings to ensure robust error handling
 func FuzzWifToPrivateKeyString(f *testing.F) {
 	// Seed corpus with valid and invalid WIF strings
-	f.Add("5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei")
+	f.Add(testUncompressedWIF)
 	f.Add("5HpHagT65TZzG1PH3CSu63k8DbpvD8s5ip4nEB3kEsreAbuatmU")
 	f.Add("5KgHn2qiftW5LQgCYFtkbrLYB1FuvisDtacax8NCvumw3UTKdcP")
 	f.Add(testWIF)
