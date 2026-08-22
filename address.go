@@ -2,7 +2,6 @@ package bitcoin
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/hex"
 	"errors"
 
@@ -72,16 +71,10 @@ func (a *A25) ComputeChecksum() [4]byte {
 }
 
 // doubleSHA256 computes a double sha256 hash of the first 21 bytes of the
-// address.  This is the one function shared with the other bitcoin RC task.
-// Returned is the full 32 byte sha256 hash.  (The bitcoin checksum will be
-// the first four bytes of the slice.)
+// address.  Returned is the full 32 byte sha256 hash.  (The bitcoin checksum
+// will be the first four bytes of the slice.)
 func (a *A25) doubleSHA256() []byte {
-	h := sha256.New()
-	_, _ = h.Write(a[:21])
-	d := h.Sum([]byte{})
-	h = sha256.New()
-	_, _ = h.Write(d)
-	return h.Sum(d[:0])
+	return hash.Sha256d(a[:21])
 }
 
 // ValidA58 validates a base58 encoded bitcoin address.  An address is valid
@@ -160,7 +153,7 @@ func GetAddressFromPubKeyString(pubKey string, compressed, mainnet bool) (*bscri
 // GetAddressFromScript will take an output script and extract a standard bitcoin address
 func GetAddressFromScript(script string) (string, error) {
 	// No script?
-	if len(script) == 0 {
+	if script == "" {
 		return "", ErrMissingScript
 	}
 

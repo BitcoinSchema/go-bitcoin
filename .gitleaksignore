@@ -8,82 +8,71 @@
 # Reference: https://github.com/gitleaks/gitleaks#gitleaksignore
 
 # Address test fixtures
-address_test.go:generic-api-key:83
+address_test.go:generic-api-key:89
+address_test.go:generic-api-key:90
 
-# Encryption fuzz test fixtures
-encryption_fuzz_test.go:generic-api-key:11
+# ECIES interop test fixtures
+ecies_test.go:generic-api-key:16
 
 # Encryption test fixtures
-encryption_test.go:generic-api-key:203
-encryption_test.go:generic-api-key:208
-encryption_test.go:generic-api-key:213
-encryption_test.go:generic-api-key:218
+encryption_test.go:generic-api-key:202
+encryption_test.go:generic-api-key:209
+encryption_test.go:generic-api-key:216
 encryption_test.go:generic-api-key:223
-encryption_test.go:generic-api-key:228
-encryption_test.go:generic-api-key:233
-encryption_test.go:generic-api-key:238
-encryption_test.go:generic-api-key:243
-encryption_test.go:generic-api-key:274
+encryption_test.go:generic-api-key:230
+encryption_test.go:generic-api-key:237
+encryption_test.go:generic-api-key:244
+encryption_test.go:generic-api-key:251
+encryption_test.go:generic-api-key:258
 encryption_test.go:generic-api-key:290
-encryption_test.go:generic-api-key:301
-encryption_test.go:generic-api-key:320
-encryption_test.go:generic-api-key:325
-encryption_test.go:generic-api-key:330
-encryption_test.go:generic-api-key:335
-encryption_test.go:generic-api-key:340
-encryption_test.go:generic-api-key:345
-encryption_test.go:generic-api-key:350
-encryption_test.go:generic-api-key:355
-encryption_test.go:generic-api-key:360
-
-# HD key test fixtures
-hd_key_test.go:generic-api-key:445
-hd_key_test.go:generic-api-key:474
-hd_key_test.go:generic-api-key:509
-hd_key_test.go:generic-api-key:538
-hd_key_test.go:generic-api-key:574
-hd_key_test.go:generic-api-key:603
-hd_key_test.go:generic-api-key:607
-hd_key_test.go:generic-api-key:655
-hd_key_test.go:generic-api-key:704
-hd_key_test.go:generic-api-key:705
-hd_key_test.go:generic-api-key:776
-hd_key_test.go:generic-api-key:777
-hd_key_test.go:generic-api-key:767
-hd_key_test.go:generic-api-key:828
-hd_key_test.go:generic-api-key:938
-hd_key_test.go:generic-api-key:1063
-
-# Private key test fixtures
-private_key_test.go:generic-api-key:118
-private_key_test.go:generic-api-key:175
-private_key_test.go:generic-api-key:198
-private_key_test.go:generic-api-key:255
-private_key_test.go:generic-api-key:339
-private_key_test.go:generic-api-key:388
-
-# Public key test fixtures
-pubkey_test.go:generic-api-key:23
-pubkey_test.go:generic-api-key:24
-
-# Sign test fixtures
-sign_test.go:generic-api-key:8
-sign_test.go:generic-api-key:10
-sign_test.go:generic-api-key:9
-
-# Sign verify extended test fixtures
-sign_verify_extended_test.go:generic-api-key:90
-sign_verify_extended_test.go:generic-api-key:131
-
-# Misc function test fixtures
-misc_functions_test.go:generic-api-key:152
-misc_functions_test.go:generic-api-key:302
+encryption_test.go:generic-api-key:306
+encryption_test.go:generic-api-key:317
+encryption_test.go:generic-api-key:356
+encryption_test.go:generic-api-key:363
+encryption_test.go:generic-api-key:370
+encryption_test.go:generic-api-key:377
+encryption_test.go:generic-api-key:384
+encryption_test.go:generic-api-key:391
+encryption_test.go:generic-api-key:398
+encryption_test.go:generic-api-key:405
+encryption_test.go:generic-api-key:412
 
 # Example files with test keys for documentation
 examples/verify_signature/verify_signature.go:generic-api-key:12
 
-# Test constants
-test_constants_test.go:generic-api-key:4
+# HD key test fixtures
+hd_key_test.go:generic-api-key:511
+hd_key_test.go:generic-api-key:538
+hd_key_test.go:generic-api-key:585
+hd_key_test.go:generic-api-key:611
+hd_key_test.go:generic-api-key:653
+hd_key_test.go:generic-api-key:680
+hd_key_test.go:generic-api-key:727
+hd_key_test.go:generic-api-key:755
+hd_key_test.go:generic-api-key:756
+hd_key_test.go:generic-api-key:830
+hd_key_test.go:generic-api-key:831
+hd_key_test.go:generic-api-key:954
+hd_key_test.go:generic-api-key:1060
+hd_key_test.go:generic-api-key:1187
 
-# ECIES interop test fixtures
-ecies_test.go:generic-api-key:16
+# Private key test fixtures
+private_key_test.go:generic-api-key:79
+private_key_test.go:generic-api-key:114
+private_key_test.go:generic-api-key:175
+private_key_test.go:generic-api-key:312
+private_key_test.go:generic-api-key:346
+private_key_test.go:generic-api-key:369
+private_key_test.go:generic-api-key:398
+
+# Sign test fixtures
+sign_test.go:generic-api-key:13
+sign_test.go:generic-api-key:47
+sign_test.go:generic-api-key:54
+sign_test.go:generic-api-key:68
+sign_test.go:generic-api-key:75
+sign_test.go:generic-api-key:82
+sign_test.go:generic-api-key:117
+
+# Shared test constants
+test_constants_test.go:generic-api-key:4

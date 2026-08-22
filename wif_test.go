@@ -11,13 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// testPrivateKeyHex (defined in test_constants_test.go) encodes to these
-// mainnet WIFs (uncompressed leads with '5', compressed with 'K'/'L').
-const (
-	testUncompressedWIF = "5JTHas7yTFMBLqgFogxZFf8Vc5uKEbkE7yQAQ2g3xPHo2sNG1Ei"
-	testCompressedWIF   = "Kz32CUDnArL4eZrGM5NDMhJ5FrduV2MnumwEUePN3TP8AwSRRFvQ"
-)
-
 // TestNewWIFUncompressed verifies uncompressed WIF output is preserved (51 chars,
 // leading '5') and round-trips back to the original private key.
 func TestNewWIFUncompressed(t *testing.T) {

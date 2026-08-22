@@ -50,7 +50,7 @@ func EncryptWithPrivateKeyString(privateKey, data string) (string, error) {
 // DecryptWithPrivateKeyString is a convenience wrapper for DecryptWithPrivateKey()
 func DecryptWithPrivateKeyString(privateKey, data string) (string, error) {
 	// Get private key
-	rawPrivateKey, _, err := PrivateAndPublicKeys(privateKey)
+	rawPrivateKey, err := PrivateKeyFromString(privateKey)
 	if err != nil {
 		return "", err
 	}
@@ -75,11 +75,8 @@ func EncryptShared(user1PrivateKey *ec.PrivateKey, user2PubKey *ec.PublicKey, da
 func EncryptSharedString(user1PrivateKey *ec.PrivateKey, user2PubKey *ec.PublicKey, data string) (
 	*ec.PrivateKey, *ec.PublicKey, string, error,
 ) {
-	// Generate shared keys that can be decrypted by either user
-	sharedPrivKey, sharedPubKey := GenerateSharedKeyPair(user1PrivateKey, user2PubKey)
-
-	// Encrypt data with shared key
-	encryptedData, err := eciesEncrypt(sharedPubKey, []byte(data))
+	// Reuse EncryptShared and hex-encode the resulting payload
+	sharedPrivKey, sharedPubKey, encryptedData, err := EncryptShared(user1PrivateKey, user2PubKey, []byte(data))
 
 	return sharedPrivKey, sharedPubKey, hex.EncodeToString(encryptedData), err
 }

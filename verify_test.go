@@ -19,6 +19,7 @@ func TestVerifyMessage(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name           string
 		inputAddress   string
 		inputSignature string
 		inputData      string
@@ -26,6 +27,7 @@ func TestVerifyMessage(t *testing.T) {
 		mainnet        bool
 	}{
 		{
+			"valid compressed message",
 			"12SsqqYk43kggMBpSvWHwJwR31NsgMePKS",
 			"HFxPx8JHsCiivB+DW/RgNpCLT6yG3j436cUNWKekV3ORBrHNChIjeVReyAco7PVmmDtVD3POs9FhDlm/nk5I6O8=",
 			"test message",
@@ -33,6 +35,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"valid long message",
 			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
 			"IKmgOFrfWRffRNjrQcJQHSBD7WL2di+4doWdaz/a/p5RUiT7ErpUqbYeLi0yzmONFaV8uLWF2vydTjA8W8KnjZU=",
 			"This time I'm writing a new message that is obnoxiously long af. This time I'm writing a " +
@@ -49,6 +52,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"valid testnet address",
 			"mrH55sFASmaDJZ46RnKjMi11nA99b4d8GH",
 			"IL3hIysOVTZu9NJp5YWkPh7PSrnX+kFuFArVB+ETNObqUeYtboWjfV2H7CVmOJGJkjo4REHJx26zCGrH71ySNRo=",
 			"Testing!",
@@ -56,6 +60,7 @@ func TestVerifyMessage(t *testing.T) {
 			false,
 		},
 		{
+			"testnet address with mainnet flag errors",
 			"mrH55sFASmaDJZ46RnKjMi11nA99b4d8GH",
 			"IL3hIysOVTZu9NJp5YWkPh7PSrnX+kFuFArVB+ETNObqUeYtboWjfV2H7CVmOJGJkjo4REHJx26zCGrH71ySNRo=",
 			"Testing!",
@@ -63,6 +68,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"mismatched address errors",
 			"1LN5p7Eg9Zju1b4g4eFPTBMPoMZGCxzrET",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"Testing!",
@@ -70,6 +76,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"empty signature errors",
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"",
 			"Testing!",
@@ -77,6 +84,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"empty data errors",
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"",
@@ -84,6 +92,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"invalid address 0 errors",
 			"0",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
 			"Testing!",
@@ -91,6 +100,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"tampered signature errors",
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"GBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4naZ=",
 			"Testing!",
@@ -98,6 +108,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"short signature errors",
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"GBD=",
 			"Testing!",
@@ -105,6 +116,7 @@ func TestVerifyMessage(t *testing.T) {
 			true,
 		},
 		{
+			"malformed base64 signature errors",
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"GBse5w0f839t8wej8f2D=",
 			"Testing!",
@@ -114,11 +126,15 @@ func TestVerifyMessage(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		if err := VerifyMessage(test.inputAddress, test.inputSignature, test.inputData, test.mainnet); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error not expected but got: %s", t.Name(), test.inputAddress, test.inputSignature, test.inputData, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] [%s] [%s] inputted and error was expected", t.Name(), test.inputAddress, test.inputSignature, test.inputData)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+			err := VerifyMessage(test.inputAddress, test.inputSignature, test.inputData, test.mainnet)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
 }
 
@@ -139,7 +155,7 @@ func ExampleVerifyMessage() {
 
 // BenchmarkVerifyMessage benchmarks the method VerifyMessage()
 func BenchmarkVerifyMessage(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_ = VerifyMessage(
 			"1FiyJnrgwBc3Ff83V1yRWAkmXBdGrDQnXQ",
 			"IBDscOd/Ov4yrd/YXantqajSAnW4fudpfr2KQy5GNo9pZybF12uNaal4KI822UpQLS/UJD+UK2SnNMn6Z3E4na8=",
@@ -219,7 +235,7 @@ func ExampleVerifyMessageDER() {
 func BenchmarkVerifyMessageDER(b *testing.B) {
 	message := []byte(`{"apiVersion":"0.1.0","timestamp":"2020-10-08T14:25:31.539Z","expiryTime":"2020-10-08T14:35:31.539Z","minerId":"` + testDERPubKey + `","currentHighestBlockHash":"0000000000000000021af4ee1f179a64e530bf818ef67acd09cae24a89124519","currentHighestBlockHeight":656007,"minerReputation":null,"fees":[{"id":1,"feeType":"standard","miningFee":{"satoshis":500,"bytes":1000},"relayFee":{"satoshis":250,"bytes":1000}},{"id":2,"feeType":"data","miningFee":{"satoshis":500,"bytes":1000},"relayFee":{"satoshis":250,"bytes":1000}}]}`)
 
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = VerifyMessageDER(sha256.Sum256(message), testDERPubKey, testDERSignature)
 	}
 }

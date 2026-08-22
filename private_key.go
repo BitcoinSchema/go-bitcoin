@@ -17,16 +17,27 @@ func GenerateSharedKeyPair(privateKey *ec.PrivateKey,
 	)
 }
 
-// PrivateKeyFromString turns a private key (hex encoded string) into an ec.PrivateKey
-func PrivateKeyFromString(privateKey string) (*ec.PrivateKey, error) {
-	if len(privateKey) == 0 {
-		return nil, ErrPrivateKeyMissing
+// privateKeyFromHex decodes a hex-encoded private key string into its
+// ec.PrivateKey and matching ec.PublicKey. It returns ErrPrivateKeyMissing for
+// an empty string and the hex decode error for malformed input.
+func privateKeyFromHex(privateKey string) (*ec.PrivateKey, *ec.PublicKey, error) {
+	if privateKey == "" {
+		return nil, nil, ErrPrivateKeyMissing
 	}
 	privateKeyBytes, err := hex.DecodeString(privateKey)
 	if err != nil {
+		return nil, nil, err
+	}
+	rawKey, publicKey := ec.PrivateKeyFromBytes(privateKeyBytes)
+	return rawKey, publicKey, nil
+}
+
+// PrivateKeyFromString turns a private key (hex encoded string) into an ec.PrivateKey
+func PrivateKeyFromString(privateKey string) (*ec.PrivateKey, error) {
+	rawKey, _, err := privateKeyFromHex(privateKey)
+	if err != nil {
 		return nil, err
 	}
-	rawKey, _ := ec.PrivateKeyFromBytes(privateKeyBytes)
 	return rawKey, nil
 }
 
@@ -86,20 +97,7 @@ func CreateWifStringWithCompression(compress bool) (string, error) {
 // PrivateAndPublicKeys will return both the private and public key in one method
 // Expects a hex encoded privateKey
 func PrivateAndPublicKeys(privateKey string) (*ec.PrivateKey, *ec.PublicKey, error) {
-	// No key?
-	if len(privateKey) == 0 {
-		return nil, nil, ErrPrivateKeyMissing
-	}
-
-	// Decode the private key into bytes
-	privateKeyBytes, err := hex.DecodeString(privateKey)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	// Get the public and private key from the bytes
-	rawKey, publicKey := ec.PrivateKeyFromBytes(privateKeyBytes)
-	return rawKey, publicKey, nil
+	return privateKeyFromHex(privateKey)
 }
 
 // PrivateKeyToWif will convert a private key to an uncompressed mainnet WIF (*WIF).
@@ -112,19 +110,11 @@ func PrivateKeyToWif(privateKey string) (*WIF, error) {
 // PrivateKeyToWifWithCompression will convert a hex private key to a mainnet WIF
 // (*WIF) using the chosen public-key compression.
 func PrivateKeyToWifWithCompression(privateKey string, compress bool) (*WIF, error) {
-	// Missing private key
-	if len(privateKey) == 0 {
-		return nil, ErrPrivateKeyMissing
-	}
-
-	// Decode the private key
-	decodedKey, err := hex.DecodeString(privateKey)
+	// Decode the private key (returns ErrPrivateKeyMissing for an empty string)
+	rawKey, _, err := privateKeyFromHex(privateKey)
 	if err != nil {
 		return nil, err
 	}
-
-	// Get the private key from bytes
-	rawKey, _ := ec.PrivateKeyFromBytes(decodedKey)
 
 	// Create a new WIF (error never gets hit since (net) is set correctly)
 	return NewWIF(rawKey, &chaincfg.MainNet, compress)
@@ -151,7 +141,7 @@ func PrivateKeyToWifStringWithCompression(privateKey string, compress bool) (str
 // WifToPrivateKey will convert a WIF to a private key (*ec.PrivateKey)
 func WifToPrivateKey(wifKey string) (*ec.PrivateKey, error) {
 	// Missing wif?
-	if len(wifKey) == 0 {
+	if wifKey == "" {
 		return nil, ErrWifMissing
 	}
 
@@ -180,7 +170,7 @@ func WifToPrivateKeyString(wifKey string) (string, error) {
 // WifFromString will convert a WIF (string) to a WIF (*WIF)
 func WifFromString(wifKey string) (*WIF, error) {
 	// Missing wif?
-	if len(wifKey) == 0 {
+	if wifKey == "" {
 		return nil, ErrWifMissing
 	}
 

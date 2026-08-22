@@ -20,6 +20,7 @@ func TestEncryptDecryptExtended(t *testing.T) {
 	testData := "Test data to encrypt"
 
 	t.Run("encrypt and decrypt with private key object", func(t *testing.T) {
+		t.Parallel()
 		encrypted, err := EncryptWithPrivateKey(privateKey, testData)
 		require.NoError(t, err)
 		assert.NotEmpty(t, encrypted)
@@ -30,6 +31,7 @@ func TestEncryptDecryptExtended(t *testing.T) {
 	})
 
 	t.Run("encrypt and decrypt with private key string", func(t *testing.T) {
+		t.Parallel()
 		encrypted, err := EncryptWithPrivateKeyString(privateKeyString, testData)
 		require.NoError(t, err)
 		assert.NotEmpty(t, encrypted)
@@ -40,24 +42,28 @@ func TestEncryptDecryptExtended(t *testing.T) {
 	})
 
 	t.Run("encrypt with empty data", func(t *testing.T) {
+		t.Parallel()
 		encrypted, err := EncryptWithPrivateKey(privateKey, "")
 		require.NoError(t, err)
 		assert.NotEmpty(t, encrypted)
 	})
 
 	t.Run("decrypt with invalid hex", func(t *testing.T) {
+		t.Parallel()
 		decrypted, err := DecryptWithPrivateKey(privateKey, "not-hex")
 		require.Error(t, err)
 		assert.Empty(t, decrypted)
 	})
 
 	t.Run("encrypt with invalid private key string", func(t *testing.T) {
+		t.Parallel()
 		encrypted, err := EncryptWithPrivateKeyString("invalid", testData)
 		require.Error(t, err)
 		assert.Empty(t, encrypted)
 	})
 
 	t.Run("decrypt with invalid private key string", func(t *testing.T) {
+		t.Parallel()
 		decrypted, err := DecryptWithPrivateKeyString("invalid", "abcd1234")
 		require.Error(t, err)
 		assert.Empty(t, decrypted)
@@ -77,6 +83,7 @@ func TestEncryptSharedExtended(t *testing.T) {
 	testData := []byte("Shared secret data")
 
 	t.Run("encrypt and decrypt shared data", func(t *testing.T) {
+		t.Parallel()
 		sharedPrivKey, sharedPubKey, encrypted, err := EncryptShared(user1Key, user2Key.PubKey(), testData)
 		require.NoError(t, err)
 		assert.NotNil(t, sharedPrivKey)
@@ -85,6 +92,7 @@ func TestEncryptSharedExtended(t *testing.T) {
 	})
 
 	t.Run("encrypt shared string", func(t *testing.T) {
+		t.Parallel()
 		sharedPrivKey, sharedPubKey, encrypted, err := EncryptSharedString(user1Key, user2Key.PubKey(), string(testData))
 		require.NoError(t, err)
 		assert.NotNil(t, sharedPrivKey)
@@ -99,6 +107,7 @@ func TestCreateKeysExtended(t *testing.T) {
 	t.Parallel()
 
 	t.Run("create private key string", func(t *testing.T) {
+		t.Parallel()
 		keyString, err := CreatePrivateKeyString()
 		require.NoError(t, err)
 		assert.NotEmpty(t, keyString)
@@ -106,6 +115,7 @@ func TestCreateKeysExtended(t *testing.T) {
 	})
 
 	t.Run("create wif", func(t *testing.T) {
+		t.Parallel()
 		wifObj, err := CreateWif()
 		require.NoError(t, err)
 		assert.NotNil(t, wifObj)
@@ -113,12 +123,14 @@ func TestCreateKeysExtended(t *testing.T) {
 	})
 
 	t.Run("create wif string", func(t *testing.T) {
+		t.Parallel()
 		wifString, err := CreateWifString()
 		require.NoError(t, err)
 		assert.NotEmpty(t, wifString)
 	})
 
 	t.Run("private key to wif and back", func(t *testing.T) {
+		t.Parallel()
 		keyString, err := CreatePrivateKeyString()
 		require.NoError(t, err)
 
@@ -132,6 +144,7 @@ func TestCreateKeysExtended(t *testing.T) {
 	})
 
 	t.Run("private key to wif - empty key error", func(t *testing.T) {
+		t.Parallel()
 		wif, err := PrivateKeyToWif("")
 		require.Error(t, err)
 		assert.Nil(t, wif)
@@ -139,6 +152,7 @@ func TestCreateKeysExtended(t *testing.T) {
 	})
 
 	t.Run("private key to wif string - invalid hex", func(t *testing.T) {
+		t.Parallel()
 		wifString, err := PrivateKeyToWifString("not-hex")
 		require.Error(t, err)
 		assert.Empty(t, wifString)
@@ -152,30 +166,35 @@ func TestGetAddressesExtended(t *testing.T) {
 	privateKey := testPrivateKeyHex
 
 	t.Run("get address from private key string - mainnet compressed", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromPrivateKeyString(privateKey, true, true)
 		require.NoError(t, err)
 		assert.NotEmpty(t, address)
 	})
 
 	t.Run("get address from private key string - mainnet uncompressed", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromPrivateKeyString(privateKey, false, true)
 		require.NoError(t, err)
 		assert.NotEmpty(t, address)
 	})
 
 	t.Run("get address from private key string - testnet", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromPrivateKeyString(privateKey, true, false)
 		require.NoError(t, err)
 		assert.NotEmpty(t, address)
 	})
 
 	t.Run("get address from private key string - invalid hex", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromPrivateKeyString("not-hex", true, true)
 		require.Error(t, err)
 		assert.Empty(t, address)
 	})
 
 	t.Run("get address from script - valid", func(t *testing.T) {
+		t.Parallel()
 		script := "76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac"
 		address, err := GetAddressFromScript(script)
 		require.NoError(t, err)
@@ -183,6 +202,7 @@ func TestGetAddressesExtended(t *testing.T) {
 	})
 
 	t.Run("get address from script - empty script", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromScript("")
 		require.Error(t, err)
 		assert.Empty(t, address)
@@ -190,12 +210,14 @@ func TestGetAddressesExtended(t *testing.T) {
 	})
 
 	t.Run("get address from script - invalid hex", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromScript("not-hex")
 		require.Error(t, err)
 		assert.Empty(t, address)
 	})
 
 	t.Run("get address from pubkey string - compressed", func(t *testing.T) {
+		t.Parallel()
 		pk, err := PrivateKeyFromString(privateKey)
 		require.NoError(t, err)
 
@@ -207,6 +229,7 @@ func TestGetAddressesExtended(t *testing.T) {
 	})
 
 	t.Run("get address from pubkey string - invalid", func(t *testing.T) {
+		t.Parallel()
 		address, err := GetAddressFromPubKeyString("invalid", true, true)
 		require.Error(t, err)
 		assert.Nil(t, address)
@@ -218,20 +241,21 @@ func TestHDKeyExtended(t *testing.T) {
 	t.Parallel()
 
 	t.Run("generate HD key with custom seed length", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 		assert.NotNil(t, key)
 	})
 
 	t.Run("generate HD key with secure seed length", func(t *testing.T) {
+		t.Parallel()
 		key, err := GenerateHDKey(SecureSeedLength)
 		require.NoError(t, err)
 		assert.NotNil(t, key)
 	})
 
 	t.Run("get extended public key from HD key", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		xPub, err := GetExtendedPublicKey(key)
 		require.NoError(t, err)
@@ -240,8 +264,8 @@ func TestHDKeyExtended(t *testing.T) {
 	})
 
 	t.Run("get private key by path", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		privKey, err := GetPrivateKeyByPath(key, 0, 0)
 		require.NoError(t, err)
@@ -249,8 +273,8 @@ func TestHDKeyExtended(t *testing.T) {
 	})
 
 	t.Run("get public keys for path", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		pubKeys, err := GetPublicKeysForPath(key, 0)
 		require.NoError(t, err)
@@ -258,8 +282,8 @@ func TestHDKeyExtended(t *testing.T) {
 	})
 
 	t.Run("get addresses for path - mainnet", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		addresses, err := GetAddressesForPath(key, 0, true)
 		require.NoError(t, err)
@@ -267,8 +291,8 @@ func TestHDKeyExtended(t *testing.T) {
 	})
 
 	t.Run("get addresses for path - testnet", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		addresses, err := GetAddressesForPath(key, 0, false)
 		require.NoError(t, err)
@@ -276,8 +300,8 @@ func TestHDKeyExtended(t *testing.T) {
 	})
 
 	t.Run("get address string from HD key", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		address, err := GetAddressStringFromHDKey(key, true)
 		require.NoError(t, err)
@@ -285,8 +309,8 @@ func TestHDKeyExtended(t *testing.T) {
 	})
 
 	t.Run("get private key string from HD key", func(t *testing.T) {
-		key, err := GenerateHDKey(RecommendedSeedLength)
-		require.NoError(t, err)
+		t.Parallel()
+		key := mustHDKey(t)
 
 		privKeyString, err := GetPrivateKeyStringFromHDKey(key)
 		require.NoError(t, err)
@@ -302,6 +326,7 @@ func TestPubKeyFunctions(t *testing.T) {
 	privateKey := testPrivateKeyHex
 
 	t.Run("pubkey from private key string - compressed", func(t *testing.T) {
+		t.Parallel()
 		pubKey, err := PubKeyFromPrivateKeyString(privateKey, true)
 		require.NoError(t, err)
 		assert.NotEmpty(t, pubKey)
@@ -309,6 +334,7 @@ func TestPubKeyFunctions(t *testing.T) {
 	})
 
 	t.Run("pubkey from private key string - uncompressed", func(t *testing.T) {
+		t.Parallel()
 		pubKey, err := PubKeyFromPrivateKeyString(privateKey, false)
 		require.NoError(t, err)
 		assert.NotEmpty(t, pubKey)
@@ -316,12 +342,14 @@ func TestPubKeyFunctions(t *testing.T) {
 	})
 
 	t.Run("pubkey from string - invalid", func(t *testing.T) {
+		t.Parallel()
 		pk, err := PubKeyFromString("invalid")
 		require.Error(t, err)
 		assert.Nil(t, pk)
 	})
 
 	t.Run("pubkey from string - empty", func(t *testing.T) {
+		t.Parallel()
 		pk, err := PubKeyFromString("")
 		require.Error(t, err)
 		assert.Nil(t, pk)

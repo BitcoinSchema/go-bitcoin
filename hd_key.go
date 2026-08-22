@@ -153,33 +153,20 @@ func GetAddressStringFromHDKey(hdKey *bip32.ExtendedKey, mainnet bool) (string, 
 // Uses the standard m/0/0 (external) and m/0/1 (internal) paths
 // Reference: https://en.bitcoin.it/wiki/BIP_0032#The_default_wallet_layout
 func GetPublicKeysForPath(hdKey *bip32.ExtendedKey, num uint32) (pubKeys []*ec.PublicKey, err error) {
-	//  m/0/x
-	var childM0x *bip32.ExtendedKey
-	if childM0x, err = GetHDKeyByPath(hdKey, DefaultExternalChain, num); err != nil {
-		return nil, err
-	}
+	// Derive the external (m/0/x) then internal (m/1/x) public keys, in order
+	for _, chain := range []uint32{DefaultExternalChain, DefaultInternalChain} {
+		var child *bip32.ExtendedKey
+		if child, err = GetHDKeyByPath(hdKey, chain, num); err != nil {
+			return nil, err
+		}
 
-	// Get the external pubKey from m/0/x
-	var pubKey *ec.PublicKey
-	if pubKey, err = childM0x.ECPubKey(); err != nil {
-		// Should never error since the previous method ensures a valid hdKey
-		return nil, err
+		// Should never error since GetHDKeyByPath ensures a valid hdKey
+		var pubKey *ec.PublicKey
+		if pubKey, err = child.ECPubKey(); err != nil {
+			return nil, err
+		}
+		pubKeys = append(pubKeys, pubKey)
 	}
-	pubKeys = append(pubKeys, pubKey)
-
-	//  m/1/x
-	var childM1x *bip32.ExtendedKey
-	if childM1x, err = GetHDKeyByPath(hdKey, DefaultInternalChain, num); err != nil {
-		// Should never error since the previous method ensures a valid hdKey
-		return nil, err
-	}
-
-	// Get the internal pubKey from m/1/x
-	if pubKey, err = childM1x.ECPubKey(); err != nil {
-		// Should never error since the previous method ensures a valid hdKey
-		return nil, err
-	}
-	pubKeys = append(pubKeys, pubKey)
 
 	return pubKeys, nil
 }
@@ -221,5 +208,5 @@ func GetExtendedPublicKey(hdKey *bip32.ExtendedKey) (string, error) {
 
 // GetHDKeyFromExtendedPublicKey will get the hd key from an existing extended public key (xPub)
 func GetHDKeyFromExtendedPublicKey(xPublicKey string) (*bip32.ExtendedKey, error) {
-	return bip32.NewKeyFromString(xPublicKey)
+	return GenerateHDKeyFromString(xPublicKey)
 }

@@ -10,7 +10,7 @@ import (
 // sigRefCompressedKey bool determines whether the signature will reference a compressed or uncompresed key
 // Spec: https://docs.moneybutton.com/docs/bsv-message.html
 func SignMessage(privateKey, message string, sigRefCompressedKey bool) (string, error) {
-	if len(privateKey) == 0 {
+	if privateKey == "" {
 		return "", ErrPrivateKeyMissing
 	}
 

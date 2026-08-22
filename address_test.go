@@ -15,34 +15,37 @@ func TestValidA58(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name          string
 		input         string
 		expectedValid bool
 		expectedError bool
 	}{
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi2", true, false},
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, false},
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
-		{"1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
-		{"1KCEAmV", false, false},
-		{"", false, false},
-		{"0", false, true},
+		{"valid address", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi2", true, false},
+		{"invalid checksum", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, false},
+		{"too long 2x", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"too long 3x", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"too long 4x", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"too long 5x", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"too long 6x", "1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi", false, true},
+		{"too short", "1KCEAmV", false, false},
+		{caseEmpty, "", false, false},
+		{caseSingleZero, "0", false, true},
 		// Valid base58 testnet address (version 0x6f) decodes cleanly but is not version 0
-		{"mmobaZaCeFGujSmej9ESfohgfWjXBW1u7m", false, true},
+		{"testnet address not version 0", "mmobaZaCeFGujSmej9ESfohgfWjXBW1u7m", false, true},
 	}
 
 	for _, test := range tests {
-		if valid, err := ValidA58([]byte(test.input)); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if valid && !test.expectedValid {
-			t.Fatalf("%s Failed: [%s] inputted and was valid but should NOT be valid", t.Name(), test.input)
-		} else if !valid && test.expectedValid {
-			t.Fatalf("%s Failed: [%s] inputted and was invalid but should be valid", t.Name(), test.input)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			valid, err := ValidA58([]byte(test.input))
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.expectedValid, valid)
+		})
 	}
 }
 
@@ -63,7 +66,7 @@ func ExampleValidA58() {
 
 // BenchmarkValidA58 benchmarks the method ValidA58()
 func BenchmarkValidA58(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = ValidA58([]byte("1KCEAmVS6FFggtc7W9as7sEENvjt7DqMi2"))
 	}
 }
@@ -73,27 +76,32 @@ func TestGetAddressFromPrivateKey(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name            string
 		input           string
 		expectedAddress string
 		compressed      bool
 		expectedError   bool
 	}{
-		{"0", "", true, true},
-		{"00000", "", true, true},
-		{"12345678", "1BHxe5Yw72oYoV8tFjySYrV9Y2JwMpAZEy", true, false},
-		{"54035dd4c7dda99ac473905a3d82", "1L5GmmuGeS3HwoEDv7zkWcheayXrRsurUm", true, false},
-		{"54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9", "13dnka5SaugRchayN84EED7a2E8dCNMLXQ", true, false},
-		{testPrivateKeyHex, "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", true, false},
+		{"invalid hex zero", "0", "", true, true},
+		{"invalid hex 00000", "00000", "", true, true},
+		{"short key 12345678", "12345678", "1BHxe5Yw72oYoV8tFjySYrV9Y2JwMpAZEy", true, false},
+		{"partial key 28 chars", "54035dd4c7dda99ac473905a3d82", "1L5GmmuGeS3HwoEDv7zkWcheayXrRsurUm", true, false},
+		{"partial key 58 chars", "54035dd4c7dda99ac473905a3d82f7864322b49bab1ff441cc457183b9", "13dnka5SaugRchayN84EED7a2E8dCNMLXQ", true, false},
+		{"full private key", testPrivateKeyHex, "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", true, false},
 	}
 
 	for _, test := range tests {
-		if address, err := GetAddressFromPrivateKeyString(test.input, test.compressed, true); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%s] inputted and error was expected", t.Name(), test.input)
-		} else if address != test.expectedAddress {
-			t.Fatalf("%s Failed: [%s] inputted and [%s] expected, but got: %s", t.Name(), test.input, test.expectedAddress, address)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			address, err := GetAddressFromPrivateKeyString(test.input, test.compressed, true)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.expectedAddress, address)
+		})
 	}
 }
 
@@ -152,7 +160,7 @@ func ExampleGetAddressFromPrivateKey() {
 // BenchmarkGetAddressFromPrivateKey benchmarks the method GetAddressFromPrivateKey()
 func BenchmarkGetAddressFromPrivateKey(b *testing.B) {
 	key, _ := CreatePrivateKeyString()
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = GetAddressFromPrivateKeyString(key, true, true)
 	}
 }
@@ -171,36 +179,37 @@ func TestGetAddressFromPubKey(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name            string
 		input           *ec.PublicKey
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{&ec.PublicKey{}, "", true, true},
-		{testGetPublicKeyFromPrivateKey(testPrivateKeyHex), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
-		{testGetPublicKeyFromPrivateKey("000000"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", false, false},
-		{testGetPublicKeyFromPrivateKey("0"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", true, true},
+		{"empty pubkey", &ec.PublicKey{}, "", true, true},
+		{"valid pubkey", testGetPublicKeyFromPrivateKey(testPrivateKeyHex), "1DfGxKmgL3ETwUdNnXLBueEvNpjcDGcKgK", false, false},
+		{"pubkey from 000000", testGetPublicKeyFromPrivateKey("000000"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", false, false},
+		{"nil pubkey from invalid key", testGetPublicKeyFromPrivateKey("0"), "15wJjXvfQzo3SXqoWGbWZmNYND1Si4siqV", true, true},
 	}
 
 	// todo: add more error cases of invalid *ec.PublicKey
 
 	for _, test := range tests {
-		rawKey, err := GetAddressFromPubKey(test.input, true, true)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		}
-		if rawKey == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		}
-		if rawKey != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		}
-		if rawKey != nil && rawKey.AddressString != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			rawKey, err := GetAddressFromPubKey(test.input, true, true)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, rawKey)
+			} else {
+				require.NotNil(t, rawKey)
+				assert.Equal(t, test.expectedAddress, rawKey.AddressString)
+			}
+		})
 	}
 }
 
@@ -218,7 +227,7 @@ func ExampleGetAddressFromPubKey() {
 // BenchmarkGetAddressFromPubKey benchmarks the method GetAddressFromPubKey()
 func BenchmarkGetAddressFromPubKey(b *testing.B) {
 	pubKey := testGetPublicKeyFromPrivateKey(testPrivateKeyHex)
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = GetAddressFromPubKey(pubKey, true, true)
 	}
 }
@@ -228,31 +237,36 @@ func TestGetAddressFromScript(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name            string
 		inputScript     string
 		expectedAddress string
 		expectedError   bool
 	}{
-		{"", "", true},
-		{"0", "", true},
-		{"76a9141a9d62736746f85ca872dc555ff51b1fed2471e288ac", "13Rj7G3pn2GgG8KE6SFXLc7dCJdLNnNK7M", false},
-		{"76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac", "1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", false},
-		{"76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2", "", true},
-		{"76a914b424110292f4ea2ac92beb9e83", "", true},
-		{"76a914b424110292f", "", true},
-		{"1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", "", true},
-		{"514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae", "", true},
-		{"410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3", "", true},
-		{"47304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901", "", true},
+		{"empty script", "", "", true},
+		{caseSingleZero, "0", "", true},
+		{"valid p2pkh 1", "76a9141a9d62736746f85ca872dc555ff51b1fed2471e288ac", "13Rj7G3pn2GgG8KE6SFXLc7dCJdLNnNK7M", false},
+		{"valid p2pkh 2", "76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac", "1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", false},
+		{"truncated script 1", "76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2", "", true},
+		{"truncated script 2", "76a914b424110292f4ea2ac92beb9e83", "", true},
+		{"truncated script 3", "76a914b424110292f", "", true},
+		{"address not script", "1HRVqUGDzpZSMVuNSZxJVaB9xjneEShfA7", "", true},
+		{"multisig script", "514104cc71eb30d653c0c3163990c47b976f3fb3f37cccdcbedb169a1dfef58bbfbfaff7d8a473e7e2e6d317b87bafe8bde97e3cf8f065dec022b51d11fcdd0d348ac4410461cbdcc5409fb4b4d42b51d33381354d80e550078cb532a34bfa2fcfdeb7d76519aecc62770f5b0e4ef8551946d8a540911abe3e7854a26f39f58b25c15342af52ae", "", true},
+		{"raw pubkey script", "410411db93e1dcdb8a016b49840f8c53bc1eb68a382e97b1482ecad7b148a6909a5cb2e0eaddfb84ccf9744464f82e160bfa9b8b64f9d4c03f999b8643f656b412a3", "", true},
+		{"signature script", "47304402204e45e16932b8af514961a1d3a1a25fdf3f4f7732e9d624c6c61548ab5fb8cd410220181522ec8eca07de4860a4acdd12909d831cc56cbbac4622082221a8768d1d0901", "", true},
 	}
 
 	for _, test := range tests {
-		if address, err := GetAddressFromScript(test.inputScript); err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.inputScript, err.Error())
-		} else if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.inputScript)
-		} else if address != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.inputScript, test.expectedAddress, address)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			address, err := GetAddressFromScript(test.inputScript)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			assert.Equal(t, test.expectedAddress, address)
+		})
 	}
 }
 
@@ -269,7 +283,7 @@ func ExampleGetAddressFromScript() {
 
 // BenchmarkAddressFromScript benchmarks the method GetAddressFromScript()
 func BenchmarkGetAddressFromScript(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = GetAddressFromScript("76a914b424110292f4ea2ac92beb9e83cf5e6f0fa2996388ac")
 	}
 }
@@ -279,34 +293,35 @@ func TestGetAddressFromPubKeyString(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
+		name            string
 		input           string
 		expectedAddress string
 		expectedNil     bool
 		expectedError   bool
 	}{
-		{"", "", true, true},
-		{"0", "", true, true},
-		{"03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf", "17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ", false, false},
-		{"0000", "", true, true},
+		{caseEmpty, "", "", true, true},
+		{caseSingleZero, "0", "", true, true},
+		{"valid compressed pubkey", "03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf", "17HeHWVDqDqexLJ31aG4qtVMoX8pKMGSuJ", false, false},
+		{"invalid pubkey 0000", "0000", "", true, true},
 	}
 
 	for _, test := range tests {
-		rawKey, err := GetAddressFromPubKeyString(test.input, true, true)
-		if err != nil && !test.expectedError {
-			t.Fatalf("%s Failed: [%v] inputted and error not expected but got: %s", t.Name(), test.input, err.Error())
-		}
-		if err == nil && test.expectedError {
-			t.Fatalf("%s Failed: [%v] inputted and error was expected", t.Name(), test.input)
-		}
-		if rawKey == nil && !test.expectedNil {
-			t.Fatalf("%s Failed: [%v] inputted and was nil but not expected", t.Name(), test.input)
-		}
-		if rawKey != nil && test.expectedNil {
-			t.Fatalf("%s Failed: [%v] inputted and was NOT nil but expected to be nil", t.Name(), test.input)
-		}
-		if rawKey != nil && rawKey.AddressString != test.expectedAddress {
-			t.Fatalf("%s Failed: [%v] inputted [%s] expected but failed comparison of addresses, got: %s", t.Name(), test.input, test.expectedAddress, rawKey.AddressString)
-		}
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			rawKey, err := GetAddressFromPubKeyString(test.input, true, true)
+			if test.expectedError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+			if test.expectedNil {
+				assert.Nil(t, rawKey)
+			} else {
+				require.NotNil(t, rawKey)
+				assert.Equal(t, test.expectedAddress, rawKey.AddressString)
+			}
+		})
 	}
 }
 
@@ -323,7 +338,7 @@ func ExampleGetAddressFromPubKeyString() {
 
 // BenchmarkGetAddressFromPubKeyString benchmarks the method GetAddressFromPubKeyString()
 func BenchmarkGetAddressFromPubKeyString(b *testing.B) {
-	for i := 0; i < b.N; i++ {
+	for b.Loop() {
 		_, _ = GetAddressFromPubKeyString("03ce8a73eb5e4d45966d719ac3ceb431cd0ee203e6395357a167b9abebc4baeacf", true, true)
 	}
 }

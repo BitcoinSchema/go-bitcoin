@@ -47,7 +47,7 @@ func TestEciesEncryptDecryptRoundTrip(t *testing.T) {
 		name string
 		data []byte
 	}{
-		{"empty", []byte("")},
+		{caseEmpty, []byte("")},
 		{"single space", []byte(" ")},
 		{"newline", []byte("\n")},
 		{"ascii", []byte("hello world")},
@@ -60,6 +60,7 @@ func TestEciesEncryptDecryptRoundTrip(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 			encrypted, encErr := eciesEncrypt(priv.PubKey(), test.data)
 			require.NoError(t, encErr)
 			require.NotEmpty(t, encrypted)
@@ -140,11 +141,13 @@ func TestEciesDecryptFailures(t *testing.T) {
 	require.NoError(t, err)
 
 	t.Run("too short", func(t *testing.T) {
+		t.Parallel()
 		_, decErr := eciesDecrypt(priv, make([]byte, 50))
 		require.ErrorIs(t, decErr, errInputTooShort)
 	})
 
 	t.Run("wrong private key", func(t *testing.T) {
+		t.Parallel()
 		other, keyErr := CreatePrivateKey()
 		require.NoError(t, keyErr)
 		_, decErr := eciesDecrypt(other, valid)
@@ -152,6 +155,7 @@ func TestEciesDecryptFailures(t *testing.T) {
 	})
 
 	t.Run("corrupted hmac", func(t *testing.T) {
+		t.Parallel()
 		corrupted := append([]byte(nil), valid...)
 		corrupted[len(corrupted)-1] ^= 0xff
 		_, decErr := eciesDecrypt(priv, corrupted)
@@ -159,6 +163,7 @@ func TestEciesDecryptFailures(t *testing.T) {
 	})
 
 	t.Run("bad curve marker", func(t *testing.T) {
+		t.Parallel()
 		corrupted := append([]byte(nil), valid...)
 		corrupted[16] ^= 0xff
 		_, decErr := eciesDecrypt(priv, corrupted)
@@ -166,6 +171,7 @@ func TestEciesDecryptFailures(t *testing.T) {
 	})
 
 	t.Run("bad X length", func(t *testing.T) {
+		t.Parallel()
 		corrupted := append([]byte(nil), valid...)
 		corrupted[18] ^= 0xff
 		_, decErr := eciesDecrypt(priv, corrupted)
@@ -173,6 +179,7 @@ func TestEciesDecryptFailures(t *testing.T) {
 	})
 
 	t.Run("bad Y length", func(t *testing.T) {
+		t.Parallel()
 		corrupted := append([]byte(nil), valid...)
 		corrupted[52] ^= 0xff
 		_, decErr := eciesDecrypt(priv, corrupted)
@@ -180,6 +187,7 @@ func TestEciesDecryptFailures(t *testing.T) {
 	})
 
 	t.Run("invalid curve point", func(t *testing.T) {
+		t.Parallel()
 		// Zero out the X (offset 20-51) and Y (offset 54-85) coordinates so the
 		// embedded public key does not lie on the secp256k1 curve.
 		corrupted := append([]byte(nil), valid...)
@@ -194,6 +202,7 @@ func TestEciesDecryptFailures(t *testing.T) {
 	})
 
 	t.Run("misaligned ciphertext length", func(t *testing.T) {
+		t.Parallel()
 		// Appending a single byte leaves the curve markers and point intact but
 		// makes the ciphertext length no longer a multiple of the AES block size.
 		corrupted := append(append([]byte(nil), valid...), 0x00)
@@ -233,6 +242,7 @@ func TestPKCSPadding(t *testing.T) {
 	}
 
 	t.Run("invalid padding", func(t *testing.T) {
+		t.Parallel()
 		// A full block whose final byte claims a padding length larger than the block.
 		bad := bytes.Repeat([]byte{0x20}, 16)
 		_, err := removePKCSPadding(bad)
