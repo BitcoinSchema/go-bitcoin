@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/bsv-blockchain/go-bt/v2"
@@ -24,6 +25,11 @@ const (
 	// DustLimit is the minimum value for a tx that can be spent
 	// This is being deprecated in the new node software (TBD)
 	DustLimit uint64 = 546
+
+	// opReturnPrefix is the locking-script hex prefix for a bare OP_RETURN output.
+	opReturnPrefix = "6a"
+	// opFalseReturnPrefix is the locking-script hex prefix for an OP_FALSE OP_RETURN output.
+	opFalseReturnPrefix = "006a"
 )
 
 // Utxo is an unspent transaction output
@@ -71,7 +77,7 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 	// Missing utxo(s) or change address
 	if len(utxos) == 0 {
 		return nil, ErrUtxosRequired
-	} else if len(changeAddress) == 0 {
+	} else if changeAddress == "" {
 		return nil, ErrChangeAddressRequired
 	}
 
@@ -156,9 +162,9 @@ func CreateTxWithChange(utxos []*Utxo, payToAddresses []*PayToAddress, opReturns
 
 	// Remove remainder from last used payToAddress (or continue until found)
 	feeAdjusted := false
-	for i := len(payToAddresses) - 1; i >= 0; i-- { // Working backwards
-		if payToAddresses[i].Satoshis > remainder {
-			payToAddresses[i].Satoshis = payToAddresses[i].Satoshis - remainder
+	for _, payTo := range slices.Backward(payToAddresses) { // Working backwards
+		if payTo.Satoshis > remainder {
+			payTo.Satoshis -= remainder
 			feeAdjusted = true
 			break
 		}
@@ -341,7 +347,7 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 	// Loop all outputs and accumulate size (find data related outputs)
 	for _, out := range tx.Outputs {
 		outHexString := out.LockingScriptHexString()
-		if strings.HasPrefix(outHexString, "006a") || strings.HasPrefix(outHexString, "6a") {
+		if strings.HasPrefix(outHexString, opFalseReturnPrefix) || strings.HasPrefix(outHexString, opReturnPrefix) {
 			totalDataBytes += len(out.Bytes())
 		}
 	}
@@ -357,13 +363,8 @@ func CalculateFeeForTx(tx *bt.Tx, standardRate, dataRate *bt.Fee) uint64 {
 		totalFee += (standardRate.MiningFee.Satoshis * totalBytes) / standardRate.MiningFee.Bytes
 	}
 
-	// Safety check (possible division by zero?)
-	if totalFee == 0 {
-		totalFee = 1
-	}
-
-	// Safety check for negative fee (should never happen in practice)
-	if totalFee < 0 {
+	// Safety check: never return a zero (rounding/division) or negative fee
+	if totalFee <= 0 {
 		totalFee = 1
 	}
 

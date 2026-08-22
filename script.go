@@ -7,7 +7,7 @@ import (
 // ScriptFromAddress will create an output P2PKH script from an address string
 func ScriptFromAddress(address string) (string, error) {
 	// Missing address?
-	if len(address) == 0 {
+	if address == "" {
 		return "", ErrMissingAddress
 	}
 

@@ -27,7 +27,7 @@ func PubKeyFromPrivateKey(privateKey *ec.PrivateKey, compressed bool) string {
 // PubKeyFromString will convert a pubKey (string) into a pubkey (*ec.PublicKey)
 func PubKeyFromString(pubKey string) (*ec.PublicKey, error) {
 	// Invalid pubKey
-	if len(pubKey) == 0 {
+	if pubKey == "" {
 		return nil, ErrMissingPubKey
 	}
 

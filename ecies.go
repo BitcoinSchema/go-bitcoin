@@ -36,6 +36,14 @@ var (
 	ciphCoordLength = [2]byte{0x00, 0x20} //nolint:gochecknoglobals // fixed ECIES wire-format marker; byte arrays cannot be const
 )
 
+// deriveKeys splits SHA-512 of the ECDH shared secret into the AES-256-CBC
+// encryption key (keyE, first 32 bytes) and the HMAC-SHA-256 key (keyM, last 32
+// bytes), matching the Pyelliptic / ANSI X9.63 scheme.
+func deriveKeys(ecdhKey []byte) (keyE, keyM []byte) {
+	derivedKey := sha512.Sum512(ecdhKey)
+	return derivedKey[:32], derivedKey[32:]
+}
+
 // generateSharedSecret generates a shared secret based on a private key and a
 // public key using Diffie-Hellman key exchange (ECDH) (RFC 4753). RFC 5903
 // Section 9 states we should only return x.
@@ -68,9 +76,7 @@ func eciesEncrypt(pubKey *ec.PublicKey, in []byte) ([]byte, error) {
 		return nil, err
 	}
 	ecdhKey := generateSharedSecret(ephemeral, pubKey)
-	derivedKey := sha512.Sum512(ecdhKey)
-	keyE := derivedKey[:32]
-	keyM := derivedKey[32:]
+	keyE, keyM := deriveKeys(ecdhKey)
 
 	paddedIn := addPKCSPadding(in)
 	// IV + Curve params/X/Y + padded plaintext/ciphertext + HMAC-256
@@ -167,9 +173,7 @@ func eciesDecrypt(priv *ec.PrivateKey, in []byte) ([]byte, error) {
 
 	// generate shared secret
 	ecdhKey := generateSharedSecret(priv, pubKey)
-	derivedKey := sha512.Sum512(ecdhKey)
-	keyE := derivedKey[:32]
-	keyM := derivedKey[32:]
+	keyE, keyM := deriveKeys(ecdhKey)
 
 	// verify mac
 	hm := hmac.New(sha256.New, keyM)
