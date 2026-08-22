@@ -117,7 +117,9 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 
 - **Addresses**
   - [Address from PrivateKey (ec.PrivateKey)](address.go)
+  - [Address from PubKey (ec.PublicKey)](address.go)
   - [Address from Script](address.go)
+  - [Validate a Base58 Address](address.go)
 - **Encryption**
   - [Encrypt With Private Key](encryption.go)
   - [Decrypt With Private Key](encryption.go)
@@ -150,11 +152,13 @@ View the generated [documentation](https://pkg.go.dev/github.com/bitcoinschema/g
 - **Signatures**
   - [Sign](sign.go) & [Verify a Bitcoin Message](verify.go)
   - [Verify a DER Signature](verify.go)
+  - [PubKey from a Signature](verify.go)
 - **Transactions**
   - [Calculate Fee](transaction.go)
   - [Create Tx](transaction.go)
   - [Create Tx using WIF](transaction.go)
   - [Create Tx with Change](transaction.go)
+  - [Create Tx with Change using WIF](transaction.go)
   - [Tx from Hex](transaction.go)
 
 <details>
