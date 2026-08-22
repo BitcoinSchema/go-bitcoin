@@ -5,9 +5,11 @@
 #  in a matrix strategy with native CI mode for failure detection and reporting.
 #
 #  This workflow handles:
-#    - Linux test execution (ubuntu runners; macOS only if a runner is configured
-#      as PRIMARY_RUNNER/SECONDARY_RUNNER). Windows is not supported — every step
-#      here is bash-only, so do not add windows runners without adding shells.
+#    - Linux test execution (ubuntu runners only). Windows and macOS are NOT
+#      supported: every step here is bash-only AND the test-go job declares a
+#      Linux service container, which only runs on Linux runners. Do not add
+#      windows/macos runners without restructuring the job (separate no-services
+#      job) and adding shells.
 #    - Multiple Go version testing (primary, secondary)
 #    - Race detection and code coverage
 #    - Native CI mode for GitHub annotations and JSONL output
@@ -125,7 +127,7 @@ jobs:
     timeout-minutes: 5
     permissions: {}
     steps:
-      - name: 🛑 Reject unsupported Windows runners
+      - name: 🛑 Reject unsupported non-Linux runners
         shell: bash
         env:
           # Route the matrix JSON through env: so it can't break out of the shell
@@ -139,29 +141,40 @@ jobs:
             exit 1
           fi
 
+          # Valid JSON isn't enough: a matrix must be an object. Guard here so a
+          # non-object (array/string/number) fails with this clear annotation instead
+          # of a raw jq indexing error in the extraction below.
+          if [[ "$(jq -r 'type' <<< "$TEST_MATRIX")" != "object" ]]; then
+            echo "::error title=Invalid test matrix::The test-matrix input must be a JSON object with an \"os\" array and/or an \"include\" array of entries containing \"os\"."
+            exit 1
+          fi
+
           # Collect every runner OS from both include-based and classic matrix shapes,
-          # then reject Windows: this workflow is bash-only and uses Linux service
-          # containers, so Windows runners are unsupported.
-          WINDOWS=$(jq -r '
+          # then reject any non-Linux runner. This workflow is bash-only AND the
+          # test-go job unconditionally declares a service container (redis, or a
+          # busybox placeholder when disabled). Service containers require Docker and
+          # only run on Linux runners, so a macOS or Windows leg would fail at job
+          # setup ("Initialize containers") before any step runs.
+          UNSUPPORTED=$(jq -r '
             [ (.include // [] | map(.os // empty)), (.os // []) ]
             | flatten
-            | map(select(type == "string" and (ascii_downcase | startswith("windows"))))
+            | map(select(type == "string" and (ascii_downcase | (startswith("windows") or startswith("macos")))))
             | unique | join(", ")
           ' <<< "$TEST_MATRIX")
 
-          if [[ -n "$WINDOWS" ]]; then
-            echo "::error title=Unsupported runner::Test matrix contains Windows runner(s): ${WINDOWS}. This workflow is bash-only and uses Linux service containers, so Windows is not supported. Use ubuntu-* runners (or macOS as PRIMARY_RUNNER/SECONDARY_RUNNER)."
-            echo "❌ Windows runners in matrix: ${WINDOWS}"
+          if [[ -n "$UNSUPPORTED" ]]; then
+            echo "::error title=Unsupported runner::Test matrix contains non-Linux runner(s): ${UNSUPPORTED}. This workflow is bash-only and uses a Linux service container, so only Linux (ubuntu-*) runners are supported. Set PRIMARY_RUNNER/SECONDARY_RUNNER to ubuntu-* runners."
+            echo "❌ Non-Linux runners in matrix: ${UNSUPPORTED}"
             exit 1
           fi
-          echo "✅ Test matrix contains no unsupported Windows runners."
+          echo "✅ Test matrix contains only supported Linux runners."
 
   # ----------------------------------------------------------------------------------
   # Testing Matrix for Go (Parallel)
   # ----------------------------------------------------------------------------------
   test-go:
     name: 🧪 Test (${{ matrix.name }})
-    needs: validate-matrix # Gate on preflight so Windows entries fail before service setup
+    needs: validate-matrix # Gate on preflight so non-Linux entries fail before service setup
     timeout-minutes: 30 # Prevent hung tests
     permissions:
       contents: read # Read repository content for testing
