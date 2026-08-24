@@ -51,35 +51,9 @@ runs:
         set -uo pipefail
         echo "🔍 Validating test results from CI mode output..."
         source .github/scripts/parse-test-label.sh
-
-        # Guard against bash arithmetic-eval injection: artifact-derived counts flow into
-        # $(( )) and [[ -gt ]]. Coerce each to a bare non-negative integer so a crafted
-        # JSONL value like "a[$(cmd)]" becomes 0 instead of being evaluated as code.
-        to_int() {
-          local v="${1//[[:space:]]/}"
-          if [[ "$v" =~ ^[0-9]+$ ]]; then printf '%s' "$v"; else printf '0'; fi
-        }
-
-        # effective_failures: how many failures a single job summary represents.
-        # Individual test failures are counted exactly; a job that failed only at
-        # the process level (build/setup error → status "error"/"failed" and/or a
-        # non-zero exit_code while failed=0) still counts as 1, so an aggregate can
-        # never misreport "0 failure(s)" for a job that actually failed validation.
-        # Echoes 0 for a fully-passing job, so its >0 result doubles as the
-        # "did this job fail?" predicate. Inputs are re-coerced to integers so the
-        # helper is safe against arithmetic-eval injection regardless of caller.
-        effective_failures() {
-          local status="$1" failed exit_code
-          failed=$(to_int "$2")
-          exit_code=$(to_int "$3")
-          if [[ "$failed" -gt 0 ]]; then
-            printf '%s' "$failed"
-          elif [[ "$status" == "failed" || "$status" == "error" || "$exit_code" -gt 0 ]]; then
-            printf '1'
-          else
-            printf '0'
-          fi
-        }
+        # to_int (arithmetic-eval injection guard) and effective_failures (process-level
+        # failures count as 1) are shared so this step and the summary step can't drift.
+        source .github/scripts/test-result-helpers.sh
 
         VALIDATION_FAILED=false
         TOTAL_FAILURES=0
@@ -255,14 +229,11 @@ runs:
       run: |
         set -uo pipefail
         source .github/scripts/parse-test-label.sh
+        # Shared to_int (arithmetic-eval injection guard) + effective_failures (process-level
+        # failures count as 1), kept in one place so this summary step and the validation
+        # step above can't drift.
+        source .github/scripts/test-result-helpers.sh
 
-        # Coerce artifact-derived counts to integers (arithmetic-eval injection guard) and
-        # strip backticks from artifact-derived text before it is written into the job
-        # summary (prevents markdown code-span / fenced-block breakout & content spoofing).
-        to_int() {
-          local v="${1//[[:space:]]/}"
-          if [[ "$v" =~ ^[0-9]+$ ]]; then printf '%s' "$v"; else printf '0'; fi
-        }
         # Strip backticks AND control chars (except tab/newline) from artifact-derived text:
         # prevents code-span/fenced-block breakout and control-character (ANSI/NUL) spoofing.
         strip_bt() { printf '%s' "$1" | LC_ALL=C tr -d '\000-\010\013-\037\140\177'; }
@@ -280,25 +251,6 @@ runs:
           s=${s//>/&gt;}
           printf '%s' "$s"
         }
-        # effective_failures: failures a single job summary represents — the exact
-        # test-failure count, or 1 for a process-level failure (build/setup error →
-        # status "error"/"failed" and/or non-zero exit_code with failed=0), or 0 for
-        # a clean pass. Keeps the "Failed" total consistent with the validation step
-        # so neither can show 0 for a job that failed. Inputs are re-coerced to
-        # integers as an arithmetic-eval injection guard.
-        effective_failures() {
-          local status="$1" failed exit_code
-          failed=$(to_int "$2")
-          exit_code=$(to_int "$3")
-          if [[ "$failed" -gt 0 ]]; then
-            printf '%s' "$failed"
-          elif [[ "$status" == "failed" || "$status" == "error" || "$exit_code" -gt 0 ]]; then
-            printf '1'
-          else
-            printf '0'
-          fi
-        }
-
         echo "## 🔍 Test Validation Summary" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
 
@@ -319,6 +271,14 @@ runs:
 
         while IFS= read -r -d '' jsonl_file; do
           SUMMARY=$(grep '"type":"summary"' "$jsonl_file" 2>/dev/null | head -1 || echo "")
+          # A summary line that isn't valid JSON means the JSONL was truncated/corrupted.
+          # Don't let jq fail silently (fields would coerce to 0 and undercount failures) —
+          # treat an unparseable summary as a hard failure signal and skip extraction.
+          if [[ -n "$SUMMARY" ]] && ! jq -e . >/dev/null 2>&1 <<< "$SUMMARY"; then
+            echo "⚠️ Invalid JSON summary in $jsonl_file — counting as a failure" >&2
+            TOTAL_FAILED=$((TOTAL_FAILED + 1))
+            SUMMARY=""
+          fi
           if [[ -n "$SUMMARY" ]]; then
             STATUS=$(echo "$SUMMARY" | jq -r '.summary.status // "unknown"')
             PASSED=$(to_int "$(echo "$SUMMARY" | jq -r '.summary.passed // 0')")
