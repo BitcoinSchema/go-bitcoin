@@ -9,6 +9,7 @@
 # Provides:
 #   to_int "value"                      -> bare non-negative integer (else 0)
 #   effective_failures "status" "failed" "exit_code" -> failure count for one job
+#   summary_is_corrupt "summary"        -> true when a non-empty summary line is invalid JSON
 # ------------------------------------------------------------------------------------
 
 # Coerce an artifact-derived value to a bare non-negative integer. Counts flow into
@@ -40,4 +41,14 @@ effective_failures() {
     printf '0'
   fi
   return 0
+}
+
+# summary_is_corrupt: true (exit 0) when the summary line is non-empty but does NOT parse
+# as JSON — i.e. the JSONL was truncated/corrupted. An empty summary is the separate
+# "no summary found" case and is NOT treated as corrupt (returns false). Every caller must
+# treat corrupt as a hard failure signal: without this, jq extractions on a broken line
+# emit nothing, every field coerces to 0, and the job is silently miscounted as passing.
+summary_is_corrupt() {
+  local summary="${1-}"
+  [[ -n "$summary" ]] && ! jq -e . >/dev/null 2>&1 <<< "$summary"
 }
