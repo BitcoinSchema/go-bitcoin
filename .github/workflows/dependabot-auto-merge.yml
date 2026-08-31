@@ -905,7 +905,17 @@ jobs:
           if [[ "$TOKEN_TYPE" == "PAT" ]]; then
             echo "🔑 Using Personal Access Token for enhanced permissions"
           else
-            echo "⚠️ Using default GITHUB_TOKEN - auto-merge may fail for Dependabot PRs"
+            # No GH_PAT_TOKEN configured (e.g. the PAT was revoked). Approving a PR and arming
+            # auto-merge cannot work with the default GITHUB_TOKEN, so attempting it here would
+            # only hard-fail this optional workflow and surface a red check on every Dependabot
+            # PR. Skip gracefully instead: this job is advisory automation, and dependency PRs
+            # are still handled manually or via `go-broadcast review-pr`.
+            echo "⏭️ No GH_PAT_TOKEN available — skipping approve + auto-merge (optional workflow)."
+            echo "   Dependency PRs will be handled manually or via 'go-broadcast review-pr'."
+            echo "════════════════════════════════════════════════════════════════"
+            echo "✅ AUTO-MERGE SKIPPED (no PAT)"
+            echo "════════════════════════════════════════════════════════════════"
+            exit 0
           fi
 
           # Determine approval message based on action type

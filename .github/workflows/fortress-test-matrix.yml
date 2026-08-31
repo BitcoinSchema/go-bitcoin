@@ -151,9 +151,11 @@ jobs:
           fi
 
           # Being an object isn't enough: validate the element types too, not just that
-          # "os"/"include" are arrays. Otherwise the jq extraction below fails silently — set -e
-          # is not enabled, so a jq error leaves UNSUPPORTED empty and lets a malformed matrix
-          # slip through to a confusing fromJSON() failure in test-go. This rejects shapes the
+          # "os"/"include" are arrays. Otherwise the jq extraction below can fail in a way that
+          # goes unnoticed: it runs inside a command substitution assignment (UNSUPPORTED=$(jq ...)),
+          # and set -e does not abort on a command that fails only inside such an assignment — so a
+          # jq error leaves UNSUPPORTED empty and lets a malformed matrix slip through to a confusing
+          # fromJSON() failure in test-go. This rejects shapes the
           # array-only check missed (e.g. os: [123], include: ["bad"], include: [{"os":123}])
           # whose non-string OS values would bypass the non-Linux guard or miscount runners.
           #   - "os", when present, must be an array of strings.
