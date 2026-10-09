@@ -501,9 +501,10 @@ jobs:
                 # to users, so require a human. Genuine security patches are handled earlier by
                 # Rule 1. Exception: dependencies verified to live under this repo's own owner
                 # (see the same-owner check step) are first-party code, so they may auto-merge
-                # when AUTO_MERGE_PATCH_SAME_OWNER is enabled.
+                # when AUTO_MERGE_PATCH_SAME_OWNER is enabled. Security updates are excluded so
+                # AUTO_MERGE_SECURITY=false still forces manual review.
                 echo "  🔒 DEP_TYPE == direct:production"
-                if [[ "$SAME_OWNER" == "true" && "${{ env.AUTO_MERGE_PATCH_SAME_OWNER }}" == "true" && "${{ env.AUTO_MERGE_PATCH }}" == "true" ]]; then
+                if [[ "$IS_SECURITY" != "true" && "$SAME_OWNER" == "true" &&"${{ env.AUTO_MERGE_PATCH_SAME_OWNER }}" == "true" && "${{ env.AUTO_MERGE_PATCH }}" == "true" ]]; then
                   echo "  ✅ SAME_OWNER == true (all dependencies owned by this repo's owner)"
                   echo "  ✅ AUTO_MERGE_PATCH_SAME_OWNER == true"
                   ACTION="auto-merge-patch-same-owner"
