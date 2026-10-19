@@ -1,8 +1,8 @@
 # ------------------------------------------------------------------------------------
 #  Auto-merge Trigger Workflow
 #
-#  Purpose: Wake up "Auto-merge on Approval" (auto-merge-on-approval.yml) when a
-#           review or PR state change might change the auto-merge decision.
+#  Purpose: Wake up "Auto-merge on Approval" (auto-merge-on-approval.yml) whenever
+#           a review or PR change might change the auto-merge decision.
 #
 #  Why this exists: review events always run the PR's OWN copy of a workflow, so a
 #  PR could change what runs. This workflow therefore does nothing and holds no
@@ -12,7 +12,8 @@
 #
 #  Triggers:
 #  - Pull request reviews (submitted, dismissed)
-#  - Pull request changes (synchronize, ready_for_review, review_request_removed)
+#  - Pull request changes that can flip a condition the evaluator checks: head,
+#    title/base, labels, draft state, review requests, state and arming
 #
 #  Maintainer: @mrz1836
 #
@@ -25,13 +26,32 @@ name: Auto-merge Trigger
 # --------------------------------------------------------------------
 on:
   pull_request_review:
-    # `dismissed`: dismissing a "Changes Requested" review must wake the evaluator,
-    # or auto-merge stays disabled even once the remaining approvals satisfy policy.
+    # `dismissed`: dismissing a "Changes Requested" review can allow arming, and
+    # dismissing an approval can require revoking an armed auto-merge.
     types: [submitted, dismissed]
   pull_request:
-    # `synchronize`: a push between evaluation and apply makes apply skip (head
-    # moved), so the new head must queue its own evaluation or the PR stays unarmed.
-    types: [synchronize, ready_for_review, review_request_removed]
+    # Every PR change that can flip a condition the evaluator checks, so arming and
+    # revocation never wait for an unrelated event:
+    # - synchronize: new head (apply skips a moved head, so it needs a fresh run)
+    # - edited: title (WIP) or base branch (required checks) — gated below
+    # - labeled/unlabeled: the opt-in label and WIP labels
+    # - ready_for_review/converted_to_draft: draft state
+    # - review_requested/review_request_removed: pending reviews
+    # - reopened: a reopened PR may need arming again
+    # - auto_merge_enabled: a manual arming with "Changes Requested" outstanding
+    # `auto_merge_disabled` is deliberately absent: re-evaluating it would re-arm a
+    # PR a maintainer just disarmed. Use a WIP label to hold a PR instead.
+    types:
+      - synchronize
+      - edited
+      - labeled
+      - unlabeled
+      - ready_for_review
+      - converted_to_draft
+      - review_requested
+      - review_request_removed
+      - reopened
+      - auto_merge_enabled
 
 # Security: this workflow needs no permissions at all
 permissions: {}
@@ -43,8 +63,8 @@ jobs:
   trigger:
     name: 📨 Queue auto-merge evaluation
     # ----------------------------------------------------------------
-    # Event gate: skip review events that can't meaningfully
-    # change the auto-merge decision.
+    # Event gate: skip events that can't change the auto-merge
+    # decision.
     #
     # `pull_request_review:submitted` fires for every review state —
     # "approved", "changes_requested" and "commented". Only the first
@@ -55,11 +75,18 @@ jobs:
     # `pull_request_review:dismissed` always passes: the payload only
     # carries state "dismissed" (not what was dismissed), and removing
     # an approval or a "Changes Requested" review can flip the decision.
+    #
+    # `pull_request:edited` passes only for title or base changes; a
+    # body edit can't change the decision.
     # ----------------------------------------------------------------
     if: |
-      github.event_name != 'pull_request_review' ||
-      github.event.action == 'dismissed' ||
-      contains(fromJSON('["approved", "changes_requested"]'), github.event.review.state)
+      (github.event_name == 'pull_request' && (
+        github.event.action != 'edited' ||
+        github.event.changes.title ||
+        github.event.changes.base)) ||
+      (github.event_name == 'pull_request_review' && (
+        github.event.action == 'dismissed' ||
+        contains(fromJSON('["approved", "changes_requested"]'), github.event.review.state)))
     runs-on: ubuntu-26.04
     timeout-minutes: 2
     steps:

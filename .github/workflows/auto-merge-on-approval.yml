@@ -10,8 +10,9 @@
 #
 #  Triggers:
 #  - Completion of "Auto-merge Trigger" (auto-merge-trigger.yml), which runs on
-#    pull request reviews (submitted, dismissed) and pull request changes
-#    (synchronize, ready_for_review, review_request_removed)
+#    pull request reviews (submitted, dismissed) and on every pull request change
+#    that can flip a condition below (pushes, title, labels, draft state, review
+#    requests, reopening, manual arming)
 #
 #  Why two workflows: review events always run the PR's own copy of a workflow,
 #  so they can never be trusted with the GitHub App key. `workflow_run` always
@@ -29,13 +30,17 @@
 #    push workflows on the base branch.
 #
 #  Auto-merge Rules (configurable via .github/env/):
-#  - Minimum number of approvals (an auto-merge armed by the App is disabled if
-#    approvals drop below it)
-#  - No requested reviewers remaining (if configured)
-#  - No "Changes Requested" reviews (an armed auto-merge is disabled)
+#  - Minimum number of approvals
+#  - No requested reviewers or teams remaining (if configured)
+#  - No "Changes Requested" reviews
 #  - PR ready for review (not draft, no WIP indicators)
+#  - Required opt-in label present (if configured)
 #  - Bot PRs handled separately (if configured)
 #  - The base branch must require status checks (always enforced)
+#
+#  Revocation: auto-merge armed by the App is disabled as soon as any rule above
+#  stops holding. "Changes Requested" disables auto-merge whoever armed it; an
+#  arming made by hand is otherwise left alone.
 #
 #  Maintainer: @mrz1836
 #
@@ -146,6 +151,11 @@ jobs:
           MIN_APPROVALS=$(echo "$ENV_JSON" | jq -r '.AUTO_MERGE_MIN_APPROVALS')
           if [[ -z "$MIN_APPROVALS" ]] || [[ "$MIN_APPROVALS" == "null" ]]; then
             MIN_APPROVALS="1"  # Default to 1 approval
+          fi
+          # Fail closed: a non-number would make every approval comparison false
+          if ! [[ "$MIN_APPROVALS" =~ ^[0-9]+$ ]]; then
+            echo "❌ AUTO_MERGE_MIN_APPROVALS must be a whole number (got '$MIN_APPROVALS')"
+            exit 1
           fi
 
           MERGE_TYPES=$(echo "$ENV_JSON" | jq -r '.AUTO_MERGE_ALLOWED_MERGE_TYPES')
@@ -302,48 +312,8 @@ jobs:
             }
 
             // ————————————————————————————————————————————————————————————————
-            // Check basic PR conditions
-            // ————————————————————————————————————————————————————————————————
-            const isDraft = pr.draft;
-            const title = pr.title || '';
-            const labels = pr.labels.map(l => l.name);
-
-            if (isDraft && process.env.SKIP_DRAFT === 'true') {
-              console.log('📝 PR is draft - skipping auto-merge');
-              core.setOutput('action', 'skip-draft');
-              return;
-            }
-
-            // Check for WIP indicators
-            if (process.env.SKIP_WIP === 'true') {
-              const titleHasWip = /\b(wip|work.in.progress)\b/i.test(title);
-              const wipLabels = process.env.WIP_LABELS.split(',').map(l => l.trim());
-              const hasWipLabel = labels.some(label => wipLabels.includes(label));
-
-              if (titleHasWip || hasWipLabel) {
-                console.log('🚧 PR has WIP indicators - skipping auto-merge');
-                core.setOutput('action', 'skip-wip');
-                return;
-              }
-            }
-
-            // ————————————————————————————————————————————————————————————————
-            // Check for automerge label requirement
-            // ————————————————————————————————————————————————————————————————
-            if (process.env.AUTO_MERGE_REQUIRE_LABEL === 'true') {
-              const automergeLabel = process.env.AUTO_MERGE_LABEL || 'automerge';
-              const hasAutomergeLabel = labels.includes(automergeLabel);
-
-              if (!hasAutomergeLabel) {
-                console.log(`🏷️  Missing required label "${automergeLabel}" - skipping auto-merge`);
-                core.setOutput('action', 'skip-missing-automerge-label');
-                return;
-              }
-              console.log(`✅ Has required automerge label: "${automergeLabel}"`);
-            }
-
-            // ————————————————————————————————————————————————————————————————
-            // Check review conditions
+            // Read reviews. Everything the decision depends on is gathered before
+            // any guard can return, because revocation (below) must see it all.
             // ————————————————————————————————————————————————————————————————
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner,
@@ -374,67 +344,77 @@ jobs:
             const TRUSTED_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
             const approvals = currentReviews.filter(r => r.state === 'APPROVED' && TRUSTED_ASSOCIATIONS.has(r.author_association)).length;
             const changesRequested = currentReviews.filter(r => r.state === 'CHANGES_REQUESTED').length;
-            const requestedReviewers = (pr.requested_reviewers || []).length;
-            const minApprovals = parseInt(process.env.MIN_APPROVALS);
+            // Users AND teams still asked to review
+            const pendingReviews = (pr.requested_reviewers || []).length + (pr.requested_teams || []).length;
+            const minApprovals = parseInt(process.env.MIN_APPROVALS, 10); // validated in "Extract configuration"
 
-            console.log(`👥 Reviews: ${approvals} approvals, ${changesRequested} changes requested, ${requestedReviewers} pending`);
+            console.log(`👥 Reviews: ${approvals} approvals, ${changesRequested} changes requested, ${pendingReviews} pending`);
             console.log(`✅ Required approvals: ${minApprovals}`);
 
             // ————————————————————————————————————————————————————————————————
-            // Outstanding "Changes Requested" reviews disable an armed auto-merge.
-            // This is state-based (not event-based), so it MUST run before the
-            // approval-threshold check below, which would otherwise return first.
+            // Every condition for arming auto-merge, in reporting order. The apply
+            // job re-checks the same list in bash — keep the two in sync.
             // ————————————————————————————————————————————————————————————————
+            const title = pr.title || '';
+            const labels = pr.labels.map(l => l.name);
+            const automergeLabel = process.env.AUTO_MERGE_LABEL || 'automerge';
+            const blockers = [];
+
+            if (process.env.SKIP_DRAFT === 'true' && pr.draft) {
+              blockers.push({ action: 'skip-draft', reason: 'PR is a draft' });
+            }
+            if (process.env.SKIP_WIP === 'true') {
+              const wipLabels = process.env.WIP_LABELS.split(',').map(l => l.trim());
+              if (/\b(wip|work.in.progress)\b/i.test(title) || labels.some(label => wipLabels.includes(label))) {
+                blockers.push({ action: 'skip-wip', reason: 'PR is marked as work in progress' });
+              }
+            }
+            if (process.env.AUTO_MERGE_REQUIRE_LABEL === 'true' && !labels.includes(automergeLabel)) {
+              blockers.push({ action: 'skip-missing-automerge-label', reason: `missing label "${automergeLabel}"` });
+            }
             if (changesRequested > 0) {
-              if (pr.auto_merge) {
-                console.log('🛑 "Changes Requested" review outstanding - auto-merge will be disabled');
-                core.setOutput('action', 'disable');
-                core.setOutput('disable-reason', 'changes requested');
-              } else {
-                console.log('🚫 Has "Changes Requested" reviews');
-                core.setOutput('action', 'conditions-not-met');
-              }
-              return;
+              blockers.push({ action: 'conditions-not-met', reason: 'changes requested' });
             }
+            if (approvals < minApprovals) {
+              blockers.push({ action: 'conditions-not-met', reason: `approvals ${approvals}/${minApprovals}` });
+            }
+            if (process.env.REQUIRE_ALL_REVIEWS === 'true' && pendingReviews > 0) {
+              blockers.push({ action: 'conditions-not-met', reason: `${pendingReviews} review request(s) pending` });
+            }
+            const reasons = blockers.map(b => b.reason).join(', ');
 
             // ————————————————————————————————————————————————————————————————
-            // Approvals can drop after auto-merge was armed (e.g. one is dismissed).
-            // The base branch may require fewer approvals than this workflow, so
-            // GitHub would still merge: revoke an arming made by a bot (this
-            // workflow's App). A maintainer who armed it by hand chose not to wait
-            // for approvals, so that is left alone.
+            // Revocation — state-based, so it runs before any guard can return:
+            // - "Changes Requested" disables auto-merge whoever armed it.
+            // - An arming by a bot (this workflow's App) lasts only while every
+            //   condition above still holds (an approval dismissed, the label
+            //   removed, a WIP label added...). The base branch may require fewer
+            //   approvals than this workflow, so GitHub alone would still merge.
+            // - A maintainer who armed it by hand is otherwise left alone.
+            // Any bot arming counts here (this job can't know the App's name); the
+            // apply job confirms it is this App, on fresh data, before revoking.
             // ————————————————————————————————————————————————————————————————
-            if (approvals < minApprovals && pr.auto_merge?.enabled_by?.type === 'Bot') {
-              console.log(`🛑 Approvals dropped below the threshold (${approvals}/${minApprovals}) - auto-merge will be disabled`);
-              core.setOutput('action', 'disable');
-              core.setOutput('disable-reason', `approvals below the required minimum (${approvals}/${minApprovals})`);
-              return;
-            }
-
-            // ————————————————————————————————————————————————————————————————
-            // Determine if we should enable auto-merge
-            // ————————————————————————————————————————————————————————————————
-            let shouldEnableAutoMerge = approvals >= minApprovals;
-
-            if (process.env.REQUIRE_ALL_REVIEWS === 'true' && requestedReviewers > 0) {
-              shouldEnableAutoMerge = false;
-            }
-
-            if (!shouldEnableAutoMerge) {
-              if (approvals < minApprovals) {
-                console.log(`⏳ Needs ${minApprovals - approvals} more approval(s)`);
-              }
-              if (process.env.REQUIRE_ALL_REVIEWS === 'true' && requestedReviewers > 0) {
-                console.log(`⏳ Has ${requestedReviewers} pending reviewer request(s)`);
-              }
-              core.setOutput('action', 'conditions-not-met');
-              return;
-            }
-
-            // Check if auto-merge is already enabled
             if (pr.auto_merge) {
-              console.log('✅ Auto-merge already enabled');
-              core.setOutput('action', 'already-enabled');
+              const armedByBot = pr.auto_merge.enabled_by?.type === 'Bot';
+              console.log(`🔒 Auto-merge is armed by ${pr.auto_merge.enabled_by?.login ?? 'unknown'}`);
+              if (changesRequested > 0 || (armedByBot && blockers.length > 0)) {
+                const reason = armedByBot ? reasons : 'changes requested';
+                console.log(`🛑 Auto-merge will be disabled: ${reason}`);
+                core.setOutput('action', 'disable');
+                core.setOutput('disable-reason', reason);
+                return;
+              }
+              if (blockers.length === 0) {
+                console.log('✅ Auto-merge already enabled');
+                core.setOutput('action', 'already-enabled');
+                return;
+              }
+              console.log(`ℹ️  Armed by hand - left alone (${reasons})`);
+            }
+
+            if (blockers.length > 0) {
+              console.log(`⏳ Not enabling auto-merge: ${reasons}`);
+              core.setOutput('action', blockers[0].action);
               return;
             }
 
@@ -539,7 +519,7 @@ jobs:
             echo ""
             echo "---"
             echo "🤖 _Automated by GitHub Actions_"
-          } >> $GITHUB_STEP_SUMMARY
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ----------------------------------------------------------------------------------
   # Apply: enable or disable auto-merge with a GitHub App token
@@ -582,20 +562,17 @@ jobs:
           permission-pull-requests: write
 
       # --------------------------------------------------------------------
-      # Enable auto-merge, pinned to the evaluated head commit
+      # Re-read the PR right before acting. Labels, title, draft state,
+      # reviews and the arming itself can all change while this job waits
+      # (e.g. for a runner), so both decisions are re-checked on fresh data.
       # --------------------------------------------------------------------
-      - name: 🚀 Enable auto-merge
-        id: enable
-        if: needs.evaluate.outputs.action == 'enable'
+      - name: 🔍 Re-check the PR
+        id: recheck
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_BOT: ${{ steps.app-token.outputs.app-slug }}[bot]
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
-          HEAD_SHA: ${{ needs.evaluate.outputs.head-sha }}
-          MERGE_TYPE: ${{ needs.evaluate.outputs.merge-type }}
-          DELETE_BRANCH: ${{ needs.evaluate.outputs.delete-branch }}
-          COMMENT_ON_ENABLE: ${{ needs.evaluate.outputs.comment-on-enable }}
-          LABELS_TO_ADD: ${{ needs.evaluate.outputs.labels-to-add }}
           MIN_APPROVALS: ${{ needs.evaluate.outputs.min-approvals }}
           REQUIRE_ALL_REVIEWS: ${{ needs.evaluate.outputs.require-all-reviews }}
           SKIP_DRAFT: ${{ needs.evaluate.outputs.skip-draft }}
@@ -604,16 +581,12 @@ jobs:
           REQUIRE_LABEL: ${{ needs.evaluate.outputs.require-label }}
           AUTOMERGE_LABEL: ${{ needs.evaluate.outputs.automerge-label }}
         run: |
-          outcome() { echo "outcome=$1" >> "$GITHUB_OUTPUT"; }
-
-          # Re-read the PR right before acting. Labels, title, draft state and reviews
-          # can change while this job waits without moving the head (and label/title
-          # edits queue no new evaluation), so re-check them, not just the SHA.
           PR_JSON=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
-          read -r STATE CURRENT_SHA ARMED DRAFT PENDING_REVIEWS HAS_LABEL IS_WIP < <(jq -r \
-            --arg label "$AUTOMERGE_LABEL" --arg wip "$WIP_LABELS" '
+          read -r STATE CURRENT_SHA ARMED ARMED_BY_APP DRAFT PENDING_REVIEWS HAS_LABEL IS_WIP < <(jq -r \
+            --arg app_bot "$APP_BOT" --arg label "$AUTOMERGE_LABEL" --arg wip "$WIP_LABELS" '
             ($wip | split(",") | map(gsub("^\\s+|\\s+$"; ""))) as $wip_labels
-            | [ .state, .head.sha, (.auto_merge != null), .draft, (.requested_reviewers | length),
+            | [ .state, .head.sha, (.auto_merge != null), (.auto_merge.enabled_by.login == $app_bot), .draft,
+                ((.requested_reviewers // [] | length) + (.requested_teams // [] | length)),
                 any(.labels[]; .name == $label),
                 ((.title // "" | test("\\b(wip|work.in.progress)\\b"; "i")) or any(.labels[]; .name | IN($wip_labels[]))) ]
             | @tsv' <<< "$PR_JSON")
@@ -630,6 +603,72 @@ jobs:
             | @tsv')
           read -r APPROVALS CHANGES_REQUESTED <<< "$REVIEW_COUNTS"
 
+          # Same conditions, in the same order, as the evaluate job's blockers
+          BLOCKERS=()
+          if [[ "$SKIP_DRAFT" == "true" && "$DRAFT" == "true" ]]; then
+            BLOCKERS+=("PR is a draft")
+          fi
+          if [[ "$SKIP_WIP" == "true" && "$IS_WIP" == "true" ]]; then
+            BLOCKERS+=("PR is marked as work in progress")
+          fi
+          if [[ "$REQUIRE_LABEL" == "true" && "$HAS_LABEL" != "true" ]]; then
+            BLOCKERS+=("missing label \"$AUTOMERGE_LABEL\"")
+          fi
+          if [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
+            BLOCKERS+=("changes requested")
+          fi
+          if [[ "$APPROVALS" -lt "$MIN_APPROVALS" ]]; then
+            BLOCKERS+=("approvals $APPROVALS/$MIN_APPROVALS")
+          fi
+          if [[ "$REQUIRE_ALL_REVIEWS" == "true" && "$PENDING_REVIEWS" -gt 0 ]]; then
+            BLOCKERS+=("$PENDING_REVIEWS review request(s) pending")
+          fi
+          REASONS=""
+          if [[ ${#BLOCKERS[@]} -gt 0 ]]; then
+            printf -v REASONS '%s, ' "${BLOCKERS[@]}"
+            REASONS="${REASONS%, }"
+          fi
+
+          echo "📋 PR #$PR_NUMBER: state=$STATE head=$CURRENT_SHA armed=$ARMED (by this App: $ARMED_BY_APP)"
+          echo "👥 Reviews: $APPROVALS approvals, $CHANGES_REQUESTED changes requested, $PENDING_REVIEWS pending"
+          echo "🚧 Blockers: ${REASONS:-none}"
+          {
+            echo "state=$STATE"
+            echo "head-sha=$CURRENT_SHA"
+            echo "armed=$ARMED"
+            echo "armed-by-app=$ARMED_BY_APP"
+            echo "approvals=$APPROVALS"
+            echo "changes-requested=$CHANGES_REQUESTED"
+            echo "pending-reviews=$PENDING_REVIEWS"
+            echo "reasons=$REASONS"
+          } >> "$GITHUB_OUTPUT"
+
+      # --------------------------------------------------------------------
+      # Enable auto-merge, pinned to the evaluated head commit
+      # --------------------------------------------------------------------
+      - name: 🚀 Enable auto-merge
+        id: enable
+        if: needs.evaluate.outputs.action == 'enable'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
+          HEAD_SHA: ${{ needs.evaluate.outputs.head-sha }}
+          MERGE_TYPE: ${{ needs.evaluate.outputs.merge-type }}
+          DELETE_BRANCH: ${{ needs.evaluate.outputs.delete-branch }}
+          COMMENT_ON_ENABLE: ${{ needs.evaluate.outputs.comment-on-enable }}
+          LABELS_TO_ADD: ${{ needs.evaluate.outputs.labels-to-add }}
+          MIN_APPROVALS: ${{ needs.evaluate.outputs.min-approvals }}
+          STATE: ${{ steps.recheck.outputs.state }}
+          CURRENT_SHA: ${{ steps.recheck.outputs.head-sha }}
+          ARMED: ${{ steps.recheck.outputs.armed }}
+          APPROVALS: ${{ steps.recheck.outputs.approvals }}
+          CHANGES_REQUESTED: ${{ steps.recheck.outputs.changes-requested }}
+          PENDING_REVIEWS: ${{ steps.recheck.outputs.pending-reviews }}
+          REASONS: ${{ steps.recheck.outputs.reasons }}
+        run: |
+          outcome() { echo "outcome=$1" >> "$GITHUB_OUTPUT"; }
+
           if [[ "$STATE" != "open" ]]; then
             echo "⏭️ PR #$PR_NUMBER is $STATE — nothing to do"
             outcome skipped-not-open
@@ -645,23 +684,8 @@ jobs:
             outcome already-enabled
             exit 0
           fi
-
-          INELIGIBLE=""
-          if [[ "$SKIP_DRAFT" == "true" && "$DRAFT" == "true" ]]; then
-            INELIGIBLE="converted to draft"
-          elif [[ "$SKIP_WIP" == "true" && "$IS_WIP" == "true" ]]; then
-            INELIGIBLE="marked as work in progress"
-          elif [[ "$REQUIRE_LABEL" == "true" && "$HAS_LABEL" != "true" ]]; then
-            INELIGIBLE="label \"$AUTOMERGE_LABEL\" removed"
-          elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
-            INELIGIBLE="changes requested"
-          elif [[ "$APPROVALS" -lt "$MIN_APPROVALS" ]]; then
-            INELIGIBLE="approvals now $APPROVALS/$MIN_APPROVALS"
-          elif [[ "$REQUIRE_ALL_REVIEWS" == "true" && "$PENDING_REVIEWS" -gt 0 ]]; then
-            INELIGIBLE="$PENDING_REVIEWS review request(s) pending"
-          fi
-          if [[ -n "$INELIGIBLE" ]]; then
-            echo "⏭️ PR changed since evaluation ($INELIGIBLE) — not enabling"
+          if [[ -n "$REASONS" ]]; then
+            echo "⏭️ PR changed since evaluation ($REASONS) — not enabling"
             outcome skipped-ineligible
             exit 0
           fi
@@ -731,7 +755,9 @@ jobs:
           outcome enabled
 
       # --------------------------------------------------------------------
-      # Disable auto-merge (changes requested, or approvals below threshold)
+      # Disable auto-merge — same rule as the evaluate job, on fresh data:
+      # "Changes Requested" revokes any arming; any other unmet condition
+      # only revokes this App's own arming.
       # --------------------------------------------------------------------
       - name: 🛑 Disable auto-merge
         id: disable
@@ -740,25 +766,75 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
-          DISABLE_REASON: ${{ needs.evaluate.outputs.disable-reason }}
           COMMENT_ON_DISABLE: ${{ needs.evaluate.outputs.comment-on-disable }}
+          LABELS_TO_ADD: ${{ needs.evaluate.outputs.labels-to-add }}
+          AUTOMERGE_LABEL: ${{ needs.evaluate.outputs.automerge-label }}
+          STATE: ${{ steps.recheck.outputs.state }}
+          ARMED: ${{ steps.recheck.outputs.armed }}
+          ARMED_BY_APP: ${{ steps.recheck.outputs.armed-by-app }}
+          CHANGES_REQUESTED: ${{ steps.recheck.outputs.changes-requested }}
+          REASONS: ${{ steps.recheck.outputs.reasons }}
         run: |
-          if DISABLE_OUTPUT=$(gh pr merge "$PR_NUMBER" --repo "$REPO" --disable-auto 2>&1); then
-            echo "🛑 Auto-merge disabled: $DISABLE_REASON"
-            if [[ "$COMMENT_ON_DISABLE" == "true" ]]; then
-              gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" --silent -f body="🛑 **Auto-merge disabled**
+          outcome() { echo "outcome=$1" >> "$GITHUB_OUTPUT"; }
 
-          Reason: $DISABLE_REASON. Auto-merge will be re-enabled when conditions are met again."
-            fi
-            echo "outcome=disabled" >> "$GITHUB_OUTPUT"
+          if [[ "$STATE" != "open" ]]; then
+            echo "⏭️ PR #$PR_NUMBER is $STATE — nothing to do"
+            outcome skipped-not-open
+            exit 0
+          fi
+          if [[ "$ARMED" != "true" ]]; then
+            echo "ℹ️  Auto-merge is no longer enabled, no action needed"
+            outcome not-enabled
+            exit 0
+          fi
+          if [[ "$ARMED_BY_APP" == "true" && -n "$REASONS" ]]; then
+            REASON="$REASONS"
+          elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
+            REASON="changes requested"
+          elif [[ -n "$REASONS" ]]; then
+            echo "⏭️ Auto-merge is armed by someone other than this App and no changes are requested — leaving it ($REASONS)"
+            outcome skipped-not-ours
+            exit 0
+          else
+            echo "⏭️ PR meets every condition again since evaluation — not disabling"
+            outcome skipped-eligible
+            exit 0
+          fi
+          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
+
+          if DISABLE_OUTPUT=$(gh pr merge "$PR_NUMBER" --repo "$REPO" --disable-auto 2>&1); then
+            echo "🛑 Auto-merge disabled: $REASON"
           elif grep -qi "not enabled" <<< "$DISABLE_OUTPUT"; then
             echo "ℹ️  Auto-merge was not enabled, no action needed"
-            echo "outcome=not-enabled" >> "$GITHUB_OUTPUT"
+            outcome not-enabled
+            exit 0
           else
             # Don't fail the workflow, but log the error properly
             echo "❌ Failed to disable auto-merge: $DISABLE_OUTPUT"
-            echo "outcome=failed-disable" >> "$GITHUB_OUTPUT"
+            outcome failed-disable
+            exit 0
           fi
+
+          # Remove the labels added on enable (never the opt-in label itself).
+          # Best effort: a label that isn't on the PR returns 404.
+          IFS=',' read -ra LABELS <<< "$LABELS_TO_ADD"
+          for label in "${LABELS[@]}"; do
+            # Trim surrounding whitespace
+            label="${label#"${label%%[![:space:]]*}"}"
+            label="${label%"${label##*[![:space:]]}"}"
+            if [[ -n "$label" && "$label" != "$AUTOMERGE_LABEL" ]]; then
+              ENCODED=$(jq -rn --arg l "$label" '$l | @uri')
+              gh api -X DELETE "repos/$REPO/issues/$PR_NUMBER/labels/$ENCODED" --silent 2>/dev/null \
+                && echo "🏷️ Removed label: $label" || true
+            fi
+          done
+
+          if [[ "$COMMENT_ON_DISABLE" == "true" ]]; then
+            gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" --silent -f body="🛑 **Auto-merge disabled**
+
+          Reason: $REASON. Auto-merge will be re-enabled when conditions are met again."
+          fi
+          outcome disabled
 
       # --------------------------------------------------------------------
       # Outcome summary
@@ -768,14 +844,17 @@ jobs:
         env:
           ENABLE_OUTCOME: ${{ steps.enable.outputs.outcome }}
           DISABLE_OUTCOME: ${{ steps.disable.outputs.outcome }}
+          DISABLE_REASON: ${{ steps.disable.outputs.reason }}
           TOKEN_OUTCOME: ${{ steps.app-token.outcome }}
+          RECHECK_OUTCOME: ${{ steps.recheck.outcome }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
-          DISABLE_REASON: ${{ needs.evaluate.outputs.disable-reason }}
         run: |
           OUTCOME="${ENABLE_OUTCOME:-${DISABLE_OUTCOME:-}}"
           if [[ "$TOKEN_OUTCOME" != "success" ]]; then
             OUTCOME="token-failed"
+          elif [[ "$RECHECK_OUTCOME" != "success" ]]; then
+            OUTCOME="recheck-failed"
           fi
           case "$OUTCOME" in
             enabled)            DESC="✅ Auto-merge enabled" ;;
@@ -785,9 +864,12 @@ jobs:
             skipped-not-open)   DESC="⏭️ Skipped (PR no longer open)" ;;
             skipped-head-moved) DESC="⏭️ Skipped (head moved since evaluation)" ;;
             skipped-ineligible) DESC="⏭️ Skipped (PR no longer eligible since evaluation)" ;;
+            skipped-eligible)   DESC="⏭️ Not disabled (PR meets every condition again)" ;;
+            skipped-not-ours)   DESC="⏭️ Not disabled (armed by someone else, no changes requested)" ;;
             failed)             DESC="❌ Failed to enable auto-merge" ;;
             failed-disable)     DESC="❌ Failed to disable auto-merge" ;;
             token-failed)       DESC="❌ Could not create the GitHub App token (App installed? key set in the 'auto-merge' environment?)" ;;
+            recheck-failed)     DESC="❌ Could not re-read the PR before acting — nothing was changed" ;;
             *)                  DESC="❓ Unknown outcome: ${OUTCOME:-none}" ;;
           esac
           {
