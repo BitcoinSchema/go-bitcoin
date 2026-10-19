@@ -24,7 +24,7 @@ These configuration files control everything from:
 | Workflow | Description |
 |----------|-------------|
 | [auto-merge-on-approval.yml](../workflows/auto-merge-on-approval.yml) | Automatically merges PRs after approval and all required checks, following strict rules. Runs from the default branch via `workflow_run`. |
-| [auto-merge-trigger.yml](../workflows/auto-merge-trigger.yml) | Permission-less trigger that wakes up the auto-merge-on-approval workflow on reviews and PR state changes. |
+| [auto-merge-trigger.yml](../workflows/auto-merge-trigger.yml) | Permission-less trigger that wakes up the auto-merge-on-approval workflow on reviews, pushes and PR state changes. |
 | [codeql-analysis.yml](../workflows/codeql-analysis.yml) | Analyzes code for security vulnerabilities using [GitHub CodeQL](https://codeql.github.com/). |
 | [dependabot-auto-merge.yml](../workflows/dependabot-auto-merge.yml) | Automatically merges [Dependabot](https://github.com/dependabot) PRs that meet all requirements. |
 | [fortress.yml](../workflows/fortress.yml) | Runs the GoFortress security and testing workflow, including linting, testing, releasing, and vulnerability checks. |

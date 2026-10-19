@@ -12,7 +12,7 @@
 #
 #  Triggers:
 #  - Pull request reviews (submitted, dismissed)
-#  - Pull request state changes (ready_for_review, review_request_removed)
+#  - Pull request changes (synchronize, ready_for_review, review_request_removed)
 #
 #  Maintainer: @mrz1836
 #
@@ -29,7 +29,9 @@ on:
     # or auto-merge stays disabled even once the remaining approvals satisfy policy.
     types: [submitted, dismissed]
   pull_request:
-    types: [ready_for_review, review_request_removed]
+    # `synchronize`: a push between evaluation and apply makes apply skip (head
+    # moved), so the new head must queue its own evaluation or the PR stays unarmed.
+    types: [synchronize, ready_for_review, review_request_removed]
 
 # Security: this workflow needs no permissions at all
 permissions: {}
