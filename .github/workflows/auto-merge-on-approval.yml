@@ -60,11 +60,13 @@ on:
 permissions: {}
 
 # --------------------------------------------------------------------
-# Concurrency Control — per job, not per workflow:
-# - `evaluate` is read-only, so a newer evaluation simply cancels an older one.
-# - `apply` must never be cancelled halfway (e.g. after enabling, before its
-#   comment and labels). The App's own changes start new runs, so applies queue
-#   instead; each one re-checks the PR on fresh data, so order doesn't matter.
+# Concurrency Control — per job, never cancelling:
+# - `evaluate` has no concurrency group. It only reads, so overlapping runs are
+#   harmless, and no run (however it ends) can cancel another one's evaluation.
+# - `apply` runs one at a time per branch and is never cancelled halfway (e.g.
+#   after enabling, before its comment and labels). It does not trust the
+#   evaluation that queued it: it re-reads the PR and works out enable / disable
+#   / nothing itself, so a queued or superseded run can't act on stale data.
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
@@ -82,7 +84,8 @@ jobs:
   #   🔍 Evaluate conditions     → decides enable / disable / skip
   #   📊 Generate summary        → always
   #
-  # Enabling/disabling auto-merge, comments and labels happen in `apply`.
+  # "enable" / "disable" only mean `apply` must run; `apply` re-derives the action
+  # from fresh data, then enables/disables auto-merge and posts comments/labels.
   # ----------------------------------------------------------------------------------
   evaluate:
     name: 🤖 Auto-merge on Approval
@@ -96,9 +99,6 @@ jobs:
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-26.04
     timeout-minutes: 5
-    concurrency:
-      group: ${{ github.workflow }}-evaluate-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
-      cancel-in-progress: true
     permissions:
       actions: read # Required: Confirm the trigger job ran (not skipped by its gate)
       contents: read # Required: Sparse checkout for env files + read branch rules
@@ -106,7 +106,6 @@ jobs:
     outputs:
       action: ${{ steps.process.outputs.action }}
       pr-number: ${{ steps.process.outputs.pr-number }}
-      head-sha: ${{ steps.process.outputs.head-sha }}
       disable-reason: ${{ steps.process.outputs.disable-reason }}
       merge-type: ${{ steps.process.outputs.merge-type }}
       delete-branch: ${{ steps.process.outputs.delete-branch }}
@@ -281,7 +280,6 @@ jobs:
             });
 
             core.setOutput('pr-number', String(prNumber));
-            core.setOutput('head-sha', pr.head.sha);
 
             console.log(`📋 PR #${prNumber}: "${pr.title}"`);
             console.log(`👤 Author: ${pr.user.login} (${pr.user.type})`);
@@ -375,6 +373,31 @@ jobs:
             console.log(`👥 Reviews: ${approvals} approvals, ${changesRequested} changes requested, ${pendingReviews} pending`);
             console.log(`✅ Required approvals: ${minApprovals}`);
 
+            // The base branch must require status checks (ruleset or classic branch
+            // protection), or "auto-merge" would merge immediately, before CI. A PR
+            // can be retargeted at any time, so this is re-checked like the rest.
+            // null = couldn't read the rules, which fails closed below.
+            let requiredChecks = null;
+            try {
+              const { data: rules } = await github.request('GET /repos/{owner}/{repo}/rules/branches/{branch}', {
+                owner,
+                repo,
+                branch: pr.base.ref,
+              });
+              const rulesetChecks = rules
+                .filter(r => r.type === 'required_status_checks')
+                .flatMap(r => r.parameters?.required_status_checks || []).length;
+
+              const { data: branch } = await github.rest.repos.getBranch({ owner, repo, branch: pr.base.ref });
+              const classic = branch.protection?.required_status_checks;
+              const classicChecks = classic && classic.enforcement_level !== 'off' ? (classic.contexts || []).length : 0;
+
+              console.log(`🛡️ Required checks on '${pr.base.ref}': rulesets=${rulesetChecks} classic=${classicChecks}`);
+              requiredChecks = rulesetChecks + classicChecks;
+            } catch (error) {
+              console.log(`❌ Could not read rules for '${pr.base.ref}' (${error.message}) — failing closed`);
+            }
+
             // ————————————————————————————————————————————————————————————————
             // Every condition for arming auto-merge, in reporting order. The apply
             // job re-checks the same list in bash — keep the two in sync.
@@ -404,6 +427,11 @@ jobs:
             }
             if (process.env.REQUIRE_ALL_REVIEWS === 'true' && pendingReviews > 0) {
               blockers.push({ action: 'conditions-not-met', reason: `${pendingReviews} review request(s) pending` });
+            }
+            if (requiredChecks === null) {
+              blockers.push({ action: 'skip-no-required-checks', reason: 'could not read the base branch required checks' });
+            } else if (requiredChecks === 0) {
+              blockers.push({ action: 'skip-no-required-checks', reason: 'base branch requires no status checks' });
             }
             const reasons = blockers.map(b => b.reason).join(', ');
 
@@ -439,37 +467,6 @@ jobs:
             if (blockers.length > 0) {
               console.log(`⏳ Not enabling auto-merge: ${reasons}`);
               core.setOutput('action', blockers[0].action);
-              return;
-            }
-
-            // ————————————————————————————————————————————————————————————————
-            // Merge guard (always enforced): the base branch must require status
-            // checks, via a ruleset or classic branch protection. Otherwise
-            // "auto-merge" would merge immediately, before CI. Fails closed.
-            // ————————————————————————————————————————————————————————————————
-            try {
-              const { data: rules } = await github.request('GET /repos/{owner}/{repo}/rules/branches/{branch}', {
-                owner,
-                repo,
-                branch: pr.base.ref,
-              });
-              const rulesetChecks = rules
-                .filter(r => r.type === 'required_status_checks')
-                .flatMap(r => r.parameters?.required_status_checks || []).length;
-
-              const { data: branch } = await github.rest.repos.getBranch({ owner, repo, branch: pr.base.ref });
-              const classic = branch.protection?.required_status_checks;
-              const classicChecks = classic && classic.enforcement_level !== 'off' ? (classic.contexts || []).length : 0;
-
-              console.log(`🛡️ Required checks on '${pr.base.ref}': rulesets=${rulesetChecks} classic=${classicChecks}`);
-              if (rulesetChecks === 0 && classicChecks === 0) {
-                console.log(`🚫 '${pr.base.ref}' requires no status checks — auto-merge would merge before CI`);
-                core.setOutput('action', 'skip-no-required-checks');
-                return;
-              }
-            } catch (error) {
-              console.log(`❌ Could not read rules for '${pr.base.ref}' (${error.message}) — failing closed`);
-              core.setOutput('action', 'skip-no-required-checks');
               return;
             }
 
@@ -549,6 +546,11 @@ jobs:
   # ----------------------------------------------------------------------------------
   # Apply: enable or disable auto-merge with a GitHub App token
   #
+  # Reconciles rather than replays: it re-reads the PR and applies the same rule as
+  # `evaluate` to that fresh data, so the evaluation that queued it only decides
+  # *whether* it runs. A run that waited in the queue, or was superseded, therefore
+  # never acts on a stale decision (retargeted base, label removed, re-armed...).
+  #
   # SECURITY: this is the only job that can read the App private key. Every step in
   # a job can read every secret the job uses (they sit in the runner's memory), so
   # this job runs nothing but GitHub's own token action (pinned by SHA) and the
@@ -591,9 +593,8 @@ jobs:
           permission-pull-requests: write
 
       # --------------------------------------------------------------------
-      # Re-read the PR right before acting. Labels, title, draft state,
-      # reviews and the arming itself can all change while this job waits
-      # (e.g. for a runner), so both decisions are re-checked on fresh data.
+      # Re-read the PR right before acting and decide what to do now:
+      # enable, disable or nothing — the same rule as the evaluate job.
       # --------------------------------------------------------------------
       - name: 🔍 Re-check the PR
         id: recheck
@@ -632,6 +633,18 @@ jobs:
             | @tsv')
           read -r APPROVALS CHANGES_REQUESTED <<< "$REVIEW_COUNTS"
 
+          # Required status checks on the CURRENT base (ruleset or classic branch
+          # protection). Empty = couldn't read them, which fails closed below.
+          BASE=$(jq -r '.base.ref | @uri' <<< "$PR_JSON")
+          REQUIRED_CHECKS=""
+          if RULES=$(gh api "repos/$REPO/rules/branches/$BASE" 2>/dev/null) &&
+             BRANCH=$(gh api "repos/$REPO/branches/$BASE" 2>/dev/null); then
+            REQUIRED_CHECKS=$(jq -n --argjson rules "$RULES" --argjson branch "$BRANCH" '
+              ([$rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks // [] | length] | add // 0)
+              + ($branch.protection.required_status_checks // null
+                 | if . != null and .enforcement_level != "off" then (.contexts // [] | length) else 0 end)')
+          fi
+
           # Same conditions, in the same order, as the evaluate job's blockers
           BLOCKERS=()
           if [[ "$SKIP_DRAFT" == "true" && "$DRAFT" == "true" ]]; then
@@ -652,73 +665,74 @@ jobs:
           if [[ "$REQUIRE_ALL_REVIEWS" == "true" && "$PENDING_REVIEWS" -gt 0 ]]; then
             BLOCKERS+=("$PENDING_REVIEWS review request(s) pending")
           fi
+          if [[ -z "$REQUIRED_CHECKS" ]]; then
+            BLOCKERS+=("could not read the base branch required checks")
+          elif [[ "$REQUIRED_CHECKS" -eq 0 ]]; then
+            BLOCKERS+=("base branch requires no status checks")
+          fi
           REASONS=""
           if [[ ${#BLOCKERS[@]} -gt 0 ]]; then
             printf -v REASONS '%s, ' "${BLOCKERS[@]}"
             REASONS="${REASONS%, }"
           fi
 
+          # Same rule as the evaluate job: "Changes Requested" revokes any arming;
+          # any other unmet condition only revokes this App's own arming
+          if [[ "$STATE" != "open" ]]; then
+            DECISION="none"; WHY="PR is $STATE"
+          elif [[ "$ARMED" == "true" ]]; then
+            if [[ "$ARMED_BY_APP" == "true" && -n "$REASONS" ]]; then
+              DECISION="disable"; WHY="$REASONS"
+            elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
+              DECISION="disable"; WHY="changes requested"
+            elif [[ -n "$REASONS" ]]; then
+              DECISION="none"; WHY="armed by someone other than this App, no changes requested ($REASONS)"
+            else
+              DECISION="none"; WHY="auto-merge already enabled"
+            fi
+          elif [[ -n "$REASONS" ]]; then
+            DECISION="none"; WHY="$REASONS"
+          else
+            DECISION="enable"; WHY="all conditions met"
+          fi
+
           echo "📋 PR #$PR_NUMBER: state=$STATE head=$CURRENT_SHA armed=$ARMED (by this App: $ARMED_BY_APP)"
           echo "👥 Reviews: $APPROVALS approvals, $CHANGES_REQUESTED changes requested, $PENDING_REVIEWS pending"
-          echo "🚧 Blockers: ${REASONS:-none}"
+          echo "🛡️ Required checks on base: ${REQUIRED_CHECKS:-unknown}"
+          echo "🎯 Decision: $DECISION ($WHY)"
           {
-            echo "state=$STATE"
+            echo "decision=$DECISION"
+            echo "reason=$WHY"
             echo "head-sha=$CURRENT_SHA"
-            echo "armed=$ARMED"
-            echo "armed-by-app=$ARMED_BY_APP"
             echo "approvals=$APPROVALS"
             echo "changes-requested=$CHANGES_REQUESTED"
             echo "pending-reviews=$PENDING_REVIEWS"
-            echo "reasons=$REASONS"
           } >> "$GITHUB_OUTPUT"
 
       # --------------------------------------------------------------------
-      # Enable auto-merge, pinned to the evaluated head commit
+      # Enable auto-merge, pinned to the re-checked head commit
       # --------------------------------------------------------------------
       - name: 🚀 Enable auto-merge
         id: enable
-        if: needs.evaluate.outputs.action == 'enable'
+        if: steps.recheck.outputs.decision == 'enable'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
-          HEAD_SHA: ${{ needs.evaluate.outputs.head-sha }}
+          HEAD_SHA: ${{ steps.recheck.outputs.head-sha }}
           MERGE_TYPE: ${{ needs.evaluate.outputs.merge-type }}
           DELETE_BRANCH: ${{ needs.evaluate.outputs.delete-branch }}
           COMMENT_ON_ENABLE: ${{ needs.evaluate.outputs.comment-on-enable }}
           LABELS_TO_ADD: ${{ needs.evaluate.outputs.labels-to-add }}
           MIN_APPROVALS: ${{ needs.evaluate.outputs.min-approvals }}
-          STATE: ${{ steps.recheck.outputs.state }}
-          CURRENT_SHA: ${{ steps.recheck.outputs.head-sha }}
-          ARMED: ${{ steps.recheck.outputs.armed }}
           APPROVALS: ${{ steps.recheck.outputs.approvals }}
           CHANGES_REQUESTED: ${{ steps.recheck.outputs.changes-requested }}
           PENDING_REVIEWS: ${{ steps.recheck.outputs.pending-reviews }}
-          REASONS: ${{ steps.recheck.outputs.reasons }}
         run: |
           outcome() { echo "outcome=$1" >> "$GITHUB_OUTPUT"; }
 
-          if [[ "$STATE" != "open" ]]; then
-            echo "⏭️ PR #$PR_NUMBER is $STATE — nothing to do"
-            outcome skipped-not-open
-            exit 0
-          fi
-          if [[ "$CURRENT_SHA" != "$HEAD_SHA" ]]; then
-            echo "⏭️ Head moved from $HEAD_SHA to $CURRENT_SHA since evaluation — not enabling"
-            outcome skipped-head-moved
-            exit 0
-          fi
-          if [[ "$ARMED" == "true" ]]; then
-            echo "✅ Auto-merge already enabled"
-            outcome already-enabled
-            exit 0
-          fi
-          if [[ -n "$REASONS" ]]; then
-            echo "⏭️ PR changed since evaluation ($REASONS) — not enabling"
-            outcome skipped-ineligible
-            exit 0
-          fi
-
+          # --match-head-commit: a push after the re-check makes this fail instead
+          # of arming commits nobody checked
           ARGS=(pr merge "$PR_NUMBER" --repo "$REPO" --auto --match-head-commit "$HEAD_SHA")
           case "$MERGE_TYPE" in
             merge)  ARGS+=(--merge);  MERGE_TYPE_TEXT="create a merge commit" ;;
@@ -767,7 +781,6 @@ jobs:
           ⏳ Pending reviews: $PENDING_REVIEWS" || echo "⚠️ Could not post the enable comment"
           fi
 
-          # Add labels if configured
           LABEL_ARGS=()
           IFS=',' read -ra LABELS <<< "$LABELS_TO_ADD"
           for label in "${LABELS[@]}"; do
@@ -787,52 +800,21 @@ jobs:
           fi
 
       # --------------------------------------------------------------------
-      # Disable auto-merge — same rule as the evaluate job, on fresh data:
-      # "Changes Requested" revokes any arming; any other unmet condition
-      # only revokes this App's own arming.
+      # Disable auto-merge
       # --------------------------------------------------------------------
       - name: 🛑 Disable auto-merge
         id: disable
-        if: needs.evaluate.outputs.action == 'disable'
+        if: steps.recheck.outputs.decision == 'disable'
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
+          REASON: ${{ steps.recheck.outputs.reason }}
           COMMENT_ON_DISABLE: ${{ needs.evaluate.outputs.comment-on-disable }}
           LABELS_TO_ADD: ${{ needs.evaluate.outputs.labels-to-add }}
           AUTOMERGE_LABEL: ${{ needs.evaluate.outputs.automerge-label }}
-          STATE: ${{ steps.recheck.outputs.state }}
-          ARMED: ${{ steps.recheck.outputs.armed }}
-          ARMED_BY_APP: ${{ steps.recheck.outputs.armed-by-app }}
-          CHANGES_REQUESTED: ${{ steps.recheck.outputs.changes-requested }}
-          REASONS: ${{ steps.recheck.outputs.reasons }}
         run: |
           outcome() { echo "outcome=$1" >> "$GITHUB_OUTPUT"; }
-
-          if [[ "$STATE" != "open" ]]; then
-            echo "⏭️ PR #$PR_NUMBER is $STATE — nothing to do"
-            outcome skipped-not-open
-            exit 0
-          fi
-          if [[ "$ARMED" != "true" ]]; then
-            echo "ℹ️  Auto-merge is no longer enabled, no action needed"
-            outcome not-enabled
-            exit 0
-          fi
-          if [[ "$ARMED_BY_APP" == "true" && -n "$REASONS" ]]; then
-            REASON="$REASONS"
-          elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
-            REASON="changes requested"
-          elif [[ -n "$REASONS" ]]; then
-            echo "⏭️ Auto-merge is armed by someone other than this App and no changes are requested — leaving it ($REASONS)"
-            outcome skipped-not-ours
-            exit 0
-          else
-            echo "⏭️ PR meets every condition again since evaluation — not disabling"
-            outcome skipped-eligible
-            exit 0
-          fi
-          echo "reason=$REASON" >> "$GITHUB_OUTPUT"
 
           if DISABLE_OUTPUT=$(gh pr merge "$PR_NUMBER" --repo "$REPO" --disable-auto 2>&1); then
             echo "🛑 Auto-merge disabled: $REASON"
@@ -877,7 +859,8 @@ jobs:
         env:
           ENABLE_OUTCOME: ${{ steps.enable.outputs.outcome }}
           DISABLE_OUTCOME: ${{ steps.disable.outputs.outcome }}
-          DISABLE_REASON: ${{ steps.disable.outputs.reason }}
+          DECISION: ${{ steps.recheck.outputs.decision }}
+          REASON: ${{ steps.recheck.outputs.reason }}
           TOKEN_OUTCOME: ${{ steps.app-token.outcome }}
           RECHECK_OUTCOME: ${{ steps.recheck.outcome }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
@@ -888,22 +871,20 @@ jobs:
             OUTCOME="token-failed"
           elif [[ "$RECHECK_OUTCOME" != "success" ]]; then
             OUTCOME="recheck-failed"
+          elif [[ "$DECISION" == "none" ]]; then
+            OUTCOME="no-change"
           fi
           case "$OUTCOME" in
-            enabled)            DESC="✅ Auto-merge enabled" ;;
-            already-enabled)    DESC="✅ Auto-merge was already enabled" ;;
-            disabled)           DESC="🛑 Auto-merge disabled ($DISABLE_REASON)" ;;
-            not-enabled)        DESC="ℹ️ Auto-merge was not enabled" ;;
-            skipped-not-open)   DESC="⏭️ Skipped (PR no longer open)" ;;
-            skipped-head-moved) DESC="⏭️ Skipped (head moved since evaluation)" ;;
-            skipped-ineligible) DESC="⏭️ Skipped (PR no longer eligible since evaluation)" ;;
-            skipped-eligible)   DESC="⏭️ Not disabled (PR meets every condition again)" ;;
-            skipped-not-ours)   DESC="⏭️ Not disabled (armed by someone else, no changes requested)" ;;
-            failed)             DESC="❌ Failed to enable auto-merge" ;;
-            failed-disable)     DESC="❌ Failed to disable auto-merge" ;;
-            token-failed)       DESC="❌ Could not create the GitHub App token (App installed? key set in the 'auto-merge' environment?)" ;;
-            recheck-failed)     DESC="❌ Could not re-read the PR before acting — nothing was changed" ;;
-            *)                  DESC="❓ Unknown outcome: ${OUTCOME:-none}" ;;
+            enabled)         DESC="✅ Auto-merge enabled" ;;
+            already-enabled) DESC="✅ Auto-merge was already enabled" ;;
+            disabled)        DESC="🛑 Auto-merge disabled ($REASON)" ;;
+            not-enabled)     DESC="ℹ️ Auto-merge was not enabled" ;;
+            no-change)       DESC="⏭️ Nothing to do on fresh data ($REASON)" ;;
+            failed)          DESC="❌ Failed to enable auto-merge" ;;
+            failed-disable)  DESC="❌ Failed to disable auto-merge" ;;
+            token-failed)    DESC="❌ Could not create the GitHub App token (App installed? key set in the 'auto-merge' environment?)" ;;
+            recheck-failed)  DESC="❌ Could not re-read the PR before acting — nothing was changed" ;;
+            *)               DESC="❓ Unknown outcome: ${OUTCOME:-none}" ;;
           esac
           {
             echo "## 🚀 Apply Outcome — PR #$PR_NUMBER"
