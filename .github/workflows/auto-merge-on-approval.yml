@@ -10,8 +10,8 @@
 #
 #  Triggers:
 #  - Completion of "Auto-merge Trigger" (auto-merge-trigger.yml), which runs on
-#    pull request reviews (submitted, dismissed) and pull request state changes
-#    (ready_for_review, review_request_removed)
+#    pull request reviews (submitted, dismissed) and pull request changes
+#    (synchronize, ready_for_review, review_request_removed)
 #
 #  Why two workflows: review events always run the PR's own copy of a workflow,
 #  so they can never be trusted with the GitHub App key. `workflow_run` always
@@ -29,7 +29,8 @@
 #    push workflows on the base branch.
 #
 #  Auto-merge Rules (configurable via .github/env/):
-#  - Minimum number of approvals
+#  - Minimum number of approvals (an auto-merge armed by the App is disabled if
+#    approvals drop below it)
 #  - No requested reviewers remaining (if configured)
 #  - No "Changes Requested" reviews (an armed auto-merge is disabled)
 #  - PR ready for review (not draft, no WIP indicators)
@@ -94,12 +95,16 @@ jobs:
       action: ${{ steps.process.outputs.action }}
       pr-number: ${{ steps.process.outputs.pr-number }}
       head-sha: ${{ steps.process.outputs.head-sha }}
-      approvals: ${{ steps.process.outputs.approvals }}
-      changes-requested: ${{ steps.process.outputs.changes-requested }}
-      pending-reviews: ${{ steps.process.outputs.pending-reviews }}
+      disable-reason: ${{ steps.process.outputs.disable-reason }}
       merge-type: ${{ steps.process.outputs.merge-type }}
       delete-branch: ${{ steps.process.outputs.delete-branch }}
       min-approvals: ${{ steps.process.outputs.min-approvals }}
+      require-all-reviews: ${{ steps.process.outputs.require-all-reviews }}
+      skip-draft: ${{ steps.process.outputs.skip-draft }}
+      skip-wip: ${{ steps.process.outputs.skip-wip }}
+      wip-labels: ${{ steps.process.outputs.wip-labels }}
+      require-label: ${{ steps.process.outputs.require-label }}
+      automerge-label: ${{ steps.process.outputs.automerge-label }}
       comment-on-enable: ${{ steps.process.outputs.comment-on-enable }}
       comment-on-disable: ${{ steps.process.outputs.comment-on-disable }}
       labels-to-add: ${{ steps.process.outputs.labels-to-add }}
@@ -196,6 +201,12 @@ jobs:
             core.setOutput('merge-type', process.env.DEFAULT_MERGE_TYPE);
             core.setOutput('delete-branch', process.env.DELETE_BRANCH);
             core.setOutput('min-approvals', process.env.MIN_APPROVALS);
+            core.setOutput('require-all-reviews', process.env.REQUIRE_ALL_REVIEWS);
+            core.setOutput('skip-draft', process.env.SKIP_DRAFT);
+            core.setOutput('skip-wip', process.env.SKIP_WIP);
+            core.setOutput('wip-labels', process.env.WIP_LABELS);
+            core.setOutput('require-label', process.env.AUTO_MERGE_REQUIRE_LABEL);
+            core.setOutput('automerge-label', process.env.AUTO_MERGE_LABEL || 'automerge');
             core.setOutput('comment-on-enable', process.env.COMMENT_ON_ENABLE);
             core.setOutput('comment-on-disable', process.env.COMMENT_ON_DISABLE);
             core.setOutput('labels-to-add', process.env.LABELS_TO_ADD);
@@ -341,9 +352,13 @@ jobs:
               per_page: 100,
             });
 
-            // Get latest review per user
+            // Get latest review per user. Only verdicts count: a later "Comment" review
+            // doesn't withdraw an approval (same as GitHub), and PENDING isn't submitted.
+            // The apply job re-counts with the same rules — keep the two in sync.
+            const VERDICT_STATES = new Set(['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED']);
             const latestReviews = {};
             reviews.forEach(review => {
+              if (!VERDICT_STATES.has(review.state)) return;
               // review.user is null for deleted accounts - fall back to a unique
               // key so the review still counts instead of throwing.
               const userId = review.user?.id ?? `deleted-user:${review.id}`;
@@ -362,10 +377,6 @@ jobs:
             const requestedReviewers = (pr.requested_reviewers || []).length;
             const minApprovals = parseInt(process.env.MIN_APPROVALS);
 
-            core.setOutput('approvals', String(approvals));
-            core.setOutput('changes-requested', String(changesRequested));
-            core.setOutput('pending-reviews', String(requestedReviewers));
-
             console.log(`👥 Reviews: ${approvals} approvals, ${changesRequested} changes requested, ${requestedReviewers} pending`);
             console.log(`✅ Required approvals: ${minApprovals}`);
 
@@ -378,10 +389,25 @@ jobs:
               if (pr.auto_merge) {
                 console.log('🛑 "Changes Requested" review outstanding - auto-merge will be disabled');
                 core.setOutput('action', 'disable');
+                core.setOutput('disable-reason', 'changes requested');
               } else {
                 console.log('🚫 Has "Changes Requested" reviews');
                 core.setOutput('action', 'conditions-not-met');
               }
+              return;
+            }
+
+            // ————————————————————————————————————————————————————————————————
+            // Approvals can drop after auto-merge was armed (e.g. one is dismissed).
+            // The base branch may require fewer approvals than this workflow, so
+            // GitHub would still merge: revoke an arming made by a bot (this
+            // workflow's App). A maintainer who armed it by hand chose not to wait
+            // for approvals, so that is left alone.
+            // ————————————————————————————————————————————————————————————————
+            if (approvals < minApprovals && pr.auto_merge?.enabled_by?.type === 'Bot') {
+              console.log(`🛑 Approvals dropped below the threshold (${approvals}/${minApprovals}) - auto-merge will be disabled`);
+              core.setOutput('action', 'disable');
+              core.setOutput('disable-reason', `approvals below the required minimum (${approvals}/${minApprovals})`);
               return;
             }
 
@@ -454,6 +480,7 @@ jobs:
         env:
           PR_NUMBER: ${{ steps.process.outputs.pr-number }}
           ACTION: ${{ steps.process.outputs.action }}
+          DISABLE_REASON: ${{ steps.process.outputs.disable-reason }}
           APP_CLIENT_ID: ${{ vars.AUTO_MERGE_APP_CLIENT_ID }}
         run: |
           echo "📊 Generating workflow summary..."
@@ -461,7 +488,7 @@ jobs:
           # Determine action taken
           case "$ACTION" in
             "enable")                        ACTION_DESC="🚀 Enable auto-merge" ;;
-            "disable")                       ACTION_DESC="🛑 Disable auto-merge (changes requested)" ;;
+            "disable")                       ACTION_DESC="🛑 Disable auto-merge ($DISABLE_REASON)" ;;
             "already-enabled")               ACTION_DESC="✅ Auto-merge already enabled" ;;
             "skip-bot")                      ACTION_DESC="🤖 Skipped (bot PR)" ;;
             "skip-fork")                     ACTION_DESC="🍴 Skipped (fork PR - security policy)" ;;
@@ -569,16 +596,40 @@ jobs:
           DELETE_BRANCH: ${{ needs.evaluate.outputs.delete-branch }}
           COMMENT_ON_ENABLE: ${{ needs.evaluate.outputs.comment-on-enable }}
           LABELS_TO_ADD: ${{ needs.evaluate.outputs.labels-to-add }}
-          APPROVALS: ${{ needs.evaluate.outputs.approvals }}
           MIN_APPROVALS: ${{ needs.evaluate.outputs.min-approvals }}
-          CHANGES_REQUESTED: ${{ needs.evaluate.outputs.changes-requested }}
-          PENDING_REVIEWS: ${{ needs.evaluate.outputs.pending-reviews }}
+          REQUIRE_ALL_REVIEWS: ${{ needs.evaluate.outputs.require-all-reviews }}
+          SKIP_DRAFT: ${{ needs.evaluate.outputs.skip-draft }}
+          SKIP_WIP: ${{ needs.evaluate.outputs.skip-wip }}
+          WIP_LABELS: ${{ needs.evaluate.outputs.wip-labels }}
+          REQUIRE_LABEL: ${{ needs.evaluate.outputs.require-label }}
+          AUTOMERGE_LABEL: ${{ needs.evaluate.outputs.automerge-label }}
         run: |
           outcome() { echo "outcome=$1" >> "$GITHUB_OUTPUT"; }
 
-          # Re-read the PR right before acting
-          read -r STATE CURRENT_SHA ARMED < <(gh api "repos/$REPO/pulls/$PR_NUMBER" \
-            --jq '[.state, .head.sha, (.auto_merge != null)] | @tsv')
+          # Re-read the PR right before acting. Labels, title, draft state and reviews
+          # can change while this job waits without moving the head (and label/title
+          # edits queue no new evaluation), so re-check them, not just the SHA.
+          PR_JSON=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
+          read -r STATE CURRENT_SHA ARMED DRAFT PENDING_REVIEWS HAS_LABEL IS_WIP < <(jq -r \
+            --arg label "$AUTOMERGE_LABEL" --arg wip "$WIP_LABELS" '
+            ($wip | split(",") | map(gsub("^\\s+|\\s+$"; ""))) as $wip_labels
+            | [ .state, .head.sha, (.auto_merge != null), .draft, (.requested_reviewers | length),
+                any(.labels[]; .name == $label),
+                ((.title // "" | test("\\b(wip|work.in.progress)\\b"; "i")) or any(.labels[]; .name | IN($wip_labels[]))) ]
+            | @tsv' <<< "$PR_JSON")
+
+          # Same counting rules as the evaluate job: latest verdict per reviewer,
+          # approvals only from OWNER/MEMBER/COLLABORATOR
+          REVIEW_COUNTS=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews?per_page=100" | jq -rs '
+            add // []
+            | map(select(.state | IN("APPROVED", "CHANGES_REQUESTED", "DISMISSED")))
+            | group_by(.user.id // "deleted-user:\(.id)")
+            | map(max_by(.submitted_at))
+            | [ (map(select(.state == "APPROVED" and (.author_association | IN("OWNER", "MEMBER", "COLLABORATOR")))) | length),
+                (map(select(.state == "CHANGES_REQUESTED")) | length) ]
+            | @tsv')
+          read -r APPROVALS CHANGES_REQUESTED <<< "$REVIEW_COUNTS"
+
           if [[ "$STATE" != "open" ]]; then
             echo "⏭️ PR #$PR_NUMBER is $STATE — nothing to do"
             outcome skipped-not-open
@@ -592,6 +643,26 @@ jobs:
           if [[ "$ARMED" == "true" ]]; then
             echo "✅ Auto-merge already enabled"
             outcome already-enabled
+            exit 0
+          fi
+
+          INELIGIBLE=""
+          if [[ "$SKIP_DRAFT" == "true" && "$DRAFT" == "true" ]]; then
+            INELIGIBLE="converted to draft"
+          elif [[ "$SKIP_WIP" == "true" && "$IS_WIP" == "true" ]]; then
+            INELIGIBLE="marked as work in progress"
+          elif [[ "$REQUIRE_LABEL" == "true" && "$HAS_LABEL" != "true" ]]; then
+            INELIGIBLE="label \"$AUTOMERGE_LABEL\" removed"
+          elif [[ "$CHANGES_REQUESTED" -gt 0 ]]; then
+            INELIGIBLE="changes requested"
+          elif [[ "$APPROVALS" -lt "$MIN_APPROVALS" ]]; then
+            INELIGIBLE="approvals now $APPROVALS/$MIN_APPROVALS"
+          elif [[ "$REQUIRE_ALL_REVIEWS" == "true" && "$PENDING_REVIEWS" -gt 0 ]]; then
+            INELIGIBLE="$PENDING_REVIEWS review request(s) pending"
+          fi
+          if [[ -n "$INELIGIBLE" ]]; then
+            echo "⏭️ PR changed since evaluation ($INELIGIBLE) — not enabling"
+            outcome skipped-ineligible
             exit 0
           fi
 
@@ -660,7 +731,7 @@ jobs:
           outcome enabled
 
       # --------------------------------------------------------------------
-      # Disable auto-merge (changes requested)
+      # Disable auto-merge (changes requested, or approvals below threshold)
       # --------------------------------------------------------------------
       - name: 🛑 Disable auto-merge
         id: disable
@@ -669,14 +740,15 @@ jobs:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
           REPO: ${{ github.repository }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
+          DISABLE_REASON: ${{ needs.evaluate.outputs.disable-reason }}
           COMMENT_ON_DISABLE: ${{ needs.evaluate.outputs.comment-on-disable }}
         run: |
           if DISABLE_OUTPUT=$(gh pr merge "$PR_NUMBER" --repo "$REPO" --disable-auto 2>&1); then
-            echo "🛑 Auto-merge disabled due to \"Changes Requested\" review"
+            echo "🛑 Auto-merge disabled: $DISABLE_REASON"
             if [[ "$COMMENT_ON_DISABLE" == "true" ]]; then
               gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" --silent -f body="🛑 **Auto-merge disabled**
 
-          Changes were requested in a review. Auto-merge will be re-enabled when conditions are met again."
+          Reason: $DISABLE_REASON. Auto-merge will be re-enabled when conditions are met again."
             fi
             echo "outcome=disabled" >> "$GITHUB_OUTPUT"
           elif grep -qi "not enabled" <<< "$DISABLE_OUTPUT"; then
@@ -699,6 +771,7 @@ jobs:
           TOKEN_OUTCOME: ${{ steps.app-token.outcome }}
           APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
           PR_NUMBER: ${{ needs.evaluate.outputs.pr-number }}
+          DISABLE_REASON: ${{ needs.evaluate.outputs.disable-reason }}
         run: |
           OUTCOME="${ENABLE_OUTCOME:-${DISABLE_OUTCOME:-}}"
           if [[ "$TOKEN_OUTCOME" != "success" ]]; then
@@ -707,10 +780,11 @@ jobs:
           case "$OUTCOME" in
             enabled)            DESC="✅ Auto-merge enabled" ;;
             already-enabled)    DESC="✅ Auto-merge was already enabled" ;;
-            disabled)           DESC="🛑 Auto-merge disabled (changes requested)" ;;
+            disabled)           DESC="🛑 Auto-merge disabled ($DISABLE_REASON)" ;;
             not-enabled)        DESC="ℹ️ Auto-merge was not enabled" ;;
             skipped-not-open)   DESC="⏭️ Skipped (PR no longer open)" ;;
             skipped-head-moved) DESC="⏭️ Skipped (head moved since evaluation)" ;;
+            skipped-ineligible) DESC="⏭️ Skipped (PR no longer eligible since evaluation)" ;;
             failed)             DESC="❌ Failed to enable auto-merge" ;;
             failed-disable)     DESC="❌ Failed to disable auto-merge" ;;
             token-failed)       DESC="❌ Could not create the GitHub App token (App installed? key set in the 'auto-merge' environment?)" ;;
