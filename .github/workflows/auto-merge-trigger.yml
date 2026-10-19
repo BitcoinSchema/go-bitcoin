@@ -39,6 +39,8 @@ on:
     # - review_requested/review_request_removed: pending reviews
     # - reopened: a reopened PR may need arming again
     # - auto_merge_enabled: a manual arming with "Changes Requested" outstanding
+    #   (the App's own arming fires it too; that evaluation finds it already
+    #   enabled, and never cancels the apply job that armed it)
     # `auto_merge_disabled` is deliberately absent: re-evaluating it would re-arm a
     # PR a maintainer just disarmed. Use a WIP label to hold a PR instead.
     types:
@@ -68,9 +70,10 @@ jobs:
     #
     # `pull_request_review:submitted` fires for every review state —
     # "approved", "changes_requested" and "commented". Only the first
-    # two affect auto-merge state. A skipped run finishes as
-    # "skipped", which the evaluator ignores, so a pure "commented"
-    # review costs no evaluation at all.
+    # two affect auto-merge state. A run whose job is skipped
+    # concludes "skipped", which the evaluator ignores (it also
+    # confirms this job ran), so a pure "commented" review costs no
+    # evaluation at all.
     #
     # `pull_request_review:dismissed` always passes: the payload only
     # carries state "dismissed" (not what was dismissed), and removing
