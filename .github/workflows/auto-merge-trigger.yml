@@ -24,7 +24,8 @@
 #  its own job ran (by job name, so keep the names in sync) before doing
 #  anything. That check only saves runs: a PR can change this file, so no
 #  consumer trusts it to allow anything. (Revoking after a push does need it to
-#  run, which is why base branches should also dismiss stale approvals on push.)
+#  run, which is why Dependabot Auto-merge only approves when the base branch's
+#  rulesets dismiss stale approvals on push.)
 #
 #  Triggers:
 #  - Pull request reviews (submitted, dismissed)
