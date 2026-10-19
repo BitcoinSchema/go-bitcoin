@@ -32,7 +32,8 @@
 #    push workflows on the base branch.
 #
 #  Auto-merge Rules (configurable via .github/env/):
-#  - Minimum number of approvals
+#  - Minimum number of approvals of the PR's current head commit (an approval of
+#    an earlier commit doesn't cover what was pushed since)
 #  - No requested reviewers or teams remaining (if configured)
 #  - No "Changes Requested" reviews
 #  - PR ready for review (not draft, no WIP indicators)
@@ -400,14 +401,22 @@ jobs:
             // Only count approvals from users with write-ish access (OWNER/MEMBER/COLLABORATOR).
             // Prevents a drive-by APPROVED review from an external account from satisfying the
             // approval threshold. Defense-in-depth on top of branch protection + CODEOWNERS.
+            // Only approvals of the current head commit count: the base branch may keep
+            // approvals after a push, and an approval of commit A says nothing about B.
+            // "Changes Requested" blocks whichever commit it was left on.
             const TRUSTED_ASSOCIATIONS = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
-            const approvals = currentReviews.filter(r => r.state === 'APPROVED' && TRUSTED_ASSOCIATIONS.has(r.author_association)).length;
+            const trustedApprovals = currentReviews.filter(r => r.state === 'APPROVED' && TRUSTED_ASSOCIATIONS.has(r.author_association));
+            const approvals = trustedApprovals.filter(r => r.commit_id === pr.head.sha).length;
+            const staleApprovals = trustedApprovals.length - approvals;
             const changesRequested = currentReviews.filter(r => r.state === 'CHANGES_REQUESTED').length;
             // Users AND teams still asked to review
             const pendingReviews = (pr.requested_reviewers || []).length + (pr.requested_teams || []).length;
             const minApprovals = parseInt(process.env.MIN_APPROVALS, 10); // validated in "Extract configuration"
 
-            console.log(`👥 Reviews: ${approvals} approvals, ${changesRequested} changes requested, ${pendingReviews} pending`);
+            console.log(`👥 Reviews: ${approvals} approvals of ${pr.head.sha.slice(0, 7)}, ${changesRequested} changes requested, ${pendingReviews} pending`);
+            if (staleApprovals > 0) {
+              console.log(`ℹ️  ${staleApprovals} approval(s) of earlier commits not counted`);
+            }
             console.log(`✅ Required approvals: ${minApprovals}`);
 
             // The base branch must require status checks (ruleset or classic branch
@@ -460,7 +469,7 @@ jobs:
               blockers.push({ action: 'conditions-not-met', reason: 'changes requested' });
             }
             if (approvals < minApprovals) {
-              blockers.push({ action: 'conditions-not-met', reason: `approvals ${approvals}/${minApprovals}` });
+              blockers.push({ action: 'conditions-not-met', reason: `approvals of the latest commit ${approvals}/${minApprovals}` });
             }
             if (process.env.REQUIRE_ALL_REVIEWS === 'true' && pendingReviews > 0) {
               blockers.push({ action: 'conditions-not-met', reason: `${pendingReviews} review request(s) pending` });
@@ -476,8 +485,8 @@ jobs:
             // Revocation — state-based, so it runs before any guard can return:
             // - "Changes Requested" disables auto-merge whoever armed it.
             // - An arming by a bot (this workflow's App) lasts only while every
-            //   condition above still holds (an approval dismissed, the label
-            //   removed, a WIP label added...). The base branch may require fewer
+            //   condition above still holds (a new commit pushed, an approval
+            //   dismissed, the label removed, a WIP label added...). The base branch may require fewer
             //   approvals than this workflow, so GitHub alone would still merge.
             // - A maintainer who armed it by hand is otherwise left alone.
             // Any bot arming counts here (this job can't know the App's name); the
@@ -673,13 +682,13 @@ jobs:
             | @tsv' <<< "$PR_JSON")
 
           # Same counting rules as the evaluate job: latest verdict per reviewer,
-          # approvals only from OWNER/MEMBER/COLLABORATOR
-          REVIEW_COUNTS=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews?per_page=100" | jq -rs '
+          # approvals only of the current head commit and from OWNER/MEMBER/COLLABORATOR
+          REVIEW_COUNTS=$(gh api --paginate "repos/$REPO/pulls/$PR_NUMBER/reviews?per_page=100" | jq -rs --arg head "$CURRENT_SHA" '
             add // []
             | map(select(.state | IN("APPROVED", "CHANGES_REQUESTED", "DISMISSED")))
             | group_by(.user.id // "deleted-user:\(.id)")
             | map(max_by(.submitted_at))
-            | [ (map(select(.state == "APPROVED" and (.author_association | IN("OWNER", "MEMBER", "COLLABORATOR")))) | length),
+            | [ (map(select(.state == "APPROVED" and .commit_id == $head and (.author_association | IN("OWNER", "MEMBER", "COLLABORATOR")))) | length),
                 (map(select(.state == "CHANGES_REQUESTED")) | length) ]
             | @tsv')
           read -r APPROVALS CHANGES_REQUESTED <<< "$REVIEW_COUNTS"
@@ -711,7 +720,7 @@ jobs:
             BLOCKERS+=("changes requested")
           fi
           if [[ "$APPROVALS" -lt "$MIN_APPROVALS" ]]; then
-            BLOCKERS+=("approvals $APPROVALS/$MIN_APPROVALS")
+            BLOCKERS+=("approvals of the latest commit $APPROVALS/$MIN_APPROVALS")
           fi
           if [[ "$REQUIRE_ALL_REVIEWS" == "true" && "$PENDING_REVIEWS" -gt 0 ]]; then
             BLOCKERS+=("$PENDING_REVIEWS review request(s) pending")
