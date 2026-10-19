@@ -60,11 +60,12 @@ on:
 permissions: {}
 
 # --------------------------------------------------------------------
-# Concurrency Control
+# Concurrency Control — per job, not per workflow:
+# - `evaluate` is read-only, so a newer evaluation simply cancels an older one.
+# - `apply` must never be cancelled halfway (e.g. after enabling, before its
+#   comment and labels). The App's own changes start new runs, so applies queue
+#   instead; each one re-checks the PR on fresh data, so order doesn't matter.
 # --------------------------------------------------------------------
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
-  cancel-in-progress: true
 
 # --------------------------------------------------------------------
 # Environment Variables
@@ -87,13 +88,19 @@ jobs:
     name: 🤖 Auto-merge on Approval
     # Only completed (not skipped) trigger runs from PRs in this repository. Fork
     # PRs are never auto-merged (also enforced in the script), so skip them early.
+    # A trigger run whose gate skipped its job concludes "skipped"; the script
+    # also confirms the trigger job itself ran, so this never relies on that alone.
     if: |
       github.event.workflow_run.conclusion == 'success' &&
       contains(fromJSON('["pull_request_review", "pull_request"]'), github.event.workflow_run.event) &&
       github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-26.04
     timeout-minutes: 5
+    concurrency:
+      group: ${{ github.workflow }}-evaluate-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+      cancel-in-progress: true
     permissions:
+      actions: read # Required: Confirm the trigger job ran (not skipped by its gate)
       contents: read # Required: Sparse checkout for env files + read branch rules
       pull-requests: read # Required: Read PR state and reviews
     outputs:
@@ -220,6 +227,23 @@ jobs:
             core.setOutput('comment-on-enable', process.env.COMMENT_ON_ENABLE);
             core.setOutput('comment-on-disable', process.env.COMMENT_ON_DISABLE);
             core.setOutput('labels-to-add', process.env.LABELS_TO_ADD);
+
+            // ————————————————————————————————————————————————————————————————
+            // Only evaluate when the trigger job actually ran: its gate skips events
+            // that can't change the decision (comment-only reviews, body edits).
+            // This is just a wake-up filter — the PR's copy of the trigger decides
+            // it, so nothing below trusts it; everything is re-read from the API.
+            // ————————————————————————————————————————————————————————————————
+            const { data: { jobs: triggerJobs } } = await github.rest.actions.listJobsForWorkflowRun({
+              owner,
+              repo,
+              run_id: run.id,
+            });
+            if (!triggerJobs.some(job => job.conclusion === 'success')) {
+              console.log('⏭️ Trigger job was skipped by its event gate - nothing to evaluate');
+              core.setOutput('action', 'skip-trigger-gated');
+              return;
+            }
 
             // ————————————————————————————————————————————————————————————————
             // Resolve the PR. Nothing from the trigger run is trusted: only its
@@ -478,6 +502,7 @@ jobs:
             "skip-missing-automerge-label")  ACTION_DESC="🏷️ Skipped (missing automerge label)" ;;
             "skip-no-required-checks")       ACTION_DESC="🚫 Skipped (base branch requires no status checks)" ;;
             "skip-no-pr")                    ACTION_DESC="ℹ️ Skipped (no open PR for this run)" ;;
+            "skip-trigger-gated")            ACTION_DESC="ℹ️ Skipped (trigger event can't change the decision)" ;;
             "skip-not-open")                 ACTION_DESC="ℹ️ Skipped (PR not open)" ;;
             "conditions-not-met")            ACTION_DESC="⏳ Conditions not met" ;;
             *)                               ACTION_DESC="❓ Unknown action: $ACTION" ;;
@@ -541,6 +566,10 @@ jobs:
       contains(fromJSON('["enable", "disable"]'), needs.evaluate.outputs.action)
     runs-on: ubuntu-26.04
     timeout-minutes: 5
+    # Queue, never cancel: see "Concurrency Control" at the top
+    concurrency:
+      group: ${{ github.workflow }}-apply-${{ github.event.workflow_run.head_repository.full_name }}-${{ github.event.workflow_run.head_branch }}
+      cancel-in-progress: false
     environment:
       name: auto-merge
       deployment: false
@@ -704,6 +733,7 @@ jobs:
           if MERGE_OUTPUT=$(gh "${ARGS[@]}" 2>&1); then
             echo "$MERGE_OUTPUT"
             echo "✅ Auto-merge enabled! PR will merge when all status checks pass."
+            outcome enabled
           elif grep -qi "already enabled" <<< "$MERGE_OUTPUT"; then
             # Race: another run enabled it first
             echo "ℹ️  Auto-merge already enabled by another workflow run"
@@ -719,13 +749,14 @@ jobs:
           This might be due to:
           - Branch protection rules
           - Missing permissions
-          - Repository settings"
+          - Repository settings" || echo "⚠️ Could not post the failure comment"
             fi
             outcome failed
             exit 1
           fi
 
-          # Add comment if configured
+          # Comment and labels are best effort: auto-merge is already enabled, so a
+          # failure here must not skip the rest or fail the run
           if [[ "$COMMENT_ON_ENABLE" == "true" ]]; then
             gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" --silent -f body="🤖 **Auto-merge enabled**
 
@@ -733,7 +764,7 @@ jobs:
 
           ✅ Approvals: $APPROVALS/$MIN_APPROVALS
           🔍 Changes requested: $CHANGES_REQUESTED
-          ⏳ Pending reviews: $PENDING_REVIEWS"
+          ⏳ Pending reviews: $PENDING_REVIEWS" || echo "⚠️ Could not post the enable comment"
           fi
 
           # Add labels if configured
@@ -748,11 +779,12 @@ jobs:
             fi
           done
           if [[ ${#LABEL_ARGS[@]} -gt 0 ]]; then
-            gh api -X POST "repos/$REPO/issues/$PR_NUMBER/labels" --silent "${LABEL_ARGS[@]}"
-            echo "🏷️ Added labels: $LABELS_TO_ADD"
+            if gh api -X POST "repos/$REPO/issues/$PR_NUMBER/labels" --silent "${LABEL_ARGS[@]}"; then
+              echo "🏷️ Added labels: $LABELS_TO_ADD"
+            else
+              echo "⚠️ Could not add labels: $LABELS_TO_ADD"
+            fi
           fi
-
-          outcome enabled
 
       # --------------------------------------------------------------------
       # Disable auto-merge — same rule as the evaluate job, on fresh data:
@@ -804,6 +836,7 @@ jobs:
 
           if DISABLE_OUTPUT=$(gh pr merge "$PR_NUMBER" --repo "$REPO" --disable-auto 2>&1); then
             echo "🛑 Auto-merge disabled: $REASON"
+            outcome disabled
           elif grep -qi "not enabled" <<< "$DISABLE_OUTPUT"; then
             echo "ℹ️  Auto-merge was not enabled, no action needed"
             outcome not-enabled
@@ -824,17 +857,17 @@ jobs:
             label="${label%"${label##*[![:space:]]}"}"
             if [[ -n "$label" && "$label" != "$AUTOMERGE_LABEL" ]]; then
               ENCODED=$(jq -rn --arg l "$label" '$l | @uri')
-              gh api -X DELETE "repos/$REPO/issues/$PR_NUMBER/labels/$ENCODED" --silent 2>/dev/null \
-                && echo "🏷️ Removed label: $label" || true
+              if gh api -X DELETE "repos/$REPO/issues/$PR_NUMBER/labels/$ENCODED" --silent 2>/dev/null; then
+                echo "🏷️ Removed label: $label"
+              fi
             fi
           done
 
           if [[ "$COMMENT_ON_DISABLE" == "true" ]]; then
             gh api -X POST "repos/$REPO/issues/$PR_NUMBER/comments" --silent -f body="🛑 **Auto-merge disabled**
 
-          Reason: $REASON. Auto-merge will be re-enabled when conditions are met again."
+          Reason: $REASON. Auto-merge will be re-enabled when conditions are met again." || echo "⚠️ Could not post the disable comment"
           fi
-          outcome disabled
 
       # --------------------------------------------------------------------
       # Outcome summary

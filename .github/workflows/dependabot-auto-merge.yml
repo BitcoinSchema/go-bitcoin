@@ -23,8 +23,10 @@
 #
 #  Auto-merge Rules (configurable via .github/env/):
 #  - Patch updates (dev/indirect): Auto-merge by default
-#  - Patch updates (direct production): Manual review, unless every dependency
+#  - Patch updates (direct production, same-owner): Auto-merge when every dependency
 #    is owned by this repo's GitHub owner (DEPENDABOT_AUTO_MERGE_PATCH_SAME_OWNER)
+#  - Patch updates (direct production, third-party): Auto-merge by default
+#    (DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY; false = manual review)
 #  - Minor dev dependencies: Auto-merge by default
 #  - Minor prod dependencies: Configurable (DEPENDABOT_AUTO_MERGE_MINOR_PROD)
 #  - Major updates: Always require manual review with alert
@@ -167,6 +169,9 @@ jobs:
             echo "MAINTAINER=$MAINTAINER"
             echo "AUTO_MERGE_PATCH=$(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH')"
             echo "AUTO_MERGE_PATCH_SAME_OWNER=$(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH_SAME_OWNER // "false"')"
+            # Defaults to "true" when unset: third-party production patches auto-merge
+            # unless a repo opts out with DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY=false.
+            echo "AUTO_MERGE_PATCH_THIRD_PARTY=$(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY // "true"')"
             echo "AUTO_MERGE_MINOR_DEV=$(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_MINOR_DEV')"
             echo "AUTO_MERGE_MINOR_PROD=$(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_MINOR_PROD')"
             echo "AUTO_MERGE_PATCH_INDIRECT=$(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH_INDIRECT')"
@@ -183,6 +188,7 @@ jobs:
           echo "  👤 Maintainer: @$MAINTAINER"
           echo "  🔧 Auto-merge patch: $(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH')"
           echo "  🔧 Auto-merge patch same-owner prod: $(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH_SAME_OWNER // "false"')"
+          echo "  🔧 Auto-merge patch third-party prod: $(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY // "true"')"
           echo "  🔧 Auto-merge minor dev: $(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_MINOR_DEV')"
           echo "  🔧 Auto-merge minor prod: $(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_MINOR_PROD')"
           echo "  🔧 Auto-merge patch indirect: $(echo "$ENV_JSON" | jq -r '.DEPENDABOT_AUTO_MERGE_PATCH_INDIRECT')"
@@ -354,7 +360,9 @@ jobs:
       # Check whether every updated dependency is owned by this repo's owner
       #
       # Used to let production PATCH updates of first-party modules auto-merge
-      # while third-party production patches still require manual review.
+      # under DEPENDABOT_AUTO_MERGE_PATCH_SAME_OWNER. Third-party production
+      # patches are governed separately by DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY
+      # (manual review when that is false).
       # The owner comes from github.repository_owner (never hardcoded), so this
       # works unchanged in any org or user account the workflow is synced to.
       #
@@ -484,6 +492,7 @@ jobs:
           echo "  AUTO_MERGE_SECURITY: ${{ env.AUTO_MERGE_SECURITY }}"
           echo "  AUTO_MERGE_PATCH: ${{ env.AUTO_MERGE_PATCH }}"
           echo "  AUTO_MERGE_PATCH_SAME_OWNER: ${{ env.AUTO_MERGE_PATCH_SAME_OWNER }}"
+          echo "  AUTO_MERGE_PATCH_THIRD_PARTY: ${{ env.AUTO_MERGE_PATCH_THIRD_PARTY }}"
           echo "  AUTO_MERGE_PATCH_INDIRECT: ${{ env.AUTO_MERGE_PATCH_INDIRECT }}"
           echo "  AUTO_MERGE_MINOR_DEV: ${{ env.AUTO_MERGE_MINOR_DEV }}"
           echo "  AUTO_MERGE_MINOR_PROD: ${{ env.AUTO_MERGE_MINOR_PROD }}"
@@ -531,13 +540,23 @@ jobs:
             if [[ "$UPDATE_TYPE" == "version-update:semver-patch" ]]; then
               echo "  ✅ UPDATE_TYPE == patch"
               if [[ "$DEP_TYPE" == "direct:production" ]]; then
-                # SECURITY: never auto-merge NON-security THIRD-PARTY production patches. A
-                # malicious or broken patch release of a production dependency ships straight
-                # to users, so require a human. Genuine security patches are handled earlier by
-                # Rule 1. Exception: dependencies verified to live under this repo's own owner
-                # (see the same-owner check step) are first-party code, so they may auto-merge
-                # when AUTO_MERGE_PATCH_SAME_OWNER is enabled. Security updates are excluded as
-                # defense in depth (Rule 1 already routes them to manual review when disabled).
+                # SECURITY: a patch release of a production dependency ships straight to
+                # users, so these are split by who publishes the dependency:
+                #   - Same-owner: dependencies verified to live under this repo's own owner
+                #     (see the same-owner check step) are first-party code, and auto-merge
+                #     when AUTO_MERGE_PATCH_SAME_OWNER is enabled.
+                #   - Third-party: everything else (including names that could not be
+                #     verified as same-owner) auto-merges when AUTO_MERGE_PATCH_THIRD_PARTY
+                #     is enabled (the default), mirroring AUTO_MERGE_MINOR_PROD in Rule 5.
+                #     This trusts the upstream release: what still stands between a
+                #     malicious or broken patch and the base branch is the merge guards,
+                #     the base branch's required status checks, and Dependabot's
+                #     `cooldown` (set per repo in dependabot.yml) so a bad release can be
+                #     caught and yanked before Dependabot proposes it. Set it to false to
+                #     require a human for third-party production patches.
+                # Both paths require AUTO_MERGE_PATCH and exclude security updates as defense
+                # in depth: Rule 1 decides those (and routes them to manual review when
+                # security auto-merge is disabled). Major updates never reach this rule.
                 echo "  🔒 DEP_TYPE == direct:production"
                 if [[ "$IS_SECURITY" != "true" && "$SAME_OWNER" == "true" && "${{ env.AUTO_MERGE_PATCH_SAME_OWNER }}" == "true" && "${{ env.AUTO_MERGE_PATCH }}" == "true" ]]; then
                   echo "  ✅ SAME_OWNER == true (all dependencies owned by this repo's owner)"
@@ -545,14 +564,24 @@ jobs:
                   ACTION="auto-merge-patch-same-owner"
                   echo "  🎯 MATCH! Action: $ACTION"
                   echo "  📝 Reason: Production patch of a same-owner (first-party) dependency"
+                elif [[ "$IS_SECURITY" != "true" && "$SAME_OWNER" != "true" && "${{ env.AUTO_MERGE_PATCH_THIRD_PARTY }}" == "true" && "${{ env.AUTO_MERGE_PATCH }}" == "true" ]]; then
+                  echo "  ✅ SAME_OWNER != true (third-party dependency)"
+                  echo "  ✅ AUTO_MERGE_PATCH_THIRD_PARTY == true"
+                  ACTION="auto-merge-patch-third-party"
+                  echo "  🎯 MATCH! Action: $ACTION"
+                  echo "  📝 Reason: Production patch of a third-party dependency, auto-merge enabled (DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY)"
                 else
-                  echo "  ❌ Not eligible for same-owner auto-merge (SAME_OWNER=$SAME_OWNER, AUTO_MERGE_PATCH_SAME_OWNER=${{ env.AUTO_MERGE_PATCH_SAME_OWNER }}, AUTO_MERGE_PATCH=${{ env.AUTO_MERGE_PATCH }})"
+                  echo "  ❌ Not eligible for production patch auto-merge (IS_SECURITY=$IS_SECURITY, SAME_OWNER=$SAME_OWNER, AUTO_MERGE_PATCH_SAME_OWNER=${{ env.AUTO_MERGE_PATCH_SAME_OWNER }}, AUTO_MERGE_PATCH_THIRD_PARTY=${{ env.AUTO_MERGE_PATCH_THIRD_PARTY }}, AUTO_MERGE_PATCH=${{ env.AUTO_MERGE_PATCH }})"
                   ACTION="manual-review"
                   echo "  🎯 MATCH! Action: $ACTION"
-                  if [[ "$SAME_OWNER" == "true" ]]; then
+                  if [[ "$IS_SECURITY" == "true" ]]; then
+                    echo "  📝 Reason: Security update; the patch rules never auto-merge it (Rule 1 decides security updates)"
+                  elif [[ "$SAME_OWNER" == "true" ]]; then
                     echo "  📝 Reason: Same-owner production patch, but same-owner/patch auto-merge is disabled in configuration"
+                  elif [[ "${{ env.AUTO_MERGE_PATCH_THIRD_PARTY }}" != "true" ]]; then
+                    echo "  📝 Reason: Third-party production patch requires manual review (supply-chain safety): DEPENDABOT_AUTO_MERGE_PATCH_THIRD_PARTY is off"
                   else
-                    echo "  📝 Reason: Third-party production patch requires manual review (supply-chain safety)"
+                    echo "  📝 Reason: Third-party production patch requires manual review: patch auto-merge is disabled in configuration (DEPENDABOT_AUTO_MERGE_PATCH)"
                   fi
                 fi
               elif [[ "$DEP_TYPE" != "indirect" ]]; then
@@ -1135,22 +1164,23 @@ jobs:
           echo "📊 Generating workflow summary..."
 
           case "$ACTION" in
-            "auto-merge-patch")            ACTION_DESC="✅ Approve + auto-merge (patch update)" ;;
-            "auto-merge-patch-indirect")   ACTION_DESC="✅ Approve + auto-merge (patch update - indirect dependency)" ;;
-            "auto-merge-patch-same-owner") ACTION_DESC="✅ Approve + auto-merge (patch update - same-owner production dependency)" ;;
-            "auto-merge-minor-dev")        ACTION_DESC="✅ Approve + auto-merge (minor dev dependency)" ;;
-            "auto-merge-minor-prod")       ACTION_DESC="✅ Approve + auto-merge (minor prod dependency)" ;;
-            "auto-merge-minor-indirect")   ACTION_DESC="✅ Approve + auto-merge (minor update - indirect dependency)" ;;
-            "auto-merge-security")         ACTION_DESC="🔒 Approve + auto-merge (security update)" ;;
-            "revoke-foreign-push")         ACTION_DESC="🚫 Revoke bot approval + disarm auto-merge (someone else pushed to this PR)" ;;
-            "skip-untrusted-actor")        ACTION_DESC="🚫 Manual review required (run not triggered by Dependabot)" ;;
-            "skip-foreign-commits")        ACTION_DESC="🚫 Manual review required (commits not produced by Dependabot)" ;;
-            "skip-no-required-checks")     ACTION_DESC="🚫 Manual review required (base branch requires no status checks)" ;;
-            "alert-major")                 ACTION_DESC="⚠️ Manual review required (major update)" ;;
-            "alert-security-major")        ACTION_DESC="🚨 Manual review required (major security update)" ;;
-            "alert-minor-prod")            ACTION_DESC="🔍 Manual review suggested (minor prod update)" ;;
-            "manual-review")               ACTION_DESC="👀 Manual review required" ;;
-            *)                             ACTION_DESC="❓ Unknown action" ;;
+            "auto-merge-patch")             ACTION_DESC="✅ Approve + auto-merge (patch update)" ;;
+            "auto-merge-patch-indirect")    ACTION_DESC="✅ Approve + auto-merge (patch update - indirect dependency)" ;;
+            "auto-merge-patch-same-owner")  ACTION_DESC="✅ Approve + auto-merge (patch update - same-owner production dependency)" ;;
+            "auto-merge-patch-third-party") ACTION_DESC="✅ Approve + auto-merge (patch update - third-party production dependency)" ;;
+            "auto-merge-minor-dev")         ACTION_DESC="✅ Approve + auto-merge (minor dev dependency)" ;;
+            "auto-merge-minor-prod")        ACTION_DESC="✅ Approve + auto-merge (minor prod dependency)" ;;
+            "auto-merge-minor-indirect")    ACTION_DESC="✅ Approve + auto-merge (minor update - indirect dependency)" ;;
+            "auto-merge-security")          ACTION_DESC="🔒 Approve + auto-merge (security update)" ;;
+            "revoke-foreign-push")          ACTION_DESC="🚫 Revoke bot approval + disarm auto-merge (someone else pushed to this PR)" ;;
+            "skip-untrusted-actor")         ACTION_DESC="🚫 Manual review required (run not triggered by Dependabot)" ;;
+            "skip-foreign-commits")         ACTION_DESC="🚫 Manual review required (commits not produced by Dependabot)" ;;
+            "skip-no-required-checks")      ACTION_DESC="🚫 Manual review required (base branch requires no status checks)" ;;
+            "alert-major")                  ACTION_DESC="⚠️ Manual review required (major update)" ;;
+            "alert-security-major")         ACTION_DESC="🚨 Manual review required (major security update)" ;;
+            "alert-minor-prod")             ACTION_DESC="🔍 Manual review suggested (minor prod update)" ;;
+            "manual-review")                ACTION_DESC="👀 Manual review required" ;;
+            *)                              ACTION_DESC="❓ Unknown action" ;;
           esac
 
           if [[ "$ACTION" == auto-merge-* || "$FOREIGN_PUSH" == "true" ]]; then
@@ -1189,6 +1219,7 @@ jobs:
             echo "|---------|-------|"
             echo "| Auto-merge patch | ${AUTO_MERGE_PATCH} |"
             echo "| Auto-merge patch same-owner prod | ${AUTO_MERGE_PATCH_SAME_OWNER} |"
+            echo "| Auto-merge patch third-party prod | ${AUTO_MERGE_PATCH_THIRD_PARTY} |"
             echo "| Auto-merge minor dev | ${AUTO_MERGE_MINOR_DEV} |"
             echo "| Auto-merge minor prod | ${AUTO_MERGE_MINOR_PROD} |"
             echo "| Auto-merge patch indirect | ${AUTO_MERGE_PATCH_INDIRECT} |"
@@ -1317,14 +1348,15 @@ jobs:
           fi
 
           case "$ACTION" in
-            "auto-merge-patch")            APPROVAL_MSG="✅ Auto-approving patch update" ;;
-            "auto-merge-patch-indirect")   APPROVAL_MSG="✅ Auto-approving patch update (indirect dependency)" ;;
-            "auto-merge-patch-same-owner") APPROVAL_MSG="✅ Auto-approving patch update (same-owner production dependency)" ;;
-            "auto-merge-minor-dev")        APPROVAL_MSG="✅ Auto-approving minor development dependency update" ;;
-            "auto-merge-minor-prod")       APPROVAL_MSG="✅ Auto-approving minor production dependency update" ;;
-            "auto-merge-minor-indirect")   APPROVAL_MSG="✅ Auto-approving minor update (indirect dependency)" ;;
-            "auto-merge-security")         APPROVAL_MSG="🔒 Auto-approving security update" ;;
-            *)                             APPROVAL_MSG="✅ Auto-approving dependency update" ;;
+            "auto-merge-patch")             APPROVAL_MSG="✅ Auto-approving patch update" ;;
+            "auto-merge-patch-indirect")    APPROVAL_MSG="✅ Auto-approving patch update (indirect dependency)" ;;
+            "auto-merge-patch-same-owner")  APPROVAL_MSG="✅ Auto-approving patch update (same-owner production dependency)" ;;
+            "auto-merge-patch-third-party") APPROVAL_MSG="✅ Auto-approving patch update (third-party production dependency)" ;;
+            "auto-merge-minor-dev")         APPROVAL_MSG="✅ Auto-approving minor development dependency update" ;;
+            "auto-merge-minor-prod")        APPROVAL_MSG="✅ Auto-approving minor production dependency update" ;;
+            "auto-merge-minor-indirect")    APPROVAL_MSG="✅ Auto-approving minor update (indirect dependency)" ;;
+            "auto-merge-security")          APPROVAL_MSG="🔒 Auto-approving security update" ;;
+            *)                              APPROVAL_MSG="✅ Auto-approving dependency update" ;;
           esac
 
           # Step 1: approve. Idempotency guard: Dependabot fires `synchronize` on every
