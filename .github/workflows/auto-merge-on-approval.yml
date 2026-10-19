@@ -9,10 +9,12 @@
 #  centralized management across all workflows.
 #
 #  Triggers:
-#  - Completion of "Auto-merge Trigger" (auto-merge-trigger.yml), which runs on
-#    pull request reviews (submitted, dismissed) and on every pull request change
-#    that can flip a condition below (pushes, title, labels, draft state, review
-#    requests, reopening, manual arming)
+#  - Completion of "Auto-merge Trigger" (auto-merge-trigger.yml) when its
+#    "📨 Queue auto-merge evaluation" job ran: pull request reviews (submitted,
+#    dismissed) and every pull request change that can flip a condition below
+#    (pushes, title, labels, draft state, review requests, reopening, manual
+#    arming). The trigger also queues "Dependabot Auto-merge" and fork "PR
+#    Management" runs; this workflow skips those right away, before any checkout.
 #
 #  Why two workflows: review events always run the PR's own copy of a workflow,
 #  so they can never be trusted with the GitHub App key. `workflow_run` always
@@ -50,8 +52,13 @@ name: Auto-merge on Approval
 
 # --------------------------------------------------------------------
 # Trigger Configuration
+#
+# zizmor's dangerous-triggers audit flags every `workflow_run` trigger. This one
+# uses no artifacts, outputs or code from the triggering run: `evaluate` re-reads
+# the PR from the API, and `apply` re-checks it and pins arming to the evaluated
+# head commit (see "Why two workflows" above).
 # --------------------------------------------------------------------
-on:
+on: # zizmor: ignore[dangerous-triggers] see "Trigger Configuration" above
   workflow_run:
     workflows: ["Auto-merge Trigger"]
     types: [completed]
@@ -91,8 +98,9 @@ jobs:
     name: 🤖 Auto-merge on Approval
     # Only completed (not skipped) trigger runs from PRs in this repository. Fork
     # PRs are never auto-merged (also enforced in the script), so skip them early.
-    # A trigger run whose gate skipped its job concludes "skipped"; the script
-    # also confirms the trigger job itself ran, so this never relies on that alone.
+    # A trigger run whose jobs all skipped concludes "skipped"; the first step also
+    # confirms the trigger's evaluation job itself ran (its other jobs queue other
+    # workflows), so this never relies on the conclusion alone.
     if: |
       github.event.workflow_run.conclusion == 'success' &&
       contains(fromJSON('["pull_request_review", "pull_request"]'), github.event.workflow_run.event) &&
@@ -104,7 +112,7 @@ jobs:
       contents: read # Required: Sparse checkout for env files + read branch rules
       pull-requests: read # Required: Read PR state and reviews
     outputs:
-      action: ${{ steps.process.outputs.action }}
+      action: ${{ steps.process.outputs.action || steps.gate.outputs.action }}
       pr-number: ${{ steps.process.outputs.pr-number }}
       disable-reason: ${{ steps.process.outputs.disable-reason }}
       merge-type: ${{ steps.process.outputs.merge-type }}
@@ -122,9 +130,40 @@ jobs:
 
     steps:
       # --------------------------------------------------------------------
+      # Only evaluate when the trigger's evaluation job actually ran: its gate
+      # skips events that can't change the decision (comment-only reviews,
+      # body edits), and its other jobs only queue Dependabot Auto-merge and
+      # fork PR Management. Checked first, so those runs end here cheaply.
+      # This is just a wake-up filter: the PR's copy of the trigger decides
+      # it, so nothing below trusts it; everything is re-read from the API.
+      # --------------------------------------------------------------------
+      - name: 🚦 Confirm the trigger queued an evaluation
+        id: gate
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        env:
+          # The trigger job that queues this workflow (auto-merge-trigger.yml)
+          QUEUE_JOB: "📨 Queue auto-merge evaluation"
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { data: { jobs: triggerJobs } } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            if (triggerJobs.some(job => job.name === process.env.QUEUE_JOB && job.conclusion === 'success')) {
+              core.setOutput('queued', 'true');
+            } else {
+              console.log(`⏭️ "${process.env.QUEUE_JOB}" did not run for this event - nothing to evaluate`);
+              core.setOutput('queued', 'false');
+              core.setOutput('action', 'skip-trigger-gated');
+            }
+
+      # --------------------------------------------------------------------
       # Check out code to access env file
       # --------------------------------------------------------------------
       - name: 📥 Checkout code (sparse)
+        if: steps.gate.outputs.queued == 'true'
         # SECURITY: on workflow_run, github.sha is the latest commit on the DEFAULT
         # branch — the same commit this workflow file came from — so the local
         # ./.github/actions/load-env action is never a PR-controlled version.
@@ -141,12 +180,14 @@ jobs:
       # --------------------------------------------------------------------
       - name: 🌍 Load environment variables
         id: load-env
+        if: steps.gate.outputs.queued == 'true'
         uses: ./.github/actions/load-env
 
       # --------------------------------------------------------------------
       # Extract auto-merge configuration up-front
       # --------------------------------------------------------------------
       - name: 🔧 Extract configuration
+        if: steps.gate.outputs.queued == 'true'
         env:
           ENV_JSON: ${{ steps.load-env.outputs.env-json }}
           APP_CLIENT_ID: ${{ vars.AUTO_MERGE_APP_CLIENT_ID }}
@@ -206,6 +247,7 @@ jobs:
       # --------------------------------------------------------------------
       - name: 🔍 Check conditions
         id: process
+        if: steps.gate.outputs.queued == 'true'
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -227,47 +269,42 @@ jobs:
             core.setOutput('comment-on-disable', process.env.COMMENT_ON_DISABLE);
             core.setOutput('labels-to-add', process.env.LABELS_TO_ADD);
 
-            // ————————————————————————————————————————————————————————————————
-            // Only evaluate when the trigger job actually ran: its gate skips events
-            // that can't change the decision (comment-only reviews, body edits).
-            // This is just a wake-up filter — the PR's copy of the trigger decides
-            // it, so nothing below trusts it; everything is re-read from the API.
-            // ————————————————————————————————————————————————————————————————
-            const { data: { jobs: triggerJobs } } = await github.rest.actions.listJobsForWorkflowRun({
-              owner,
-              repo,
-              run_id: run.id,
-            });
-            if (!triggerJobs.some(job => job.conclusion === 'success')) {
-              console.log('⏭️ Trigger job was skipped by its event gate - nothing to evaluate');
-              core.setOutput('action', 'skip-trigger-gated');
-              return;
-            }
+            // (The "🚦 Confirm the trigger queued an evaluation" step already checked
+            // that the trigger's evaluation job ran.)
 
             // ————————————————————————————————————————————————————————————————
             // Resolve the PR. Nothing from the trigger run is trusted: only its
             // head branch/SHA are used to find the PR, then everything is
-            // re-read from the API.
+            // re-read from the API. Only PRs in this repository count (the
+            // payload can list PRs of other repositories with the same head),
+            // and a head shared by several PRs is skipped, never guessed.
             // ————————————————————————————————————————————————————————————————
-            let prNumber = (run.pull_requests || [])
-              .find(p => p.head && p.head.sha === run.head_sha)?.number;
-            if (!prNumber) {
+            const candidates = new Set((run.pull_requests || [])
+              .filter(p => p.head?.sha === run.head_sha && p.base?.repo?.id === context.payload.repository.id)
+              .map(p => p.number));
+            if (candidates.size === 0) {
               const { data: associated } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
                 owner,
                 repo,
                 commit_sha: run.head_sha,
               });
-              prNumber = associated.find(p =>
-                p.state === 'open' &&
-                p.head?.ref === run.head_branch &&
-                p.head?.repo?.full_name === `${owner}/${repo}`
-              )?.number;
+              for (const p of associated) {
+                if (p.state === 'open' && p.head?.ref === run.head_branch && p.head?.repo?.full_name === `${owner}/${repo}`) {
+                  candidates.add(p.number);
+                }
+              }
             }
-            if (!prNumber) {
+            if (candidates.size === 0) {
               console.log(`ℹ️  No open pull request found for ${run.head_branch} @ ${run.head_sha}`);
               core.setOutput('action', 'skip-no-pr');
               return;
             }
+            if (candidates.size > 1) {
+              console.log(`ℹ️  Several pull requests (#${[...candidates].join(', #')}) have head ${run.head_sha} - none is acted on`);
+              core.setOutput('action', 'skip-ambiguous-pr');
+              return;
+            }
+            const [prNumber] = candidates;
 
             console.log(`🔍 Checking auto-merge conditions for PR #${prNumber}`);
             console.log('════════════════════════════════════════════════════════════════');
@@ -480,11 +517,21 @@ jobs:
         if: always()
         env:
           PR_NUMBER: ${{ steps.process.outputs.pr-number }}
-          ACTION: ${{ steps.process.outputs.action }}
+          ACTION: ${{ steps.process.outputs.action || steps.gate.outputs.action }}
           DISABLE_REASON: ${{ steps.process.outputs.disable-reason }}
           APP_CLIENT_ID: ${{ vars.AUTO_MERGE_APP_CLIENT_ID }}
         run: |
           echo "📊 Generating workflow summary..."
+
+          # Not queued by the trigger: no configuration was loaded, keep it short
+          if [[ "$ACTION" == "skip-trigger-gated" ]]; then
+            {
+              echo "# 🤖 Auto-merge on Approval Summary"
+              echo ""
+              echo "ℹ️ Skipped: the trigger didn't queue an evaluation for this event (it can't change the decision, or it was for another workflow)."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
 
           # Determine action taken
           case "$ACTION" in
@@ -499,6 +546,7 @@ jobs:
             "skip-missing-automerge-label")  ACTION_DESC="🏷️ Skipped (missing automerge label)" ;;
             "skip-no-required-checks")       ACTION_DESC="🚫 Skipped (base branch requires no status checks)" ;;
             "skip-no-pr")                    ACTION_DESC="ℹ️ Skipped (no open PR for this run)" ;;
+            "skip-ambiguous-pr")             ACTION_DESC="ℹ️ Skipped (several PRs share this head commit)" ;;
             "skip-trigger-gated")            ACTION_DESC="ℹ️ Skipped (trigger event can't change the decision)" ;;
             "skip-not-open")                 ACTION_DESC="ℹ️ Skipped (PR not open)" ;;
             "conditions-not-met")            ACTION_DESC="⏳ Conditions not met" ;;
@@ -611,6 +659,9 @@ jobs:
           REQUIRE_LABEL: ${{ needs.evaluate.outputs.require-label }}
           AUTOMERGE_LABEL: ${{ needs.evaluate.outputs.automerge-label }}
         run: |
+          # pipefail: a failed review listing below must fail this step (and so
+          # skip enabling/disabling), not count as zero approvals
+          set -o pipefail
           PR_JSON=$(gh api "repos/$REPO/pulls/$PR_NUMBER")
           read -r STATE CURRENT_SHA ARMED ARMED_BY_APP DRAFT PENDING_REVIEWS HAS_LABEL IS_WIP < <(jq -r \
             --arg app_bot "$APP_BOT" --arg label "$AUTOMERGE_LABEL" --arg wip "$WIP_LABELS" '
