@@ -60,11 +60,15 @@
 #  - The bot approval and the App's auto-merge only stand while the latest
 #    evaluation allows them. Every evaluation that doesn't approve (a commit
 #    Dependabot didn't produce, a run someone else triggered, an update that now
-#    needs review, unreadable metadata, a failed analysis) revokes them. A push
-#    by anyone else also disarms an auto-merge armed by hand. This needs the
-#    trigger to run for that push. A pusher who also edits the trigger in the
-#    same push can prevent that, so base branches should also dismiss stale
-#    approvals on push (see .github/docs/auto-merge-github-app.md)
+#    needs review, unreadable metadata, a PR that couldn't be verified, a failed
+#    analysis) revokes them. A push by anyone else also disarms an auto-merge
+#    armed by hand.
+#  - Revoking needs the trigger to run for the push, and a pusher who also edits
+#    the trigger in the same push can prevent that. So the bot only approves
+#    when the base branch's rulesets require an approval and void it on a new
+#    push (dismiss stale approvals, or require approval of the most recent
+#    push): GitHub then drops the bot approval whatever the workflows do (see
+#    .github/docs/auto-merge-github-app.md)
 #  - The approval and auto-merge are pinned to the verified head commit
 #
 #  Maintainer: @mrz1836
@@ -129,6 +133,8 @@ jobs:
   #                         `analyze` decides what to do with it
   #   revoke-foreign-push → the PR has a commit Dependabot didn't produce
   #   manual-no-metadata  → Dependabot's metadata can't be read: manual review
+  #   revoke-unverified   → the PR is known, but a GitHub API read failed before
+  #                         it was verified: revoke (fail closed, re-run to retry)
   #   skip-*              → not a PR this workflow acts on, or no longer at the
   #                         triggering commit: nothing to do (reason in the summary)
   # Every result but skip-* reaches `apply`, which approves the verified head
@@ -178,6 +184,8 @@ jobs:
           QUEUE_JOB: "📨 Queue Dependabot auto-merge"
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          # Retry transient API errors (5xx); a read that still fails revokes below
+          retries: 3
           script: |
             const { owner, repo } = context.repo;
             const repoFullName = `${owner}/${repo}`;
@@ -345,14 +353,20 @@ jobs:
             // ——————————————————————————————————————————————————————————————————
             // 1. Wake-up filter. The trigger's PR-side run decides this, so it is
             //    only used to skip events that queue nothing (labels, edits, the
-            //    App's own arming...). Never a security check.
+            //    App's own arming...). Never a security check. If the jobs can't
+            //    be listed, evaluate anyway: skipping could skip a revocation.
             // ——————————————————————————————————————————————————————————————————
-            const { data: { jobs: triggerJobs } } = await github.rest.actions.listJobsForWorkflowRun({
-              owner,
-              repo,
-              run_id: run.id,
-            });
-            if (!triggerJobs.some(job => job.name === process.env.QUEUE_JOB && job.conclusion === 'success')) {
+            let triggerJobs = null;
+            try {
+              ({ data: { jobs: triggerJobs } } = await github.rest.actions.listJobsForWorkflowRun({
+                owner,
+                repo,
+                run_id: run.id,
+              }));
+            } catch (error) {
+              core.warning(`Couldn't list the trigger run's jobs (${error.status ?? error.message}), so this run evaluates the PR anyway`);
+            }
+            if (triggerJobs && !triggerJobs.some(job => job.name === process.env.QUEUE_JOB && job.conclusion === 'success')) {
               return finish('skip-trigger-gated', `The trigger didn't queue a Dependabot evaluation for this event ("${process.env.QUEUE_JOB}" did not run)`);
             }
 
@@ -385,11 +399,29 @@ jobs:
             const [prNumber] = candidates;
             console.log(`🔗 PR #${prNumber} (found via ${source})`);
 
+            // From here on the PR is known, so a failed read must not end the run
+            // without a result: `apply` would then not run, and an approval and
+            // auto-merge from an earlier evaluation would outlive a push. Revoke
+            // instead (fail closed); `apply` re-reads the PR before touching it.
+            const unverified = (what, error) => {
+              core.warning(`PR #${prNumber}: couldn't ${what} (${error.message}), so any earlier bot approval and auto-merge are revoked`);
+              return finish('revoke-unverified', `Couldn't ${what} (${error.status ?? error.message}), so PR #${prNumber} at ${run.head_sha} is unverified`, {
+                'pr-number': String(prNumber),
+                'head-sha': run.head_sha,
+                actor: run.actor?.login ?? '',
+              });
+            };
+
             // ——————————————————————————————————————————————————————————————————
             // 3. Re-read the PR: open, opened by Dependabot, not a fork, and still
             //    on the exact commit the trigger ran for.
             // ——————————————————————————————————————————————————————————————————
-            const { data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber });
+            let pr;
+            try {
+              ({ data: pr } = await github.rest.pulls.get({ owner, repo, pull_number: prNumber }));
+            } catch (error) {
+              return unverified('read the PR', error);
+            }
             const prOutputs = { 'pr-number': String(pr.number) };
             console.log(`📋 PR #${pr.number}: state=${pr.state}, author=${pr.user?.login ?? '<deleted>'}, head=${pr.head?.repo?.full_name ?? '<deleted>'} @ ${pr.head?.sha}`);
             if (pr.state !== 'open') {
@@ -421,12 +453,17 @@ jobs:
               c.author?.login === DEPENDABOT &&
               c.committer?.login === 'web-flow' &&
               c.commit?.verification?.verified === true;
-            const commits = await github.paginate(github.rest.pulls.listCommits, {
-              owner,
-              repo,
-              pull_number: pr.number,
-              per_page: 100,
-            });
+            let commits;
+            try {
+              commits = await github.paginate(github.rest.pulls.listCommits, {
+                owner,
+                repo,
+                pull_number: pr.number,
+                per_page: 100,
+              });
+            } catch (error) {
+              return unverified('list the PR commits', error);
+            }
             if (commits.length === 0) {
               return finish('manual-no-metadata', `PR #${pr.number} has no commits`, verified);
             }
@@ -443,8 +480,14 @@ jobs:
             // ——————————————————————————————————————————————————————————————————
             // 5. Dependabot metadata from the verified head commit's message.
             // ——————————————————————————————————————————————————————————————————
-            const headCommit = commits.find(c => c.sha === pr.head.sha)
-              ?? (await github.rest.repos.getCommit({ owner, repo, ref: pr.head.sha })).data;
+            let headCommit = commits.find(c => c.sha === pr.head.sha);
+            if (!headCommit) {
+              try {
+                ({ data: headCommit } = await github.rest.repos.getCommit({ owner, repo, ref: pr.head.sha }));
+              } catch (error) {
+                return unverified('read the head commit', error);
+              }
+            }
             if (!isDependabotCommit(headCommit)) {
               return finish('revoke-foreign-push', `Head commit ${pr.head.sha} wasn't produced by Dependabot`, verified);
             }
@@ -1207,12 +1250,14 @@ jobs:
       #      checked this; it is re-checked here in case of a push since then.
       #   4. The base branch must require status checks (ruleset or classic
       #      branch protection). Otherwise "auto-merge" would merge before CI.
+      #   5. The base branch's rulesets must require an approval AND drop it on
+      #      a new push (dismiss stale approvals, or require approval of the
+      #      most recent push). Revoking after someone else pushes needs the
+      #      PR-side trigger to run, and the pusher controls that file, so
+      #      GitHub itself must make an approval of older content worthless.
       # Any action other than auto-merge-* also makes `apply` revoke a bot
       # approval and auto-merge left by an earlier evaluation, so a later push
       # (by Dependabot or anyone else) never rides an approval of older content.
-      # It also warns, without blocking, when the base branch's rulesets require
-      # approvals but keep them after new pushes. Revoking needs the PR-side
-      # trigger to run for the push, so "dismiss stale approvals" is the backstop.
       # Fails closed: any API error leaves the PR for manual review.
       # --------------------------------------------------------------------
       - name: 🛡️ Apply merge guards
@@ -1278,15 +1323,20 @@ jobs:
             finish skip-no-required-checks "🚫 '$BASE_REF' requires no status checks — auto-merge would merge before CI"
           fi
 
-          # Advisory (never blocks): rulesets that require approvals but keep them
-          # after new pushes. Classic branch protection isn't readable with this token.
-          STALE_APPROVALS_KEPT=$(jq '
+          # Guard 5: a new push must void the bot approval. A pusher who also edits
+          # the PR-side trigger stops the revocation, so the base branch has to
+          # require an approval (else an armed auto-merge merges whatever is pushed)
+          # and drop it on push. Classic branch protection's review settings
+          # aren't readable with this token, so only rulesets count.
+          APPROVALS_VOIDED_ON_PUSH=$(jq '
             [.[] | select(.type == "pull_request") | .parameters // {}] as $rules
             | (($rules | map(.required_approving_review_count // 0) | max // 0) > 0)
-              and (($rules | any(.dismiss_stale_reviews_on_push == true or .require_last_push_approval == true)) | not)' \
+              and ($rules | any(.dismiss_stale_reviews_on_push == true or .require_last_push_approval == true))' \
             <<< "$RULES_JSON" 2>/dev/null || echo false)
-          if [[ "$STALE_APPROVALS_KEPT" == "true" ]]; then
-            echo "::warning title=Approvals survive new pushes on $BASE_REF::Turn on \"Dismiss stale pull request approvals when new commits are pushed\" (or \"Require approval of the most recent reviewable push\") in the ruleset. Revoking the bot approval after someone else pushes needs the PR-side trigger to run, and a pusher who edits the trigger can stop it."
+          echo "  Rulesets on '$BASE_REF' require an approval that a new push voids: $APPROVALS_VOIDED_ON_PUSH"
+          if [[ "$APPROVALS_VOIDED_ON_PUSH" != "true" ]]; then
+            echo "::warning title=Approvals survive new pushes on $BASE_REF::Dependabot auto-merge is off until a ruleset on $BASE_REF requires at least one approval and turns on \"Dismiss stale pull request approvals when new commits are pushed\" (or \"Require approval of the most recent reviewable push\"). Otherwise someone who pushes to the PR and edits the PR-side trigger could ride the bot approval. See .github/docs/auto-merge-github-app.md"
+            finish skip-stale-approvals-kept "🚫 '$BASE_REF' keeps approvals after new pushes (or requires none) — a bot approval could cover code pushed later"
           fi
 
           finish "$ACTION" "✅ All merge guards passed"
@@ -1615,6 +1665,7 @@ jobs:
             "skip-untrusted-actor")         ACTION_DESC="🚫 Manual review required (run not triggered by Dependabot)" ;;
             "skip-foreign-commits")         ACTION_DESC="🚫 Manual review required (commits not produced by Dependabot)" ;;
             "skip-no-required-checks")      ACTION_DESC="🚫 Manual review required (base branch requires no status checks)" ;;
+            "skip-stale-approvals-kept")    ACTION_DESC="🚫 Manual review required (base branch keeps approvals after new pushes, or requires none)" ;;
             "alert-major")                  ACTION_DESC="⚠️ Manual review required (major update)" ;;
             "alert-security-major")         ACTION_DESC="🚨 Manual review required (major security update)" ;;
             "alert-minor-prod")             ACTION_DESC="🔍 Manual review suggested (minor prod update)" ;;
@@ -1710,9 +1761,10 @@ jobs:
   #   approve → the decision is auto-merge-*: approve the verified head commit and
   #             arm auto-merge for it
   #   revoke  → anything else (a commit Dependabot didn't produce, unreadable
-  #             metadata, a decision that doesn't auto-merge, a failed analysis):
-  #             disarm the App's auto-merge (or any auto-merge after a push by
-  #             someone else), then dismiss the App's approvals. A failed call
+  #             metadata, a PR that couldn't be verified, a decision that doesn't
+  #             auto-merge, a failed analysis): disarm the App's auto-merge (or any
+  #             auto-merge after a push by someone else), then dismiss the App's
+  #             approvals. Only ever on a same-repo Dependabot PR. A failed call
   #             doesn't skip the rest: everything is attempted, then the job fails
   #             and the PR comment says what's left. Once the head has moved, a
   #             newer evaluation decides it: an App approval of the current head
@@ -1737,7 +1789,7 @@ jobs:
     if: |
       !cancelled() &&
       vars.AUTO_MERGE_APP_CLIENT_ID != '' &&
-      contains(fromJSON('["analyze", "revoke-foreign-push", "manual-no-metadata"]'), needs.verify.outputs.result)
+      contains(fromJSON('["analyze", "revoke-foreign-push", "manual-no-metadata", "revoke-unverified"]'), needs.verify.outputs.result)
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     # Queue, never cancel: see "Concurrency Control" at the top
@@ -1921,6 +1973,8 @@ jobs:
             fi
           elif [[ "$VERIFY_RESULT" == "manual-no-metadata" ]]; then
             WHY="Dependabot's update metadata couldn't be read from commit $SHORT_SHA"
+          elif [[ "$VERIFY_RESULT" == "revoke-unverified" ]]; then
+            WHY="Commit $SHORT_SHA couldn't be verified (a GitHub API read failed)"
           elif [[ "$ANALYZE_RESULT" != "success" ]]; then
             WHY="The analysis of commit $SHORT_SHA didn't complete"
           elif [[ "$ACTION" == "skip-untrusted-actor" ]]; then
@@ -1944,9 +1998,18 @@ jobs:
           STATE=$(jq -r '.state' <<< "$PR_JSON")
           CURRENT_SHA=$(jq -r '.head.sha' <<< "$PR_JSON")
           ARMED_BY=$(jq -r 'if .auto_merge == null then "" else (.auto_merge.enabled_by.login // "unknown") end' <<< "$PR_JSON")
+          AUTHOR=$(jq -r '.user.login // ""' <<< "$PR_JSON")
+          HEAD_REPO=$(jq -r '.head.repo.full_name // ""' <<< "$PR_JSON")
           if [[ "$STATE" != "open" ]]; then
             echo "⏭️ PR is $STATE — nothing to revoke"
             outcome skipped-not-open
+            exit 0
+          fi
+          # `verify` hands over a PR it couldn't read as revoke-unverified, so check
+          # here that this is a same-repo Dependabot PR before touching it
+          if [[ "$AUTHOR" != "dependabot[bot]" || "$HEAD_REPO" != "$REPO" ]]; then
+            echo "⏭️ Not a same-repo Dependabot PR (author ${AUTHOR:-<deleted>}, head ${HEAD_REPO:-<deleted>}) — refusing"
+            outcome skipped-not-dependabot
             exit 0
           fi
 
