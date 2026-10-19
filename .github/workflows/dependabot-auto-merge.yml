@@ -156,7 +156,10 @@ jobs:
       contents: read # Required: Read commits (author, signature, message)
       pull-requests: read # Required: Re-read the PR and list its commits
     outputs:
-      result: ${{ steps.verify.outputs.result }}
+      # The step's `decision`, not its `result`: actions/github-script sets its
+      # own `result` output (the script's return value) after the script runs,
+      # which would overwrite one the script set.
+      result: ${{ steps.verify.outputs.decision }}
       reason: ${{ steps.verify.outputs.reason }}
       pr-number: ${{ steps.verify.outputs.pr-number }}
       head-sha: ${{ steps.verify.outputs.head-sha }}
@@ -192,13 +195,15 @@ jobs:
             const run = context.payload.workflow_run;
             const DEPENDABOT = 'dependabot[bot]';
 
-            // Every exit goes through finish(), so `result` is set exactly once.
+            // Every exit goes through finish(), so `decision` is set exactly once.
+            // Not `result`: github-script overwrites that output with the
+            // script's return value (empty here) once the script returns.
             const finish = (result, reason, outputs = {}) => {
               for (const [key, value] of Object.entries(outputs)) {
                 core.setOutput(key, value ?? '');
               }
               core.setOutput('reason', reason);
-              core.setOutput('result', result);
+              core.setOutput('decision', result);
               console.log('════════════════════════════════════════════════════════════════');
               console.log(`🎯 RESULT: ${result}`);
               console.log(`📝 Reason: ${reason}`);
@@ -522,7 +527,7 @@ jobs:
       - name: 📊 Generate verification summary
         if: always()
         env:
-          RESULT: ${{ steps.verify.outputs.result }}
+          RESULT: ${{ steps.verify.outputs.decision }}
           REASON: ${{ steps.verify.outputs.reason }}
           PR_NUMBER: ${{ steps.verify.outputs.pr-number }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
