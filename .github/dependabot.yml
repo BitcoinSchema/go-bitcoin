@@ -17,7 +17,7 @@
 #   • PR titles prefixed with chore(scope): – conventional commits.
 #   • Force‑push and delete‑branch disabled via branch‑protection rules.
 #   • PR limit = 10 to avoid queue flooding.
-#   • Cooldown – version updates wait 3 days after a release (gomod: patch 3 / minor 7 / major 14 days); security updates are never delayed; first-party bsv-blockchain modules update at once.
+#   • Cooldown – version updates wait 3 days after a release (gomod: patch 3 / minor 7 / major 14 days); security updates are never delayed; first-party bsv-blockchain modules and trusted publishers (actions/*, github/*, gitleaks/*, ossf/*, devcontainers features) update at once.
 #   • All dependency PRs require passing CI checks before merging.
 # ────────────────────────────────────────────────────────────────
 
@@ -68,6 +68,7 @@ updates:
       timezone: "America/New_York"
     cooldown:
       default-days: 3
+      exclude: ["actions/*", "github/*", "gitleaks/*", "ossf/*"]
     allow:
       - dependency-type: "direct"
     groups:
@@ -93,6 +94,7 @@ updates:
       timezone: "America/New_York"
     cooldown:
       default-days: 3
+      exclude: ["ghcr.io/devcontainers/features/*"]
     allow:
       - dependency-type: "direct"
     groups:
