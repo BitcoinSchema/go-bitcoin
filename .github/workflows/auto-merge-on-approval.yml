@@ -436,10 +436,13 @@ jobs:
             let requiredChecks = null;
             let approvalsVoidedOnPush = null;
             try {
-              const { data: rules } = await github.request('GET /repos/{owner}/{repo}/rules/branches/{branch}', {
+              // Paginated (30 rules per page by default): a rule on a later page
+              // would otherwise be missed, and every check below would fail closed
+              const rules = await github.paginate('GET /repos/{owner}/{repo}/rules/branches/{branch}', {
                 owner,
                 repo,
                 branch: pr.base.ref,
+                per_page: 100,
               });
               const rulesetChecks = rules
                 .filter(r => r.type === 'required_status_checks')
@@ -719,10 +722,11 @@ jobs:
           # Required status checks on the CURRENT base (ruleset or classic branch
           # protection), and whether its rulesets require an approval that a new
           # push voids. Empty = couldn't read them, which fails closed below.
+          # The rules are paginated; pipefail makes a failed page fail the read.
           BASE=$(jq -r '.base.ref | @uri' <<< "$PR_JSON")
           REQUIRED_CHECKS=""
           APPROVALS_VOIDED_ON_PUSH=""
-          if RULES=$(gh api "repos/$REPO/rules/branches/$BASE" 2>/dev/null) &&
+          if RULES=$(gh api --paginate "repos/$REPO/rules/branches/$BASE?per_page=100" 2>/dev/null | jq -s 'add // []') &&
              BRANCH=$(gh api "repos/$REPO/branches/$BASE" 2>/dev/null); then
             REQUIRED_CHECKS=$(jq -n --argjson rules "$RULES" --argjson branch "$BRANCH" '
               ([$rules[] | select(.type == "required_status_checks") | .parameters.required_status_checks // [] | length] | add // 0)
