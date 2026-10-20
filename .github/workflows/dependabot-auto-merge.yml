@@ -1319,7 +1319,11 @@ jobs:
           echo "  ✅ All commits authored by dependabot[bot] and signed by GitHub"
 
           # Guard 4: the base branch must require status checks
-          RULES_JSON=$(gh api "repos/$REPO/rules/branches/$BASE_REF" 2>/dev/null || echo '[]')
+          # All pages of the rules (a rule on a later page would otherwise be missed).
+          # pipefail (in this subshell only): a failed read becomes [], not gh's error body.
+          if ! RULES_JSON=$(set -o pipefail; gh api --paginate "repos/$REPO/rules/branches/$BASE_REF?per_page=100" 2>/dev/null | jq -s 'add // []'); then
+            RULES_JSON='[]'
+          fi
           RULESET_CHECKS=$(jq '[.[] | select(.type == "required_status_checks") | .parameters.required_status_checks[]?] | length' <<< "$RULES_JSON" 2>/dev/null || echo 0)
           CLASSIC_CHECKS=$(gh api "repos/$REPO/branches/$BASE_REF" \
             --jq 'if (.protection.required_status_checks.enforcement_level // "off") == "off" then 0 else ([.protection.required_status_checks.contexts[]?] | length) end' 2>/dev/null || echo 0)
