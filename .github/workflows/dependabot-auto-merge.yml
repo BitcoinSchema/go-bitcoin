@@ -122,8 +122,9 @@ permissions: {}
 #   GitHub keeps one pending job per group: the last apply to arrive replaces
 #   one still waiting. That isn't always the freshest evaluation: a revocation
 #   that skips `analyze` can arrive before an older commit's slower approval.
-#   So an approval whose head moved during its analysis never joins the queue
-#   (it would only skip), and every apply re-checks the head before acting.
+#   So an approval whose head moved or whose PR was retargeted during its
+#   analysis never joins the queue (it would only skip), and every apply
+#   re-checks the head and base before acting.
 # --------------------------------------------------------------------
 
 # --------------------------------------------------------------------
@@ -633,8 +634,9 @@ jobs:
       action: ${{ steps.guard.outputs.action || needs.verify.outputs.result }}
       manual-review-label: ${{ steps.config.outputs.manual-review-label }}
       auto-merge-labels: ${{ steps.config.outputs.auto-merge-labels }}
-      # "true" only for an approval whose head moved during the analysis
-      head-moved: ${{ steps.head.outputs.head-moved }}
+      # "true" only for an approval whose head moved or whose PR was retargeted
+      # during the analysis
+      stale: ${{ steps.head.outputs.stale }}
 
     steps:
       # --------------------------------------------------------------------
@@ -1810,29 +1812,42 @@ jobs:
           echo "✅ Analysis completed!"
 
       # --------------------------------------------------------------------
-      # Last, and for an approval only: is the PR still on the analyzed commit?
-      # If not, `apply` would only end in skipped-head-moved, but joining its
-      # queue would still replace the pending apply of the current head (GitHub
-      # keeps one pending job per group: the last to arrive, not the freshest
-      # evaluation). So it stays out. Revocations always go ahead. Never fails
-      # the job (that would turn the decision into a revoke): an unreadable PR
-      # changes nothing, and `apply` re-checks the head itself.
+      # Last, and for an approval only: is the PR still on the analyzed commit
+      # and base? If not, `apply` would only end in skipped-head-moved or
+      # skipped-base-changed, but joining its queue would still replace the
+      # pending apply of the newer evaluation (GitHub keeps one pending job per
+      # group: the last to arrive, not the freshest evaluation). A retarget keeps
+      # the head, and its own evaluation may skip `analyze` (e.g.
+      # manual-no-metadata), leaving this one running to displace its revocation.
+      # So it stays out. Revocations always go ahead. Never fails the job (that
+      # would turn the decision into a revoke): an unreadable PR changes nothing,
+      # and `apply` re-checks the head and base itself.
       # --------------------------------------------------------------------
-      - name: 📌 Confirm the head before approving
+      - name: 📌 Confirm the head and base before approving
         id: head
         if: startsWith(steps.guard.outputs.action, 'auto-merge-')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           VERIFIED_SHA: ${{ needs.verify.outputs.head-sha }}
+          VERIFIED_BASE: ${{ needs.verify.outputs.base-ref }}
         run: |
-          if CURRENT_SHA=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '.head.sha' 2>/dev/null) &&
-             [[ -n "$CURRENT_SHA" && "$CURRENT_SHA" != "$VERIFIED_SHA" ]]; then
-            echo "⏭️ Head moved from $VERIFIED_SHA to $CURRENT_SHA — no approval; the run for the new commit decides"
-            echo "head-moved=true" >> "$GITHUB_OUTPUT"
-            echo "⏭️ Not approved: the PR moved on to \`$CURRENT_SHA\` during the analysis; the run for that commit decides." >> "$GITHUB_STEP_SUMMARY"
+          # One read for both; branch names can't contain spaces, so the line splits cleanly
+          if PR_REF=$(gh api "repos/$REPO/pulls/$PR_NUMBER" --jq '"\(.head.sha) \(.base.ref)"' 2>/dev/null) &&
+             read -r CURRENT_SHA CURRENT_BASE <<< "$PR_REF" && [[ -n "$CURRENT_SHA" ]]; then
+            if [[ "$CURRENT_SHA" != "$VERIFIED_SHA" ]]; then
+              echo "⏭️ Head moved from $VERIFIED_SHA to $CURRENT_SHA — no approval; the run for the new commit decides"
+              echo "stale=true" >> "$GITHUB_OUTPUT"
+              echo "⏭️ Not approved: the PR moved on to \`$CURRENT_SHA\` during the analysis; the run for that commit decides." >> "$GITHUB_STEP_SUMMARY"
+            elif [[ "$CURRENT_BASE" != "$VERIFIED_BASE" ]]; then
+              echo "⏭️ Base changed from ${VERIFIED_BASE:-<unknown>} to $CURRENT_BASE — no approval; the run for the retarget decides"
+              echo "stale=true" >> "$GITHUB_OUTPUT"
+              echo "⏭️ Not approved: the PR was retargeted to \`$CURRENT_BASE\` during the analysis; the run for the retarget decides." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "✅ PR #$PR_NUMBER is still at $VERIFIED_SHA on $VERIFIED_BASE"
+            fi
           else
-            echo "✅ PR #$PR_NUMBER is still at $VERIFIED_SHA (or unreadable: the apply job re-checks)"
+            echo "⚠️ Couldn't re-read PR #$PR_NUMBER — the apply job re-checks the head and base"
           fi
 
   # ----------------------------------------------------------------------------------
@@ -1867,13 +1882,14 @@ jobs:
     needs: [verify, analyze]
     # No successful analysis needed: revoking must hold even if `analyze` fails,
     # which would otherwise leave an earlier approval + auto-merge armed. Approving
-    # requires one (see DECISION). An approval whose head moved during the
-    # analysis stays out of the queue (see "Confirm the head before approving").
+    # requires one (see DECISION). An approval whose head moved or whose PR was
+    # retargeted during the analysis stays out of the queue (see "Confirm the
+    # head and base before approving").
     if: |
       !cancelled() &&
       vars.AUTO_MERGE_APP_CLIENT_ID != '' &&
       contains(fromJSON('["analyze", "revoke-foreign-push", "manual-no-metadata", "revoke-unverified"]'), needs.verify.outputs.result) &&
-      needs.analyze.outputs.head-moved != 'true'
+      needs.analyze.outputs.stale != 'true'
     runs-on: ubuntu-26.04
     timeout-minutes: 5
     # Queue, never cancel: see "Concurrency Control" at the top
